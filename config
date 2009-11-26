@@ -1,6 +1,7 @@
 ngx_addon_name=ngx_http_drizzle_module
 HTTP_MODULES="$HTTP_MODULES ngx_http_drizzle_module"
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/common.cc $ngx_addon_dir/src/mod_drizzle.cc"
-CFLAGS="$CFLAGS -I$ngx_addon_dir/src/"
-CORE_LIBS="$CORE_LIBS -ldrizzle -lstdc++"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/mod_drizzle.c"
+CFLAGS="$CFLAGS -I$ngx_addon_dir/src/ -DDDEBUG"
+#CFLAGS="$CFLAGS -I$ngx_addon_dir/src/"
+CORE_LIBS="$CORE_LIBS -ldrizzle"
 
