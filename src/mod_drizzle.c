@@ -314,6 +314,24 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 					drizzle_con_set_auth(&(ctx->dr_con), tmp1, tmp2);
 				}
 
+				{
+					// clear content length, so nginx will use chunked encoding for output
+					ngx_http_clear_content_length(r);
+
+					// set response header and send it
+					r->headers_out.status = NGX_HTTP_OK;
+					r->headers_out.content_type.data = (u_char*)"text/plain";
+					r->headers_out.content_type.len = sizeof("text/plain") - 1;
+					r->headers_out.content_type_len = sizeof("text/plain") - 1;
+
+					if(ngx_http_send_header(r) != NGX_OK) {
+						ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+								"failed to send response headers!");
+						ctx->cur_state = DB_ERR;
+						continue;
+					}
+				}
+
 				ctx->cur_state = DB_CONNECT;
 				continue;
 
@@ -394,24 +412,6 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 				}
 
 				{
-					// clear content length, so nginx will use chunked encoding for output
-					ngx_http_clear_content_length(r);
-
-					// set response header and send it
-#define TYPE "text/plain"
-					r->headers_out.content_type.data = (u_char*)TYPE;
-					r->headers_out.content_type.len = sizeof(TYPE) - 1;
-					r->headers_out.content_type_len = sizeof(TYPE) - 1;
-
-					if(ngx_http_send_header(r) != NGX_OK) {
-						ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-								"failed to send response headers!");
-						ctx->cur_state = DB_ERR;
-						continue;
-					}
-				}
-
-				{
 					size_t tmp_len;
 					ngx_buf_t *b;
 					ngx_chain_t out;
@@ -448,9 +448,6 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 							drizzle_result_sqlstate(&(ctx->dr_res)),
 							drizzle_result_column_count(&(ctx->dr_res)),
 							drizzle_result_row_count(&(ctx->dr_res)));
-					b->memory = 1;
-					b->last_buf = 0;
-					b->flush = 1;	// force output
 					b->temporary = 1;	// allow http write filter to free the buf when outputing done
 
 					ngx_http_output_filter(r, &out);
@@ -528,9 +525,6 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 							drizzle_column_name(col),
 							drizzle_column_size(col),
 							(int)drizzle_column_type(col));
-					b->memory = 1;
-					b->last_buf = 0;
-					b->flush = 1;	// force output
 					b->temporary = 1;	// allow http output filter to free the buf when outputing done
 
 					ngx_http_output_filter(r, &out);
@@ -590,6 +584,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 						ctx->cur_state = DB_ERR;
 						continue;
 					}
+
 					tmp_len = sizeof("Row 0123456789:\n") - 1;
 					title_buf->pos = ngx_pcalloc(r->pool, tmp_len);
 					if(!(title_buf->pos)) {
@@ -600,8 +595,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 					}
 					title_buf->last = ngx_snprintf(title_buf->pos, tmp_len,
 							"Row %L:\n", drizzle_row_current(&(ctx->dr_res)));
-					title_buf->memory = 1;
-					title_buf->flush = 1;
+					// the buffer is newly allocated and its content can be changed freely
 					title_buf->temporary = 1;
 
 					out_lst->buf = title_buf;
@@ -641,8 +635,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 							}
 
 							field_buf->last = ngx_cpymem(field_buf->pos, "\t(NULL)\n", tmp_len);
-							field_buf->memory = 1;
-							field_buf->flush = 1;
+							// the buffer is newly allocated and its content can be changed freely
 							field_buf->temporary = 1;
 						} else {
 							tmp_len = 4096;
@@ -657,8 +650,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 
 							field_buf->last = ngx_snprintf(field_buf->pos, tmp_len,
 									"\t(%d) %*s\n", field_sizes[i], field_sizes[i], row[i]);
-							field_buf->memory = 1;
-							field_buf->flush = 1;
+							// the buffer is newly allocated and its content can be changed freely
 							field_buf->temporary = 1;
 						}
 
@@ -668,6 +660,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 						out_lst = new_lst;
 					}
 
+					// XXX: we set last buffer's 'flush' flag instead of calling
+					// ngx_http_send_special(r, NGX_HTTP_FLUSH) to prevent traversing
+					// output filter chain twice
+					out_lst->buf->flush = 1;
 					ngx_http_output_filter(r, head);
 				}
 
@@ -698,32 +694,34 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 				}
 				ngx_free_connection(ctx->ngx_db_con);
 
-				// finalize libdrizzle client, free connection and query result
-				drizzle_free(&(ctx->dr));
-
-				{
-					ngx_buf_t *b;
+				if(ctx->cur_state == DB_ERR) {
 					ngx_chain_t out;
-
-					b = ngx_pcalloc(r->pool, sizeof(ngx_buf_t));
+					ngx_buf_t *b = ngx_calloc_buf(r->pool);
+					if(b) {
+						b->pos = ngx_palloc(r->pool, 4096);
+						b->last = ngx_snprintf(b->pos, 4096, "*** ERROR: %s\n",
+								drizzle_error(&(ctx->dr)));
+						b->last_buf = 1;
+						b->flush = 1;
+						b->temporary = 1;
+					}
 					out.buf = b;
 					out.next = NULL;
-
-					b->pos = 0;
-					b->last = 0;
-					b->sync = 1;
-					b->last_buf = 1;
-					b->temporary = 1;
-
 					ngx_http_output_filter(r, &out);
+				} else {
+					// prompt nginx for the end of output contents and flush all contents not sending yet
+					ngx_http_send_special(r, NGX_HTTP_LAST | NGX_HTTP_FLUSH);
 				}
+
+				// finalize libdrizzle client, free connection and query result
+				drizzle_free(&(ctx->dr));
 
 				// manually finalize request only when the entering state is DB_INIT,
 				// cause that call is not from our registered event handler but NginX
 				// content phase handler, and it will finalize request after calling us.
 				if(old_state != DB_INIT) {
-					// finalize current subrequest
-					ngx_http_finalize_request(r, (ctx->cur_state == DB_FIN) ? NGX_OK : NGX_ERROR);
+					// finalize current request manually 
+					ngx_http_finalize_request(r, (ctx->cur_state == DB_FIN) ? NGX_HTTP_OK : NGX_HTTP_INTERNAL_SERVER_ERROR);
 				}
 
 				return (ctx->cur_state == DB_FIN) ? NGX_OK : NGX_ERROR;
