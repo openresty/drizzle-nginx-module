@@ -1,4 +1,4 @@
-#include "common.h"
+#include "ngx_http_drizzle_module.h"
 
 /* Forward declaration */
 static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r);
