@@ -25,15 +25,15 @@ Description
 
 Synopsis
 
-    # POST /mysql
-    # select * from my_table;
+    # GET /mysql
     location /mysql {
         drizzle;
-        drizzle_host localhost;
-        drizzle_user db_user;
-        drizzle_pass db_password;
-        drizzle_db   db_name;
-        drizzle_sql  $request_body;
+        drizzle_host    localhost;
+        drizzle_user    db_user;
+        drizzle_pass    db_password;
+        drizzle_db      db_name;
+        drizzle_port    3306;
+        drizzle_sql     'select name from cats';
     }
 
 Status
