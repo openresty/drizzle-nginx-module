@@ -17,8 +17,8 @@ __DATA__
         drizzle_user monty;
         drizzle_pass some_pass;
         drizzle_db   test;
-        drizzle_sql  'select * from cats';
         drizzle_port  3306;
+        drizzle_sql  'select * from cats';
     }
 --- request
 GET /mysql
