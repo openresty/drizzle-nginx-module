@@ -4,7 +4,7 @@ Name
 Description
     This is an nginx module integrating libdrizzle
     (https://launchpad.net/libdrizzle) into nginx in an
-    non-blocking streamming way.
+    non-blocking and streamming way.
 
     Essentially it provides a very efficient and flexible way
     for nginx internals to access mysql, drizzle, sqlite3,
