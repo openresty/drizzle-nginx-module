@@ -9,7 +9,8 @@ Description
     Essentially it provides a very efficient and flexible way
     for nginx internals to access mysql, drizzle, sqlite3,
     as well as other RDBMS's that support the drizzle protocol
-    or mysql protocol.
+    or mysql protocol. Also it can serve as a direct REST
+    interface to those RDBMS backends.
 
     Currently it's not in the form of a standard nginx upstream
     module, but fiddling with nginx's connection/event API
