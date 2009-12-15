@@ -17,11 +17,10 @@ __DATA__
         drizzle_user monty;
         drizzle_pass some_pass;
         drizzle_db   test;
-        drizzle_sql  $request_body;
+        drizzle_sql  'select * from cats';
         drizzle_port  3306;
     }
 --- request
-POST /mysql
-select * from cats;
+GET /mysql
 --- response_body
 

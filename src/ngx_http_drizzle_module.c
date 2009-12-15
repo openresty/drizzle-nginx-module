@@ -1,3 +1,10 @@
+/* Copyright (C) chaoslawful */
+/* Copyright (C) agentzh */
+
+#define DDEBUG 1
+
+#include "ddebug.h"
+
 #include "ngx_http_drizzle_module.h"
 
 /* Forward declaration */
@@ -231,14 +238,17 @@ static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r)
 
             dd("SQL to be executed: '%.*s'", ctx->sql.len, ctx->sql.data);
         } else {
-            /* given raw sql have no embedded nginx variables, use it as is */
+            dd("given raw sql have no embedded nginx variables, use it as is.");
+
             ctx->sql = dlcf->raw_sql;
         }
     }
 
-#if defined(nginx_version) && nginx_version >= 8000
+#if defined(nginx_version) && nginx_version >= 8011
+
     /* increase main request's reference count */
-    ++(r->main->count);
+    r->main->count++;
+
 #endif
 
     return process_drizzle(r, ctx);
@@ -291,7 +301,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
     for(;;) {
         switch(ctx->cur_state) {
             case DB_INIT:
-                /* initialize libdrizzle client */
+                dd("initialize libdrizzle client");
+
                 (void)drizzle_create(&(ctx->dr));
                 drizzle_add_options(&(ctx->dr), DRIZZLE_NON_BLOCKING);
                 drizzle_con_create(&(ctx->dr), &(ctx->dr_con));
@@ -336,19 +347,22 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 continue;
 
             case DB_CONNECT:
-                /* connect to database */
+                dd("connect to database");
+
                 rc = drizzle_con_connect(&(ctx->dr_con));
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
                     int db_con_fd = drizzle_con_fd(&(ctx->dr_con));
 
                     if(db_con_fd == -1) {
-                        /* error occured, finish query */
+                        dd("error occured, finish query");
+
                         ctx->cur_state = DB_ERR;
                         continue;
                     }
 
-                    /* setup a nginx event related to db connection fd */
+                    dd("setup a nginx event related to db connection fd");
+
                     if(!(ctx->ngx_db_con)) {
                         ctx->ngx_db_con = ngx_get_connection(db_con_fd, r->connection->log);
 
@@ -356,7 +370,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                     "failed to get a free nginx connection structure!");
 
-                            /* close established drizzle connection */
+                            dd("close established drizzle connection");
+
                             drizzle_con_close(&(ctx->dr_con));
                             ctx->cur_state = DB_ERR;
                             continue;
@@ -385,7 +400,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 
                     break;
                 } else if(rc != DRIZZLE_RETURN_OK) {
-                    /* error occured, finish query */
+                    dd("error occured, finish query");
+
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to connect database: (%d) %s", rc, drizzle_error(&(ctx->dr)));
 
@@ -397,7 +413,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 continue;
 
             case DB_SEND_QUERY:
-                /* send query to database */
+                dd("send query to database");
+
                 (void)drizzle_query(&(ctx->dr_con), &(ctx->dr_res), (const char*)(ctx->sql.data), ctx->sql.len, &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
@@ -468,7 +485,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 continue;
 
             case DB_RECV_FIELDS:
-                /* receive result status and field descriptions */
+                dd("receive result status and field descriptions");
+
                 col = drizzle_column_read(&(ctx->dr_res), NULL, &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
@@ -541,7 +559,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 continue;
 
             case DB_RECV_ROWS:
-                /* receive result data rows */
+                dd("receive result data rows");
+
                 row = drizzle_row_buffer(&(ctx->dr_res), &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
@@ -689,7 +708,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 
             case DB_FIN:
             case DB_ERR:
-                /* remove db connection from event pool */
+                dd("remove db connection from event pool");
+
                 if(ngx_del_conn(ctx->ngx_db_con, NGX_CLOSE_EVENT) != NGX_OK) {
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to remove database connection from nginx event pool!");

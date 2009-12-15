@@ -4,7 +4,6 @@
 #include <nginx.h>    /* for nginx version macro */
 #include <ngx_http.h>
 #include <libdrizzle/drizzle_client.h>
-#include "ddebug.h"
 
 /* Per-location configuration for module drizzle */
 typedef struct {
