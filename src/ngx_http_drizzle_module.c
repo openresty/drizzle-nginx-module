@@ -145,12 +145,12 @@ static char* ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void 
     ngx_conf_merge_str_value(ccf->db_name, pcf->db_name, "test");
     ngx_conf_merge_str_value(ccf->raw_sql, pcf->raw_sql, "");
 
-    DD("Database host: '%.*s'", ccf->db_host.len, ccf->db_host.data);
-    DD("Database port: %d", ccf->db_port);
-    DD("Database user: '%.*s'", ccf->db_user.len, ccf->db_user.data);
-    DD("Database password: '%.*s'", ccf->db_pass.len, ccf->db_pass.data);
-    DD("Database name: '%.*s'", ccf->db_name.len, ccf->db_name.data);
-    DD("Raw SQL: '%.*s'", ccf->raw_sql.len, ccf->raw_sql.data);
+    dd("Database host: '%.*s'", ccf->db_host.len, ccf->db_host.data);
+    dd("Database port: %d", ccf->db_port);
+    dd("Database user: '%.*s'", ccf->db_user.len, ccf->db_user.data);
+    dd("Database password: '%.*s'", ccf->db_pass.len, ccf->db_pass.data);
+    dd("Database name: '%.*s'", ccf->db_name.len, ccf->db_name.data);
+    dd("Raw SQL: '%.*s'", ccf->raw_sql.len, ccf->raw_sql.data);
 
     return NGX_CONF_OK;
 }
@@ -165,7 +165,7 @@ static char* ngx_http_drizzle_sql_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *
     value = (ngx_str_t*)(cf->args->elts);
     sql = &value[1];
     n = ngx_http_script_variables_count(sql);
-    DD("Found %d NginX variables in the raw SQL statement: %.*s",
+    dd("Found %d NginX variables in the raw SQL statement: %.*s",
             n, sql->len, sql->data);
 
     dlcf->raw_sql = *sql;
@@ -229,7 +229,7 @@ static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r)
                 return NGX_ERROR;
             }
 
-            DD("SQL to be executed: '%.*s'", ctx->sql.len, ctx->sql.data);
+            dd("SQL to be executed: '%.*s'", ctx->sql.len, ctx->sql.data);
         } else {
             /* given raw sql have no embedded nginx variables, use it as is */
             ctx->sql = dlcf->raw_sql;
@@ -453,10 +453,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_http_output_filter(r, &out);
                 }
 
-                DD("Result:");
-                DD("\tSQL state:\t%s", drizzle_result_sqlstate(&(ctx->dr_res)));
-                DD("\tColumn count:\t%d", drizzle_result_column_count(&(ctx->dr_res)));
-                DD("\tRow count:\t%llu", drizzle_result_row_count(&(ctx->dr_res)));
+                dd("Result:");
+                dd("\tSQL state:\t%s", drizzle_result_sqlstate(&(ctx->dr_res)));
+                dd("\tColumn count:\t%d", drizzle_result_column_count(&(ctx->dr_res)));
+                dd("\tRow count:\t%llu", drizzle_result_row_count(&(ctx->dr_res)));
                 
                 if(drizzle_result_column_count(&(ctx->dr_res)) == 0) {
                     /* no more data to be read */
@@ -530,10 +530,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_http_output_filter(r, &out);
                 }
 
-                DD("Field:");
-                DD("\tField name:\t%s", drizzle_column_name(col));
-                DD("\tField size:\t%u", drizzle_column_size(col));
-                DD("\tField type:\t%d", (int)drizzle_column_type(col));
+                dd("Field:");
+                dd("\tField name:\t%s", drizzle_column_name(col));
+                dd("\tField size:\t%u", drizzle_column_size(col));
+                dd("\tField type:\t%d", (int)drizzle_column_type(col));
 
                 drizzle_column_free(col);
 
@@ -667,7 +667,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_http_output_filter(r, head);
                 }
 
-                DD("Row %llu:", drizzle_row_current(&(ctx->dr_res)));
+                dd("Row %llu:", drizzle_row_current(&(ctx->dr_res)));
                 {
                     size_t *field_sizes;
 
@@ -675,9 +675,9 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     uint16_t i;
                     for(i = 0; i < drizzle_result_column_count(&(ctx->dr_res)); ++i) {
                         if(!row[i]) {
-                            DD("\t(NULL)");
+                            dd("\t(NULL)");
                         } else {
-                            DD("\t(%u) %*s", field_sizes[i], field_sizes[i], row[i]);
+                            dd("\t(%u) %*s", field_sizes[i], field_sizes[i], row[i]);
                         }
                     }
                 }
