@@ -265,7 +265,7 @@ static void drizzle_io_event_handler(ngx_event_t *ev)
             /* write event */
             revents |= POLLOUT;
         }
-        
+
         /* drizzle_con_set_revents() isn't declared external in libdrizzle-0.4.0, */
         /* so we have to do its job all by ourselves... */
         if(revents != 0) {
@@ -457,7 +457,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 dd("\tSQL state:\t%s", drizzle_result_sqlstate(&(ctx->dr_res)));
                 dd("\tColumn count:\t%d", drizzle_result_column_count(&(ctx->dr_res)));
                 dd("\tRow count:\t%llu", drizzle_result_row_count(&(ctx->dr_res)));
-                
+
                 if(drizzle_result_column_count(&(ctx->dr_res)) == 0) {
                     /* no more data to be read */
                     ctx->cur_state = DB_FIN;
