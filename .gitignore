@@ -1,3 +1,5 @@
+*.mobi
+genmobi.sh
 .libs
 *.swp
 *.slo
