@@ -670,9 +670,9 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 dd("Row %llu:", drizzle_row_current(&(ctx->dr_res)));
                 {
                     size_t *field_sizes;
-
-                                        field_sizes = drizzle_row_field_sizes(&(ctx->dr_res));
                     uint16_t i;
+
+                    field_sizes = drizzle_row_field_sizes(&(ctx->dr_res));
                     for(i = 0; i < drizzle_result_column_count(&(ctx->dr_res)); ++i) {
                         if(!row[i]) {
                             dd("\t(NULL)");
