@@ -61,6 +61,9 @@ Output
 
     where 0.03 is this module's own version number.
 
+    The Content-Type is always set to
+    "application/octet-stream".
+
     Below is the HTTP response body part:
 
     Header part
@@ -103,11 +106,9 @@ Output
     On the nginx output chain link level, the following
     components should be put into a single ngx_buf_t struct:
 
-        * the header
+        * the header AND the column list
 
-        * the column list
-
-        * each row
+        * each field in each row (if any)
 
 Installation
     You should first install libdrizzle which can be obtained
