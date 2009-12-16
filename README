@@ -67,6 +67,9 @@ Output
     Below is the HTTP response body part:
 
     Header part
+        u_char         endian type (1 means big-endian and little
+                       endian otherwise)
+
         uint32_t       format version
                        (v1.2.3 is represented as 1002003 in
                         decimal)
@@ -86,7 +89,7 @@ Output
 
     Body part
 
-      0*Column (terminated by 8 bytes' zero)
+      0*Column (terminated by 32-bit 0)
 
         uint32_t        (non-zero) standard column type code
         uint32_t        driver-specific column type length
