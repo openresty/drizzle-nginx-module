@@ -28,13 +28,17 @@ Synopsis
     # GET /mysql
     location /mysql {
         drizzle;
-        drizzle_host    localhost;
+        drizzle_host    127.0.0.1;
         drizzle_user    db_user;
         drizzle_pass    db_password;
         drizzle_db      db_name;
         drizzle_port    3306;
         drizzle_sql     'select name from cats';
     }
+
+You'd better use pure IPs for "drizzle_host" like 127.0.0.1
+rather than domains like "localhost", or you may observe server
+hangs for reasons that we don't know ;)
 
 Status
     This module is NOT working yet but we're working hard

@@ -260,6 +260,8 @@ static void drizzle_io_event_handler(ngx_event_t *ev)
     ngx_http_request_t *r;
     ngx_http_drizzle_ctx_t *ctx;
 
+    dd("drizzle io event handler");
+
     c = (ngx_connection_t*)(ev->data);
     r = (ngx_http_request_t*)(c->data);
     ctx = (ngx_http_drizzle_ctx_t*)ngx_http_get_module_ctx(r, ngx_http_drizzle_module);
@@ -268,12 +270,12 @@ static void drizzle_io_event_handler(ngx_event_t *ev)
         /* libdrizzle use standard poll() event constants, and depends on drizzle_con_wait() to fill them, */
         /* so we must explicitly set the drizzle connection event flags. */
         short revents = 0;
-        if(ev == c->read) {
-            /* read event */
-            revents |= POLLIN;
-        } else if(ev == c->write) {
-            /* write event */
+        if(ev->write) {
+            dd("write event");
             revents |= POLLOUT;
+        } else {
+            dd("read event");
+            revents |= POLLIN;
         }
 
         /* drizzle_con_set_revents() isn't declared external in libdrizzle-0.4.0, */
@@ -283,6 +285,8 @@ static void drizzle_io_event_handler(ngx_event_t *ev)
         }
         ctx->dr_con.revents = revents;
         ctx->dr_con.events &= (short)~revents;
+    } else {
+        dd("No context!");
     }
 
     process_drizzle(r, ctx);
@@ -295,6 +299,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
     drizzle_column_st *col;
     drizzle_row_t row;
     proc_state_t old_state = ctx->cur_state;
+
+    dd("process drizzle");
 
     dlcf = (ngx_http_drizzle_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
@@ -352,6 +358,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 rc = drizzle_con_connect(&(ctx->dr_con));
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
+                    dd("well, still IO wait...");
+
                     int db_con_fd = drizzle_con_fd(&(ctx->dr_con));
 
                     if(db_con_fd == -1) {
@@ -361,9 +369,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                         continue;
                     }
 
-                    dd("setup a nginx event related to db connection fd");
+                    dd("setup an nginx event related to db connection fd");
 
                     if(!(ctx->ngx_db_con)) {
+                        dd("no connection found...");
                         ctx->ngx_db_con = ngx_get_connection(db_con_fd, r->connection->log);
 
                         if(!(ctx->ngx_db_con)) {
@@ -380,6 +389,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                         /* we don't need to setup most of the connection fields, because */
                         /* they're only useful to nginx i/o apis. */
                         /* here we only need the connection event functionality. */
+
+                        ctx->ngx_db_con->log_error = r->connection->log_error;
+                        ctx->ngx_db_con->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
+
                         ctx->ngx_db_con->data = r;
                         ctx->ngx_db_con->log = r->connection->log;
                         ctx->ngx_db_con->read->log = r->connection->log;
@@ -397,6 +410,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             continue;
                         }
                     }
+
+                    dd("got here...");
 
                     break;
                 } else if(rc != DRIZZLE_RETURN_OK) {
@@ -756,6 +771,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
 
         break;
     }
+
+    dd("returning NGX_DONE...");
 
     return NGX_DONE;
 }
