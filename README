@@ -45,6 +45,57 @@ Status
     This module is NOT working yet but we're working hard
     on it ;)
 
+Output
+    This module generates binary query results in a format
+    that will be shared among the various nginx database
+    driver modules like ngx_postgresql and ngx_oracle.
+
+    Header part
+        uint32_t       format version
+                       (v1.2.3 is represented as 1002003 in
+                        decimal)
+
+        u_char         result type
+                       (0 means normal SQL result type,
+                        fixed for now)
+
+        uint32_t       standard error code
+        uint32_t       driver-specific error code
+
+        uint32_t       driver-specific error string length
+        u_char*        driver-specific error string data
+
+        uint64_t       database rows affected
+        uint64_t       insert id (if none, 0)
+
+    Body part
+
+      0*Column (terminated by 8 bytes' zero)
+
+        uint32_t        (non-zero) standard column type code
+        uint32_t        driver-specific column type length
+        u_char*         driver-specific column type data
+        uint32_t        column name length
+        u_char*         column name data
+
+      0*Row (terminated by 1 byte' zero)
+
+        u_char          valid row (1 means valid, and 0 means
+                        the row list terminator)
+
+        0*Field (count is predetermined by column number)
+            uint32_t        field length
+            u_char          field data (in textual representation)
+
+    On the nginx output chain link level, the following
+    components should be put into a single ngx_buf_t struct:
+
+        * the header
+
+        * the column list
+
+        * each row
+
 Installation
     You should first install libdrizzle which can be obtained
     from here:
