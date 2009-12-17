@@ -13,7 +13,7 @@ __DATA__
 --- config
     location /mysql {
         drizzle;
-        drizzle_host agent;
+        drizzle_host 127.0.0.1;
         drizzle_user monty;
         drizzle_pass some_pass;
         drizzle_db   test;
