@@ -268,23 +268,9 @@ static void drizzle_io_event_handler(ngx_event_t *ev)
 
     if(ctx) {
         /* libdrizzle use standard poll() event constants, and depends on drizzle_con_wait() to fill them, */
-        /* so we must explicitly set the drizzle connection event flags. */
-        short revents = 0;
-        if(ev->write) {
-            dd("write event");
-            revents |= POLLOUT;
-        } else {
-            dd("read event");
-            revents |= POLLIN;
-        }
-
-        /* drizzle_con_set_revents() isn't declared external in libdrizzle-0.4.0, */
-        /* so we have to do its job all by ourselves... */
-        if(revents != 0) {
-            ctx->dr_con.options |= DRIZZLE_CON_IO_READY;
-        }
-        ctx->dr_con.revents = revents;
-        ctx->dr_con.events &= (short)~revents;
+		/* here we can directly call drizzle_con_wait() to fill libdrizzle internal event states, */
+		/* as poll() will play well along with epoll() or other event mechanisms used by nginx */
+		(void)drizzle_con_wait(&(ctx->dr));
     } else {
         dd("No context!");
     }
