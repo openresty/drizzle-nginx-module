@@ -2,86 +2,69 @@
 /* Copyright (C) agentzh */
 
 #define DDEBUG 1
-
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
 
-/* Forward declaration */
-static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r);
-
-static char* ngx_http_drizzle_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-static char* ngx_http_drizzle_sql_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-
-static void drizzle_io_event_handler(ngx_event_t *ev);
-static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *ctx);
-
-static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
-static char* ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child);
-
-/* MySQL service port bounds for configuration validation */
-static ngx_conf_num_bounds_t db_port_bounds = {
-    ngx_conf_check_num_bounds,    /* post_handler */
-    1,    /* low */
-    65535,    /* high */
+/* drizzle service port bounds for configuration validation */
+enum {
+    drizzle_min_port = 1,
+    drizzle_max_port = 65535
 };
 
-/* Nginx directives for module drizzle */
+
+/* Forward declaration */
+
+/* main content handler */
+static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r);
+
+/* for read/write event handlers */
+static ngx_int_t ngx_http_drizzle_rw_handler(ngx_http_request_t *r,
+        ngx_http_upstream_t *u);
+
+/* just a work-around to override the default u->output_filter */
+static ngx_int_t ngx_http_drizzle_output_filter(ngx_http_request_t *r,
+        ngx_chain_t *in);
+
+static void ngx_http_drizzle_event_handler(ngx_event_t *ev);
+
+static ngx_int_t ngx_http_drizzle_do_process(ngx_http_request_t *r,
+        ngx_http_drizzle_ctx_t *ctx);
+
+static char* ngx_http_drizzle_dbname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char* ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char* ngx_http_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+
+static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
+static char* ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
+        void *child);
+
+
+/* config directives for module drizzle */
 static ngx_command_t ngx_http_drizzle_cmds[] = {
-    {    /* "drizzle" directive enable mod_drizzle content handler for current location */
-        ngx_string("drizzle"),    /* name */
-        NGX_HTTP_LOC_CONF | NGX_CONF_NOARGS,    /* type */
-        ngx_http_drizzle_cmd,    /* set */
-        0,    /* conf */
-        0,    /* offset */
-        NULL    /* post */
-    },
-    {    /* "drizzle_host" directive set backend MySQL service hostname for current location */
-        /* NOTE: default value is "localhost" */
-        ngx_string("drizzle_host"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
+    {
+        ngx_string("drizzle_query"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+            NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+        ngx_http_drizzle_query,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, db_host),
+        offsetof(ngx_http_drizzle_loc_conf_t, query),
         NULL
     },
-    {    /* "drizzle_port" directive set backend MySQL service port for current location */
-        ngx_string("drizzle_port"),
+    {
+        ngx_string("drizzle_dbname"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+            NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
+        ngx_http_drizzle_dbname,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, db_port),
-        &db_port_bounds    /* Validate service port range */
-    },
-    {    /* "drizzle_user" directive set user for MySQL service */
-        ngx_string("drizzle_user"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, db_user),
+        offsetof(ngx_http_drizzle_loc_conf_t, dbname),
         NULL
     },
-    {    /* "drizzle_pass" directive set password for MySQL service */
-        ngx_string("drizzle_pass"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, db_pass),
-        NULL
-    },
-    {    /* "drizzle_db" directive set database name for MySQL service */
-        ngx_string("drizzle_db"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, db_name),
-        NULL
-    },
-    {    /* "drizzle_sql" directive set SQL statement to execute */
-        /* support variable expanding */
-        ngx_string("drizzle_sql"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_http_drizzle_sql_cmd,
+    {
+        ngx_string("drizzle_server"),
+        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
+        ngx_http_drizzle_server,
         NGX_HTTP_LOC_CONF_OFFSET,
         0,
         NULL
@@ -89,6 +72,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
 
     ngx_null_command
 };
+
 
 /* Nginx HTTP subsystem module hooks */
 static ngx_http_module_t ngx_http_drizzle_module_ctx = {
@@ -102,14 +86,15 @@ static ngx_http_module_t ngx_http_drizzle_module_ctx = {
     NULL,    /* merge_srv_conf */
 
     ngx_http_drizzle_create_loc_conf,    /* create_loc_conf */
-    ngx_http_drizzle_merge_loc_conf    /* merge_loc_conf */
+    ngx_http_drizzle_merge_loc_conf      /* merge_loc_conf */
 };
+
 
 ngx_module_t ngx_http_drizzle_module = {
     NGX_MODULE_V1,
-    &ngx_http_drizzle_module_ctx,    /* module context */
-    ngx_http_drizzle_cmds,    /* module directives */
-    NGX_HTTP_MODULE,    /* module type */
+    &ngx_http_drizzle_module_ctx,       /* module context */
+    ngx_http_drizzle_cmds,              /* module directives */
+    NGX_HTTP_MODULE,                    /* module type */
     NULL,    /* init master */
     NULL,    /* init module */
     NULL,    /* init process */
@@ -119,6 +104,7 @@ ngx_module_t ngx_http_drizzle_module = {
     NULL,    /* exit master */
     NGX_MODULE_V1_PADDING
 };
+
 
 static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 {

@@ -1,40 +1,94 @@
-#ifndef NGX_HTTP_DRIZZLE_H
-#define NGX_HTTP_DRIZZLE_H
+#ifndef NGX_HTTP_DRIZZLE_MODULE_H
+#define NGX_HTTP_DRIZZLE_MODULE_H
 
-#include <nginx.h>    /* for nginx version macro */
+#include <ngx_config.h>
+#include <nginx.h>
 #include <ngx_http.h>
+
 #include <libdrizzle/drizzle_client.h>
 
-/* Per-location configuration for module drizzle */
 typedef struct {
-    ngx_str_t db_host;    /* MySQL service hostname for current location, default to "localhost" */
-    ngx_int_t db_port;    /* MySQL service port for current location, default to 3306 */
-    ngx_str_t db_user;    /* MySQL service user, default to "root" */
-    ngx_str_t db_pass;    /* MySQL service password, default to "" */
-    ngx_str_t db_name;    /* MySQL database name, default to "test" */
-    ngx_str_t raw_sql;    /* SQL statement to be executed, default to "" */
-    ngx_array_t *sql_lengths;    /* Holding NginX variable lengths in the raw SQL statement */
-    ngx_array_t *sql_values;    /* Holding NginX variable values in the raw SQL statement */
+    /* of ngx_http_upstream_drizzle_server_t */
+    ngx_array_t                         *servers;
+
+    drizzle_st                           drizzle;
+
+    /* TODO: we might need "tried" from round robin peer data */
+    ngx_uint_t                           current;
+
+    ngx_http_upstream_init_pt            original_init_upstream;
+    ngx_http_upstream_init_peer_pt       original_init_peer;
+
+} ngx_http_upstream_drizzle_srv_conf_t;
+
+
+typedef struct {
+    ngx_http_upstream_drizzle_srv_conf_t  *conf;
+
+    ngx_http_upstream_t                   *upstream;
+    ngx_http_request_t                    *request;
+
+    void                                  *data;
+
+    ngx_event_get_peer_pt                  original_get_peer;
+    ngx_event_free_peer_pt                 original_free_peer;
+
+} ngx_http_upstream_drizzle_peer_data_t;
+
+
+typedef struct {
+    /* drizzle database name */
+    ngx_http_complex_value_t            dbname;
+
+    /* SQL query to be executed */
+    ngx_http_complex_value_t            query;
+
 } ngx_http_drizzle_loc_conf_t;
 
+
+/* states for the drizzle client state machine */
 typedef enum {
-    DB_INIT,
-    DB_CONNECT,
-    DB_SEND_QUERY,
-    DB_RECV_FIELDS,
-    DB_RECV_ROWS,
-    DB_FIN,
-    DB_ERR
-} proc_state_t;
+    state_db_init,
+    state_db_connect,
+    state_db_send_query,
+    state_db_recv_fields,
+    state_db_recv_rows,
+    state_db_fin,
+    state_db_err
+
+} ngx_http_drizzle_state_t;
+
 
 typedef struct {
-    proc_state_t cur_state;
-    ngx_str_t sql;
-    ngx_connection_t *ngx_db_con;
-    drizzle_st dr;
-    drizzle_con_st dr_con;
-    drizzle_result_st dr_res;
+    ngx_str_t                           query;
+
+    ngx_http_drizzle_state_t            state;
+
+    ngx_connection_t                   *nginx_con;
+    drizzle_con_st                      drizzle_con;
+    drizzle_result_st                   drizzle_result;
+
 } ngx_http_drizzle_ctx_t;
 
-#endif /* NGX_HTTP_DRIZZLE_H */
+
+typedef struct {
+    ngx_addr_t                      *addrs;
+    ngx_uint_t                       naddrs;
+
+    in_port_t                        port;
+
+    ngx_str_t                        dbname;
+
+/*
+    ngx_uint_t                       weight;
+    ngx_uint_t                       max_fails;
+    time_t                           fail_timeout;
+
+    unsigned                         down:1;
+    unsigned                         backup:1;
+*/
+
+} ngx_http_upstream_server_t;
+
+#endif /* NGX_HTTP_DRIZZLE_MODULE_H */
 
