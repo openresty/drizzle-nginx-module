@@ -31,8 +31,15 @@ static void ngx_http_drizzle_event_handler(ngx_event_t *ev);
 static ngx_int_t ngx_http_drizzle_do_process(ngx_http_request_t *r,
         ngx_http_drizzle_ctx_t *ctx);
 
+static char *
+ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
+
+/*
 static char* ngx_http_drizzle_dbname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char* ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+*/
+
 static char* ngx_http_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
@@ -45,8 +52,8 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
     {
         ngx_string("drizzle_query"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
-        ngx_http_drizzle_query,
+            |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+        ngx_http_drizzle_set_complex_value_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_drizzle_loc_conf_t, query),
         NULL
@@ -54,9 +61,8 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
     {
         ngx_string("drizzle_dbname"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_http_drizzle_dbname,
+            |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+        ngx_http_drizzle_set_complex_value_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_drizzle_loc_conf_t, dbname),
         NULL
@@ -106,83 +112,81 @@ ngx_module_t ngx_http_drizzle_module = {
 };
 
 
-static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
+static void*
+ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 {
-    ngx_http_drizzle_loc_conf_t *conf;
-    conf = (ngx_http_drizzle_loc_conf_t*)ngx_pcalloc(cf->pool, sizeof(ngx_http_drizzle_loc_conf_t));
-    if(conf == NULL) {
+    ngx_http_drizzle_loc_conf_t             *conf;
+
+    conf = ngx_palloc(cf->pool, sizeof(ngx_http_drizzle_loc_conf_t));
+    if (conf == NULL) {
         return NULL;
     }
 
-    conf->db_host.data = NULL;
-    conf->db_port = NGX_CONF_UNSET;
-    conf->db_user.data = NULL;
-    conf->db_pass.data = NULL;
-    conf->db_name.data = NULL;
-    conf->raw_sql.data = NULL;
-    conf->sql_lengths = NULL;
-    conf->sql_values = NULL;
+    conf->dbname = NGX_CONF_UNSET_PTR;
+    conf->query  = NGX_CONF_UNSET_PTR;
 
     return conf;
 }
 
-static char* ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
+
+static char*
+ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
-    ngx_http_drizzle_loc_conf_t *pcf = (ngx_http_drizzle_loc_conf_t*)parent;
-    ngx_http_drizzle_loc_conf_t *ccf = (ngx_http_drizzle_loc_conf_t*)child;
+    ngx_http_drizzle_loc_conf_t *prev = parent;
+    ngx_http_drizzle_loc_conf_t *conf = child;
 
-    ngx_conf_merge_str_value(ccf->db_host, pcf->db_host, "localhost");
-    ngx_conf_merge_value(ccf->db_port, pcf->db_port, 3306);
-    ngx_conf_merge_str_value(ccf->db_user, pcf->db_user, "root");
-    ngx_conf_merge_str_value(ccf->db_pass, pcf->db_pass, "");
-    ngx_conf_merge_str_value(ccf->db_name, pcf->db_name, "test");
-    ngx_conf_merge_str_value(ccf->raw_sql, pcf->raw_sql, "");
-
-    dd("Database host: '%.*s'", ccf->db_host.len, ccf->db_host.data);
-    dd("Database port: %d", ccf->db_port);
-    dd("Database user: '%.*s'", ccf->db_user.len, ccf->db_user.data);
-    dd("Database password: '%.*s'", ccf->db_pass.len, ccf->db_pass.data);
-    dd("Database name: '%.*s'", ccf->db_name.len, ccf->db_name.data);
-    dd("Raw SQL: '%.*s'", ccf->raw_sql.len, ccf->raw_sql.data);
+    ngx_conf_merge_ptr_value(conf->dbname, prev->dbname, NULL);
+    ngx_conf_merge_ptr_value(conf->query, prev->query, NULL);
 
     return NGX_CONF_OK;
 }
 
-static char* ngx_http_drizzle_sql_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+
+static char *
+ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf)
 {
-    ngx_http_drizzle_loc_conf_t *dlcf = (ngx_http_drizzle_loc_conf_t*)conf;
-    ngx_str_t *value, *sql;
-    ngx_uint_t n;
-    ngx_http_script_compile_t sc;
+    char                             *p = conf;
+    ngx_http_complex_value_t        **field;
+    ngx_str_t                        *value;
+    ngx_conf_post_t                  *post;
+    ngx_http_compile_complex_value_t  ccv;
 
-    value = (ngx_str_t*)(cf->args->elts);
-    sql = &value[1];
-    n = ngx_http_script_variables_count(sql);
-    dd("Found %d NginX variables in the raw SQL statement: %.*s",
-            n, sql->len, sql->data);
+    field = (ngx_http_complex_value_t **) (p + cmd->offset);
 
-    dlcf->raw_sql = *sql;
-    dlcf->sql_lengths = NULL;
-    dlcf->sql_values = NULL;
+    if (*field) {
+        return "is duplicate";
+    }
 
-    if(n) {
-        ngx_memzero(&sc, sizeof(ngx_http_script_compile_t));
+    *field = ngx_pcalloc(cf->pool, sizeof(ngx_http_complex_value_t));
+    if (*field == NULL) {
+        return NGX_CONF_ERROR;
+    }
 
-        sc.cf = cf;
-        sc.source = sql;
-        sc.lengths = &(dlcf->sql_lengths);
-        sc.values = &(dlcf->sql_values);
-        sc.variables = n;
-        sc.complete_lengths = 1;
-        sc.complete_values = 1;
+    value = cf->args->elts;
 
-        if(ngx_http_script_compile(&sc) != NGX_OK) {
-            return (char*)NGX_CONF_ERROR;
-        }
+    if (value[1].len == 0) {
+        return NGX_OK;
+    }
+
+    ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+
+    ccv.cf = cf;
+    ccv.value = &value[1];
+    ccv.complex_value = *field;
+
+    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+        return NGX_CONF_ERROR;
+    }
+
+    if (cmd->post) {
+        post = cmd->post;
+        return post->post_handler(cf, post, field);
     }
 
     return NGX_CONF_OK;
 }
+
 
 static char* ngx_http_drizzle_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -210,7 +214,7 @@ static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r)
 
         ngx_http_set_ctx(r, ctx, ngx_http_drizzle_module);
 
-        ctx->cur_state = DB_INIT;
+        ctx->state = state_db_init;
         ctx->ngx_db_con = NULL;
 
         ngx_http_drizzle_loc_conf_t *dlcf = (ngx_http_drizzle_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
@@ -270,15 +274,15 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
     drizzle_return_t rc;
     drizzle_column_st *col;
     drizzle_row_t row;
-    proc_state_t old_state = ctx->cur_state;
+    proc_state_t old_state = ctx->state;
 
     dd("process drizzle");
 
     dlcf = (ngx_http_drizzle_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
     for(;;) {
-        switch(ctx->cur_state) {
-            case DB_INIT:
+        switch(ctx->state) {
+            case state_db_init:
                 dd("initialize libdrizzle client");
 
                 (void)drizzle_create(&(ctx->dr));
@@ -316,15 +320,15 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(ngx_http_send_header(r) != NGX_OK) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to send response headers!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
                 }
 
-                ctx->cur_state = DB_CONNECT;
+                ctx->state = state_db_connect;
                 continue;
 
-            case DB_CONNECT:
+            case state_db_connect:
                 dd("connect to database");
 
                 rc = drizzle_con_connect(&(ctx->dr_con));
@@ -337,7 +341,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(db_con_fd == -1) {
                         dd("error occured, finish query");
 
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -354,7 +358,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             dd("close established drizzle connection");
 
                             drizzle_con_close(&(ctx->dr_con));
-                            ctx->cur_state = DB_ERR;
+                            ctx->state = state_db_err;
                             continue;
                         }
 
@@ -378,7 +382,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                     "failed to add database connection into nginx event pool!");
 
-                            ctx->cur_state = DB_ERR;
+                            ctx->state = state_db_err;
                             continue;
                         }
                     }
@@ -392,17 +396,17 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to connect database: (%d) %s", rc, drizzle_error(&(ctx->dr)));
 
-                    ctx->cur_state = DB_ERR;
+                    ctx->state = state_db_err;
                     continue;
                 }
 
-                ctx->cur_state = DB_SEND_QUERY;
+                ctx->state = state_db_send_query;
                 continue;
 
-            case DB_SEND_QUERY:
+            case state_db_send_query:
                 dd("send query to database");
 
-                (void)drizzle_query(&(ctx->dr_con), &(ctx->dr_res), (const char*)(ctx->sql.data), ctx->sql.len, &rc);
+                (void)drizzle_query(&(ctx->dr_con), &(ctx->drizzle_res), (const char*)(ctx->sql.data), ctx->sql.len, &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
                     break;
@@ -411,7 +415,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to query database: (%d) %s", rc, drizzle_error(&(ctx->dr)));
 
-                    ctx->cur_state = DB_ERR;
+                    ctx->state = state_db_err;
                     continue;
                 }
 
@@ -424,7 +428,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!b) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate buffer for response body!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -440,7 +444,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!b->pos) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate buffer for response body!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -449,32 +453,32 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             "\tSQL state:\t%s\n"
                             "\tColumn count:\t%ud\n"
                             "\tRow count:\t%uL\n",
-                            drizzle_result_sqlstate(&(ctx->dr_res)),
-                            drizzle_result_column_count(&(ctx->dr_res)),
-                            drizzle_result_row_count(&(ctx->dr_res)));
+                            drizzle_result_sqlstate(&(ctx->drizzle_res)),
+                            drizzle_result_column_count(&(ctx->drizzle_res)),
+                            drizzle_result_row_count(&(ctx->drizzle_res)));
                     b->temporary = 1;    /* allow http write filter to free the buf when outputing done */
 
                     ngx_http_output_filter(r, &out);
                 }
 
                 dd("Result:");
-                dd("\tSQL state:\t%s", drizzle_result_sqlstate(&(ctx->dr_res)));
-                dd("\tColumn count:\t%d", drizzle_result_column_count(&(ctx->dr_res)));
-                dd("\tRow count:\t%llu", drizzle_result_row_count(&(ctx->dr_res)));
+                dd("\tSQL state:\t%s", drizzle_result_sqlstate(&(ctx->drizzle_res)));
+                dd("\tColumn count:\t%d", drizzle_result_column_count(&(ctx->drizzle_res)));
+                dd("\tRow count:\t%llu", drizzle_result_row_count(&(ctx->drizzle_res)));
 
-                if(drizzle_result_column_count(&(ctx->dr_res)) == 0) {
+                if(drizzle_result_column_count(&(ctx->drizzle_res)) == 0) {
                     /* no more data to be read */
-                    ctx->cur_state = DB_FIN;
+                    ctx->state = state_db_fin;
                     continue;
                 }
 
-                ctx->cur_state = DB_RECV_FIELDS;
+                ctx->state = state_db_recv_fields;
                 continue;
 
-            case DB_RECV_FIELDS:
+            case state_db_recv_fields:
                 dd("receive result status and field descriptions");
 
-                col = drizzle_column_read(&(ctx->dr_res), NULL, &rc);
+                col = drizzle_column_read(&(ctx->drizzle_res), NULL, &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
                     break;
@@ -483,13 +487,13 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to recv field description data: (%d) %s", rc, drizzle_error(&(ctx->dr)));
 
-                    ctx->cur_state = DB_ERR;
+                    ctx->state = state_db_err;
                     continue;
                 }
 
                 if(!col) {
                     /* no more field descriptions to read */
-                    ctx->cur_state = DB_RECV_ROWS;
+                    ctx->state = state_db_recv_rows;
                     continue;
                 }
 
@@ -502,7 +506,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!b) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate buffer for response body!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -518,7 +522,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!b->pos) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate buffer for response body!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -545,10 +549,10 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 /* continue reading field descriptions */
                 continue;
 
-            case DB_RECV_ROWS:
+            case state_db_recv_rows:
                 dd("receive result data rows");
 
-                row = drizzle_row_buffer(&(ctx->dr_res), &rc);
+                row = drizzle_row_buffer(&(ctx->drizzle_res), &rc);
 
                 if(rc == DRIZZLE_RETURN_IO_WAIT) {
                     break;
@@ -557,13 +561,13 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                             "failed to recv row data: (%d) %s", rc, drizzle_error(&(ctx->dr)));
 
-                    ctx->cur_state = DB_ERR;
+                    ctx->state = state_db_err;
                     continue;
                 }
 
                 if(!row) {
                     /* no more rows to read */
-                    ctx->cur_state = DB_FIN;
+                    ctx->state = state_db_fin;
                     continue;
                 }
 
@@ -571,7 +575,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 {
                     ngx_buf_t *title_buf;
                     ngx_chain_t *out_lst, *head;
-                    size_t *field_sizes = drizzle_row_field_sizes(&(ctx->dr_res));
+                    size_t *field_sizes = drizzle_row_field_sizes(&(ctx->drizzle_res));
                     uint16_t i;
                     size_t tmp_len;
 
@@ -579,7 +583,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!out_lst) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate output chain node!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -587,7 +591,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!title_buf) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate output buffer node!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
 
@@ -596,26 +600,26 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     if(!(title_buf->pos)) {
                         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                 "failed to allocate output buffer!");
-                        ctx->cur_state = DB_ERR;
+                        ctx->state = state_db_err;
                         continue;
                     }
                     title_buf->last = ngx_snprintf(title_buf->pos, tmp_len,
-                            "Row %L:\n", drizzle_row_current(&(ctx->dr_res)));
+                            "Row %L:\n", drizzle_row_current(&(ctx->drizzle_res)));
                     /* the buffer is newly allocated and its content can be changed freely */
                     title_buf->temporary = 1;
 
                     out_lst->buf = title_buf;
                     out_lst->next = 0;
 
-                    for(i = 0; i < drizzle_result_column_count(&(ctx->dr_res)); ++i) {
+                    for(i = 0; i < drizzle_result_column_count(&(ctx->drizzle_res)); ++i) {
                         ngx_buf_t *field_buf;
                         ngx_chain_t *new_lst = ngx_pcalloc(r->pool, sizeof(ngx_chain_t));
 
                         if(!new_lst) {
                             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                     "failed to allocate output chain node: row=%d, col=%d",
-                                    drizzle_row_current(&(ctx->dr_res)), i);
-                            ctx->cur_state = DB_ERR;
+                                    drizzle_row_current(&(ctx->drizzle_res)), i);
+                            ctx->state = state_db_err;
                             /* we will free all drizzle resources, so don't need to call drizzle_row_free() here */
                             continue;
                         }
@@ -624,8 +628,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                         if(!field_buf) {
                             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                     "failed to allocate output buffer node: row=%d, col=%d",
-                                    drizzle_row_current(&(ctx->dr_res)), i);
-                            ctx->cur_state = DB_ERR;
+                                    drizzle_row_current(&(ctx->drizzle_res)), i);
+                            ctx->state = state_db_err;
                             continue;
                         }
 
@@ -635,8 +639,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             if(!(field_buf->pos)) {
                                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                         "failed to allocate output buffer: row=%d, col=%d",
-                                        drizzle_row_current(&(ctx->dr_res)), i);
-                                ctx->cur_state = DB_ERR;
+                                        drizzle_row_current(&(ctx->drizzle_res)), i);
+                                ctx->state = state_db_err;
                                 continue;
                             }
 
@@ -649,8 +653,8 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                             if(!(field_buf->pos)) {
                                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                                         "failed to allocate output buffer: row=%d, col=%d",
-                                        drizzle_row_current(&(ctx->dr_res)), i);
-                                ctx->cur_state = DB_ERR;
+                                        drizzle_row_current(&(ctx->drizzle_res)), i);
+                                ctx->state = state_db_err;
                                 continue;
                             }
 
@@ -673,13 +677,13 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     ngx_http_output_filter(r, head);
                 }
 
-                dd("Row %llu:", drizzle_row_current(&(ctx->dr_res)));
+                dd("Row %llu:", drizzle_row_current(&(ctx->drizzle_res)));
                 {
                     size_t *field_sizes;
                     uint16_t i;
 
-                    field_sizes = drizzle_row_field_sizes(&(ctx->dr_res));
-                    for(i = 0; i < drizzle_result_column_count(&(ctx->dr_res)); ++i) {
+                    field_sizes = drizzle_row_field_sizes(&(ctx->drizzle_res));
+                    for(i = 0; i < drizzle_result_column_count(&(ctx->drizzle_res)); ++i) {
                         if(!row[i]) {
                             dd("\t(NULL)");
                         } else {
@@ -688,13 +692,13 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                     }
                 }
 
-                drizzle_row_free(&(ctx->dr_res), row);
+                drizzle_row_free(&(ctx->drizzle_res), row);
 
                 /* continue reading rows */
                 continue;
 
-            case DB_FIN:
-            case DB_ERR:
+            case state_db_fin:
+            case state_db_err:
                 dd("remove db connection from event pool");
 
                 if(ngx_del_conn(ctx->ngx_db_con, NGX_CLOSE_EVENT) != NGX_OK) {
@@ -703,7 +707,7 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 }
                 ngx_free_connection(ctx->ngx_db_con);
 
-                if(ctx->cur_state == DB_ERR) {
+                if(ctx->state == state_db_err) {
                     ngx_chain_t out;
                     ngx_buf_t *b = ngx_calloc_buf(r->pool);
                     if(b) {
@@ -725,19 +729,19 @@ static ngx_int_t process_drizzle(ngx_http_request_t *r, ngx_http_drizzle_ctx_t *
                 /* finalize libdrizzle client, free connection and query result */
                 drizzle_free(&(ctx->dr));
 
-                /* manually finalize request only when the entering state is DB_INIT, */
+                /* manually finalize request only when the entering state is state_db_init, */
                 /* cause that call is not from our registered event handler but NginX */
                 /* content phase handler, and it will finalize request after calling us. */
-                if(old_state != DB_INIT) {
+                if(old_state != state_db_init) {
                     /* finalize current request manually  */
-                    ngx_http_finalize_request(r, (ctx->cur_state == DB_FIN) ? NGX_HTTP_OK : NGX_HTTP_INTERNAL_SERVER_ERROR);
+                    ngx_http_finalize_request(r, (ctx->state == state_db_fin) ? NGX_HTTP_OK : NGX_HTTP_INTERNAL_SERVER_ERROR);
                 }
 
-                return (ctx->cur_state == DB_FIN) ? NGX_OK : NGX_ERROR;
+                return (ctx->state == state_db_fin) ? NGX_OK : NGX_ERROR;
 
             default:
                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                        "invalid mod_drizzle processing state: cur_state=%d", ctx->cur_state);
+                        "invalid mod_drizzle processing state: cur_state=%d", ctx->state);
                 return NGX_ERROR;
         }
 

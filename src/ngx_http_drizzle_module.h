@@ -38,10 +38,10 @@ typedef struct {
 
 typedef struct {
     /* drizzle database name */
-    ngx_http_complex_value_t            dbname;
+    ngx_http_complex_value_t            *dbname;
 
     /* SQL query to be executed */
-    ngx_http_complex_value_t            query;
+    ngx_http_complex_value_t            *query;
 
 } ngx_http_drizzle_loc_conf_t;
 
@@ -66,7 +66,7 @@ typedef struct {
 
     ngx_connection_t                   *nginx_con;
     drizzle_con_st                      drizzle_con;
-    drizzle_result_st                   drizzle_result;
+    drizzle_result_st                   drizzle_res;
 
 } ngx_http_drizzle_ctx_t;
 
@@ -88,7 +88,7 @@ typedef struct {
     unsigned                         backup:1;
 */
 
-} ngx_http_upstream_server_t;
+} ngx_http_upstream_drizzle_server_t;
 
 #endif /* NGX_HTTP_DRIZZLE_MODULE_H */
 
