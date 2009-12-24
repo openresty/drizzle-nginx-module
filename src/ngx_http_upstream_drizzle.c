@@ -6,6 +6,7 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_upstream_drizzle.h"
 #include "ngx_http_drizzle_processor.h"
+#include "ngx_http_drizzle_util.h"
 
 enum {
     ngx_http_drizzle_default_port = 3306
@@ -29,24 +30,23 @@ static ngx_int_t ngx_http_drizzle_output_filter(ngx_http_request_t *r,
 
 
 void *
-ngx_http_upstream_drizzle_create_conf(ngx_conf_t *cf)
+ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 {
     ngx_http_upstream_drizzle_srv_conf_t  *conf;
 
-    conf = ngx_pcalloc(cf->pool,
+    conf = ngx_palloc(cf->pool,
                        sizeof(ngx_http_upstream_drizzle_srv_conf_t));
     if (conf == NULL) {
         return NULL;
     }
 
-    /*
-     * set by ngx_pcalloc():
-     *
-     *     conf->peers   = NULL;
-     *     conf->current = 0;
-     *     conf->servers = NULL;
-     *     conf->drizzle = (drizzle_st)0;
-     */
+    conf->peers   = NULL;
+    conf->current = 0;
+    conf->servers = NULL;
+
+    (void) drizzle_create(&conf->drizzle);
+
+    drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
 
     return conf;
 }
@@ -65,6 +65,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_url_t                                    u;
     ngx_uint_t                                   i;
     ngx_http_upstream_srv_conf_t                *uscf;
+    ngx_str_t                                    protocol;
 
     if (dscf->servers == NULL) {
         dscf->servers = ngx_array_create(cf->pool, 4,
@@ -102,6 +103,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
     ds->addrs  = u.addrs;
     ds->naddrs = u.naddrs;
     ds->port   = u.port;
+    ds->protocol = ngx_http_drizzle_protocol;
 
     /* parse various options */
 
@@ -133,6 +135,41 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             continue;
         }
+
+        if (ngx_strncmp(value[i].data, "protocol=", sizeof("protocol=") - 1)
+                == 0)
+        {
+            protocol.len = value[i].len - (sizeof("protocol=") - 1);
+            protocol.data = &value[i].data[sizeof("protocol=") - 1];
+
+            switch (protocol.len) {
+            case 5:
+                if (ngx_str5cmp(protocol.data, 'm', 'y', 's', 'q', 'l')) {
+                    ds->protocol = ngx_http_mysql_protocol;
+                } else {
+                    continue;
+                }
+
+                break;
+
+            case 7:
+                if ( ! ngx_str7cmp(protocol.data,
+                            'd', 'r', 'i', 'z', 'z', 'l', 'e'))
+                {
+                    continue;
+                }
+
+                break;
+            default:
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid protocol \"%V\"", &protocol);
+
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid parameter \"%V\"", &value[i]);
@@ -192,6 +229,7 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
                 peers->peer[n].user = server[i].user;
                 peers->peer[n].password = server[i].password;
                 peers->peer[n].dbname = server[i].dbname;
+                peers->peer[n].protocol = server[i].protocol;
 
                 n++;
             }
@@ -239,6 +277,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     dp->query.len  = 0;
     dp->dbname.len = 0;
+    dp->state = state_db_init;
 
     /* to force ngx_output_chain not to use ngx_chain_writer */
 
@@ -255,6 +294,8 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
     /* prepare dbname */
+
+    dp->dbname.len = 0;
 
     if (dlcf->dbname) {
         /* check if dbname requires overriding at request time */
@@ -321,6 +362,12 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     r = dp->request;
 
     /* set up the peer's drizzle connection */
+
+    (void) drizzle_con_create(&dscf->drizzle, &dp->drizzle_con);
+
+    if (peer->protocol == ngx_http_mysql_protocol) {
+        drizzle_con_add_options(&dp->drizzle_con, DRIZZLE_CON_MYSQL);
+    }
 
     return NGX_DONE;
 }
