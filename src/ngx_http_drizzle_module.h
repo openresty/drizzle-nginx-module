@@ -7,6 +7,8 @@
 
 #include <libdrizzle/drizzle_client.h>
 
+extern ngx_module_t ngx_http_drizzle_module;
+
 typedef struct {
     /* of ngx_http_upstream_drizzle_server_t */
     ngx_array_t                         *servers;
