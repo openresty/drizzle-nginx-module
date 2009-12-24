@@ -33,17 +33,5 @@ typedef enum {
 
 } ngx_http_drizzle_state_t;
 
-
-typedef struct {
-    ngx_str_t                           query;
-
-    ngx_http_drizzle_state_t            state;
-
-    ngx_connection_t                   *nginx_con;
-    drizzle_con_st                      drizzle_con;
-    drizzle_result_st                   drizzle_res;
-
-} ngx_http_drizzle_ctx_t;
-
 #endif /* NGX_HTTP_DRIZZLE_MODULE_H */
 

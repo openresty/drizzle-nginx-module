@@ -24,7 +24,6 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
     ngx_int_t                       rc;
     ngx_http_upstream_t            *u;
-    ngx_http_drizzle_ctx_t         *ctx;
     ngx_http_drizzle_loc_conf_t    *mlcf;
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
@@ -61,15 +60,6 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     u->process_header = NULL;
     u->abort_request = ngx_http_drizzle_abort_request;
     u->finalize_request = ngx_http_drizzle_finalize_request;
-
-    ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_drizzle_ctx_t));
-    if (ctx == NULL) {
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    ctx->state = state_db_init;
-
-    ngx_http_set_ctx(r, ctx, ngx_http_drizzle_module);
 
     /* we bypass the upstream input filter mechanism in
      * ngx_http_upstream_process_headers */

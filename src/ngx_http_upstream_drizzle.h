@@ -18,11 +18,11 @@ typedef struct {
 typedef struct {
     struct sockaddr                *sockaddr;
     socklen_t                       socklen;
+    ngx_str_t                       name;
     in_port_t                       port;
     ngx_str_t                       user;
     ngx_str_t                       password;
     ngx_str_t                       dbname;
-    ngx_str_t                       name;
 } ngx_http_upstream_drizzle_peer_t;
 
 
@@ -53,8 +53,17 @@ typedef struct {
 typedef struct {
     ngx_http_upstream_drizzle_srv_conf_t  *conf;
 
-    ngx_http_upstream_t                   *upstream;
-    ngx_http_request_t                    *request;
+    ngx_http_upstream_t                    *upstream;
+    ngx_http_request_t                     *request;
+
+    ngx_str_t                               dbname;
+    ngx_str_t                               query;
+
+    ngx_http_drizzle_state_t                state;
+
+    ngx_connection_t                       *nginx_con;
+    drizzle_con_st                          drizzle_con;
+    drizzle_result_st                       drizzle_res;
 
 } ngx_http_upstream_drizzle_peer_data_t;
 

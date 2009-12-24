@@ -188,6 +188,10 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
                 peers->peer[n].sockaddr = server[i].addrs[j].sockaddr;
                 peers->peer[n].socklen = server[i].addrs[j].socklen;
                 peers->peer[n].name = server[i].addrs[j].name;
+                peers->peer[n].port = server[i].port;
+                peers->peer[n].user = server[i].user;
+                peers->peer[n].password = server[i].password;
+                peers->peer[n].dbname = server[i].dbname;
 
                 n++;
             }
@@ -216,6 +220,9 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t   *dp;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_upstream_t                     *u;
+    ngx_http_drizzle_loc_conf_t             *dlcf;
+    ngx_str_t                                dbname;
+    ngx_str_t                                query;
 
     dp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
     if (dp == NULL) {
@@ -230,6 +237,9 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     dp->upstream = u;
     dp->request  = r;
 
+    dp->query.len  = 0;
+    dp->dbname.len = 0;
+
     /* to force ngx_output_chain not to use ngx_chain_writer */
 
     u->output.output_filter = (ngx_event_pipe_output_filter_pt)
@@ -242,7 +252,50 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     u->peer.get = ngx_http_upstream_drizzle_get_peer;
     u->peer.free = ngx_http_upstream_drizzle_free_peer;
 
+    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+    /* prepare dbname */
+
+    if (dlcf->dbname) {
+        /* check if dbname requires overriding at request time */
+        if (ngx_http_complex_value(r, dlcf->dbname, &dbname) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
+        if (dbname.len) {
+            dp->dbname = dbname;
+        }
+    }
+
+    /* prepare SQL query */
+
+    if (dlcf->query == NULL) {
+        ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+                       "empty \"query\" in drizzle upstream \"%V\"",
+                       dscf->peers->name);
+
+        goto empty_query;
+    }
+
+    if (ngx_http_complex_value(r, dlcf->query, &query) != NGX_OK) {
+        return NGX_ERROR;
+    }
+
+    if (query.len == 0) {
+        goto empty_query;
+    }
+
+    dp->query = query;
+
     return NGX_OK;
+
+empty_query:
+
+    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+                   "empty \"query\" in drizzle upstream \"%V\"",
+                   dscf->peers->name);
+
+    return NGX_ERROR;
 }
 
 
@@ -251,10 +304,25 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
+    ngx_http_upstream_drizzle_peers_t       *peers;
+    ngx_http_upstream_drizzle_peer_t        *peer;
+    ngx_http_request_t                      *r;
 
     dscf = dp->conf;
 
-    return NGX_OK;
+    peers = dscf->peers;
+
+    if (dscf->current >= peers->number) {
+        dscf->current = 0;
+    }
+
+    peer = &peers->peer[dscf->current++];
+
+    r = dp->request;
+
+    /* set up the peer's drizzle connection */
+
+    return NGX_DONE;
 }
 
 
