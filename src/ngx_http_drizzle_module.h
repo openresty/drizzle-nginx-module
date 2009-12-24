@@ -37,6 +37,8 @@ typedef struct {
 
 
 typedef struct {
+    ngx_http_upstream_conf_t             upstream;
+
     /* drizzle database name */
     ngx_http_complex_value_t            *dbname;
 

@@ -31,9 +31,10 @@ static void ngx_http_drizzle_event_handler(ngx_event_t *ev);
 static ngx_int_t ngx_http_drizzle_do_process(ngx_http_request_t *r,
         ngx_http_drizzle_ctx_t *ctx);
 
-static char *
-ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
+        ngx_command_t *cmd, void *conf);
+
+static char* ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 /*
 static char* ngx_http_drizzle_dbname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
@@ -68,9 +69,9 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         NULL
     },
     {
-        ngx_string("drizzle_server"),
-        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
-        ngx_http_drizzle_server,
+        ngx_string("drizzle_pass"),
+        NGX_HTTP_UPS_CONF|NGX_CONF_TAKE1,
+        ngx_http_drizzle_pass,
         NGX_HTTP_LOC_CONF_OFFSET,
         0,
         NULL
@@ -188,17 +189,44 @@ ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 }
 
 
-static char* ngx_http_drizzle_cmd(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+static char*
+ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    ngx_http_core_loc_conf_t *clcf;
+    ngx_http_drizzle_loc_conf_t             *dlcf = conf;
+    ngx_http_core_loc_conf_t                *clcf;
+    ngx_str_t                               *value;
+    ngx_url_t                                u;
+
+    if (dlcf->upstream.upstream) {
+        return "is duplicate";
+    }
+
+    value = cf->args->elts;
+    ngx_memzero(&u, sizeof(ngx_url_t));
+
+    u.url = value[1];
+    u.no_resolve = 1;
+
+    dlcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
+
+    if (dlcf->upstream.upstream == NULL) {
+        return NGX_CONF_ERROR;
+    }
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
     clcf->handler = ngx_http_drizzle_handler;
+
+    if (clcf->name.data[clcf->name.len - 1] == '/') {
+        clcf->auto_redirect = 1;
+    }
 
     return NGX_CONF_OK;
 }
 
-static ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r)
+
+static ngx_int_t
+ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
     ngx_http_drizzle_ctx_t *ctx = (ngx_http_drizzle_ctx_t*)ngx_http_get_module_ctx(r, ngx_http_drizzle_module);
 
