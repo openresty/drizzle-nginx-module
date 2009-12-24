@@ -17,10 +17,10 @@ static ngx_int_t ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
 static ngx_int_t ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_srv_conf_t *uscf);
 
-static ngx_int_t ngx_http_upstream_get_drizzle_peer(ngx_peer_connection_t *pc,
+static ngx_int_t ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc,
         void *data);
 
-static void ngx_http_upstream_free_drizzle_peer(ngx_peer_connection_t *pc,
+static void ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state);
 
 /* just a work-around to override the default u->output_filter */
@@ -213,42 +213,53 @@ static ngx_int_t
 ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_srv_conf_t *uscf)
 {
-    ngx_http_upstream_drizzle_peer_data_t  *dp;
-    ngx_http_upstream_drizzle_srv_conf_t   *dscf;
+    ngx_http_upstream_drizzle_peer_data_t   *dp;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
+    ngx_http_upstream_t                     *u;
 
-    dp = r->upstream->peer.data;
-
+    dp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
     if (dp == NULL) {
-        dp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
-        if (dp == NULL) {
-            return NGX_ERROR;
-        }
-
-        r->upstream->peer.data = dp;
+        return NGX_ERROR;
     }
+
+    u = r->upstream;
 
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
     dp->conf     = dscf;
-    dp->upstream = r->upstream;
+    dp->upstream = u;
     dp->request  = r;
 
-    r->upstream->peer.get = ngx_http_upstream_get_drizzle_peer;
-    r->upstream->peer.free = ngx_http_upstream_free_drizzle_peer;
+    /* to force ngx_output_chain not to use ngx_chain_writer */
+
+    u->output.output_filter = (ngx_event_pipe_output_filter_pt)
+                                ngx_http_drizzle_output_filter;
+    u->output.filter_ctx = NULL;
+    u->output.in   = NULL;
+    u->output.busy = NULL;
+
+    u->peer.data = dp;
+    u->peer.get = ngx_http_upstream_drizzle_get_peer;
+    u->peer.free = ngx_http_upstream_drizzle_free_peer;
 
     return NGX_OK;
 }
 
 
 static ngx_int_t
-ngx_http_upstream_get_drizzle_peer(ngx_peer_connection_t *pc, void *data)
+ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 {
+    ngx_http_upstream_drizzle_peer_data_t   *dp = data;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
+
+    dscf = dp->conf;
+
     return NGX_OK;
 }
 
 
 static void
-ngx_http_upstream_free_drizzle_peer(ngx_peer_connection_t *pc,
+ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state)
 {
 }
