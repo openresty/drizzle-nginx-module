@@ -11,6 +11,9 @@ enum {
     ngx_http_drizzle_default_port = 3306
 };
 
+static ngx_int_t ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
+        ngx_http_upstream_srv_conf_t *uscf);
+
 /* just a work-around to override the default u->output_filter */
 static ngx_int_t ngx_http_drizzle_output_filter(ngx_http_request_t *r,
         ngx_chain_t *in);
@@ -40,6 +43,9 @@ ngx_http_upstream_drizzle_create_conf(ngx_conf_t *cf)
 }
 
 
+/* mostly based on ngx_http_upstream_server in
+ * ngx_http_upstream.c of nginx 0.8.30.
+ * Copyright (C) Igor Sysoev */
 char *
 ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf)
@@ -49,6 +55,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_str_t                                   *value;
     ngx_url_t                                    u;
     ngx_uint_t                                   i;
+    ngx_http_upstream_srv_conf_t                *uscf;
 
     if (dscf->servers == NULL) {
         dscf->servers = ngx_array_create(cf->pool, 4,
@@ -118,17 +125,78 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
             continue;
         }
 
-        goto invalid;
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid parameter \"%V\"", &value[i]);
+
+        return NGX_CONF_ERROR;
     }
 
+    uscf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_upstream_module);
+
+    uscf->peer.init_upstream = ngx_http_upstream_drizzle_init;
+
     return NGX_CONF_OK;
+}
 
-invalid:
 
-    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                       "invalid parameter \"%V\"", &value[i]);
+static ngx_int_t
+ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
+        ngx_http_upstream_srv_conf_t *uscf)
+{
+    ngx_uint_t                               i, j, n;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
+    ngx_http_upstream_drizzle_server_t      *server;
+    ngx_http_upstream_drizzle_peers_t       *peers;
 
-    return NGX_CONF_ERROR;
+    uscf->peer.init = ngx_http_upstream_drizzle_init_peer;
+
+    dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+
+    if (dscf->servers) {
+        server = uscf->servers->elts;
+
+        n = 0;
+
+        for (i = 0; i < uscf->servers->nelts; i++) {
+            n += server[i].naddrs;
+        }
+
+        peers = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_drizzle_peers_t)
+                + sizeof(ngx_http_upstream_drizzle_peer_t) * (n - 1));
+
+        if (peers == NULL) {
+            return NGX_ERROR;
+        }
+
+        peers->single = (n == 1);
+        peers->number = n;
+        peers->name = &uscf->host;
+
+        n = 0;
+
+        for (i = 0; i < uscf->servers->nelts; i++) {
+            for (j = 0; j < server[i].naddrs; j++) {
+                peers->peer[n].sockaddr = server[i].addrs[j].sockaddr;
+                peers->peer[n].socklen = server[i].addrs[j].socklen;
+                peers->peer[n].name = server[i].addrs[j].name;
+
+                n++;
+            }
+        }
+
+        dscf->peers = peers;
+
+        return NGX_OK;
+    }
+
+    /* XXX an upstream implicitly defined by drizzle_pass, etc.,
+     * is not allowed for now */
+
+    ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                  "no drizzle_server defined in upstream \"%V\" in %s:%ui",
+                  &uscf->host, uscf->file_name, uscf->line);
+
+    return NGX_OK;
 }
 
 

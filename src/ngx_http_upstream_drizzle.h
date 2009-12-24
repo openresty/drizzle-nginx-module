@@ -22,13 +22,14 @@ typedef struct {
     ngx_str_t                       user;
     ngx_str_t                       password;
     ngx_str_t                       dbname;
-
+    ngx_str_t                       name;
 } ngx_http_upstream_drizzle_peer_t;
 
 
 typedef struct {
     ngx_uint_t                          single;
     ngx_uint_t                          number;
+    ngx_str_t                          *name;
 
     ngx_http_upstream_drizzle_peer_t    peer[1];
 
