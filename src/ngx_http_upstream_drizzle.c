@@ -113,6 +113,16 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 == 0)
         {
             ds->dbname.len = value[i].len - (sizeof("dbname=") - 1);
+            if (ds->dbname.len >= DRIZZLE_MAX_DB_SIZE) {
+                ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                       "\"dbname\" value too large in drizzle upstream \"%V\""
+                       " (at most %d bytes)",
+                       dscf->peers->name,
+                       (int) DRIZZLE_MAX_DB_SIZE);
+
+                return NGX_CONF_ERROR;
+            }
+
             ds->dbname.data = &value[i].data[sizeof("dbname=") - 1];
 
             continue;
@@ -122,6 +132,17 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 == 0)
         {
             ds->user.len = value[i].len - (sizeof("user=") - 1);
+
+            if (ds->user.len >= DRIZZLE_MAX_USER_SIZE) {
+                ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                       "\"user\" value too large in drizzle upstream \"%V\""
+                       " (at most %d bytes)",
+                       dscf->peers->name,
+                       (int) DRIZZLE_MAX_USER_SIZE);
+
+                return NGX_CONF_ERROR;
+            }
+
             ds->user.data = &value[i].data[sizeof("user=") - 1];
 
             continue;
@@ -131,6 +152,17 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 == 0)
         {
             ds->password.len = value[i].len - (sizeof("password=") - 1);
+
+            if (ds->password.len >= DRIZZLE_MAX_PASSWORD_SIZE) {
+                ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                       "\"password\" value too large in drizzle upstream \"%V\""
+                       " (at most %d bytes)",
+                       dscf->peers->name,
+                       (int) DRIZZLE_MAX_PASSWORD_SIZE);
+
+                return NGX_CONF_ERROR;
+            }
+
             ds->password.data = &value[i].data[sizeof("password=") - 1];
 
             continue;
@@ -193,6 +225,7 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_upstream_drizzle_server_t      *server;
     ngx_http_upstream_drizzle_peers_t       *peers;
+    size_t                                   len;
 
     uscf->peer.init = ngx_http_upstream_drizzle_init_peer;
 
@@ -230,6 +263,15 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
                 peers->peer[n].password = server[i].password;
                 peers->peer[n].dbname = server[i].dbname;
                 peers->peer[n].protocol = server[i].protocol;
+
+                len = sizeof("255.255.255.255");
+                peers->peer[n].host = ngx_palloc(cf->pool, len);
+
+                len = ngx_sock_ntop(peers->peer[n].sockaddr,
+                        peers->peer[n].host,
+                        len - 1, 0 /* no port */);
+
+                peers->peer[n].host[len] = '\0';
 
                 n++;
             }
@@ -304,6 +346,14 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
         }
 
         if (dbname.len) {
+            if (dbname.len >= DRIZZLE_MAX_DB_SIZE) {
+                ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+                       "\"dbname\" value too large in drizzle upstream \"%V\"",
+                       dscf->peers->name);
+
+                return NGX_ERROR;
+            }
+
             dp->dbname = dbname;
         }
     }
@@ -348,6 +398,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_http_upstream_drizzle_peers_t       *peers;
     ngx_http_upstream_drizzle_peer_t        *peer;
     ngx_http_request_t                      *r;
+    drizzle_con_st                          *con;
+    ngx_str_t                                dbname;
 
     dscf = dp->conf;
 
@@ -363,11 +415,40 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     /* set up the peer's drizzle connection */
 
-    (void) drizzle_con_create(&dscf->drizzle, &dp->drizzle_con);
+    con = &dp->drizzle_con;
+
+    (void) drizzle_con_create(&dscf->drizzle, con);
+
+    /* set protocol for the drizzle connection */
 
     if (peer->protocol == ngx_http_mysql_protocol) {
-        drizzle_con_add_options(&dp->drizzle_con, DRIZZLE_CON_MYSQL);
+        drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
     }
+
+    /* set dbname for the drizzle connection */
+
+    if (dp->dbname.len) {
+        dbname = dp->dbname;
+    } else {
+        dbname = peer->dbname;
+    }
+
+    ngx_memcpy(con->db, dbname.data, dbname.len);
+    con->db[dbname.len] = '\0';
+
+    /* set user for the drizzle connection */
+
+    ngx_memcpy(con->user, peer->user.data, peer->user.len);
+    con->user[peer->user.len] = '\0';
+
+    /* set password for the drizzle connection */
+
+    ngx_memcpy(con->password, peer->password.data, peer->password.len);
+    con->password[peer->password.len] = '\0';
+
+    /* set host and port for the drizzle connection */
+
+    drizzle_con_set_tcp(con, (char *) peer->host, peer->port);
 
     return NGX_DONE;
 }

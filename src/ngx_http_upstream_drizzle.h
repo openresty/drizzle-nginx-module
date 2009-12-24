@@ -5,7 +5,7 @@
 #include <ngx_http.h>
 
 typedef enum {
-    ngx_http_drizzle_protocol,
+    ngx_http_drizzle_protocol = 0,
     ngx_http_mysql_protocol
 
 } ngx_http_upstream_drizzle_protocol_t;
@@ -32,6 +32,7 @@ typedef struct {
     ngx_str_t                       user;
     ngx_str_t                       password;
     ngx_str_t                       dbname;
+    u_char                         *host;
 
     ngx_http_upstream_drizzle_protocol_t      protocol;
 } ngx_http_upstream_drizzle_peer_t;
