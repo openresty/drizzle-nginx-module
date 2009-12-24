@@ -1,15 +1,22 @@
 /* Copyright (C) agentzh */
 
-#define DDEBUG 1
+#define DDEBUG 0
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_drizzle_processor.h"
+#include "ngx_http_drizzle_util.h"
 
 /* for read/write event handlers */
-static ngx_int_t ngx_http_drizzle_rw_handler(ngx_http_request_t *r,
+static void ngx_http_drizzle_rw_handler(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
+
+static ngx_int_t ngx_http_drizzle_create_request(ngx_http_request_t *r);
+static ngx_int_t ngx_http_drizzle_reinit_request(ngx_http_request_t *r);
+static void ngx_http_drizzle_abort_request(ngx_http_request_t *r);
+static void ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
+        ngx_int_t rc);
 
 
 ngx_int_t
@@ -51,7 +58,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
     u->create_request = ngx_http_drizzle_create_request;
     u->reinit_request = ngx_http_drizzle_reinit_request;
-    u->process_header = ngx_http_drizzle_process_header;
+    u->process_header = NULL;
     u->abort_request = ngx_http_drizzle_abort_request;
     u->finalize_request = ngx_http_drizzle_finalize_request;
 
@@ -78,7 +85,6 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_upstream_init(r);
 
     /* override the read/write event handler to our own */
-
     u->write_event_handler = ngx_http_drizzle_rw_handler;
     u->read_event_handler  = ngx_http_drizzle_rw_handler;
 
@@ -94,15 +100,58 @@ ngx_http_drizzle_rw_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
     c = u->peer.connection;
 
     if (c->write->timedout) {
-        ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+        /* XXX we can't call ngx_http_upstream_next because it's
+         * declared static. sigh. */
+        ngx_http_upstream_drizzle_finalize_request(r, u,
+                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
     if (c->read->timedout) {
-        ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+        /* XXX we can't call ngx_http_upstream_next because it's
+         * declared static. sigh. */
+        ngx_http_upstream_drizzle_finalize_request(r, u,
+                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
     ngx_http_drizzle_process_events(r);
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_create_request(ngx_http_request_t *r)
+{
+    r->upstream->request_bufs = NULL;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_reinit_request(ngx_http_request_t *r)
+{
+    ngx_http_upstream_t         *u;
+
+    u = r->upstream;
+
+    /* override the read/write event handler to our own */
+    u->write_event_handler = ngx_http_drizzle_rw_handler;
+    u->read_event_handler  = ngx_http_drizzle_rw_handler;
+
+    return NGX_OK;
+}
+
+
+static void
+ngx_http_drizzle_abort_request(ngx_http_request_t *r)
+{
+}
+
+
+static void
+ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
+        ngx_int_t rc)
+{
 }
 

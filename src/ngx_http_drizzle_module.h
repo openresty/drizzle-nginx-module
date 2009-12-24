@@ -10,35 +10,6 @@
 extern ngx_module_t ngx_http_drizzle_module;
 
 typedef struct {
-    /* of ngx_http_upstream_drizzle_server_t */
-    ngx_array_t                         *servers;
-
-    drizzle_st                           drizzle;
-
-    /* TODO: we might need "tried" from round robin peer data */
-    ngx_uint_t                           current;
-
-    ngx_http_upstream_init_pt            original_init_upstream;
-    ngx_http_upstream_init_peer_pt       original_init_peer;
-
-} ngx_http_upstream_drizzle_srv_conf_t;
-
-
-typedef struct {
-    ngx_http_upstream_drizzle_srv_conf_t  *conf;
-
-    ngx_http_upstream_t                   *upstream;
-    ngx_http_request_t                    *request;
-
-    void                                  *data;
-
-    ngx_event_get_peer_pt                  original_get_peer;
-    ngx_event_free_peer_pt                 original_free_peer;
-
-} ngx_http_upstream_drizzle_peer_data_t;
-
-
-typedef struct {
     ngx_http_upstream_conf_t             upstream;
 
     /* drizzle database name */
@@ -73,26 +44,6 @@ typedef struct {
     drizzle_result_st                   drizzle_res;
 
 } ngx_http_drizzle_ctx_t;
-
-
-typedef struct {
-    ngx_addr_t                      *addrs;
-    ngx_uint_t                       naddrs;
-
-    in_port_t                        port;
-
-    ngx_str_t                        dbname;
-
-/*
-    ngx_uint_t                       weight;
-    ngx_uint_t                       max_fails;
-    time_t                           fail_timeout;
-
-    unsigned                         down:1;
-    unsigned                         backup:1;
-*/
-
-} ngx_http_upstream_drizzle_server_t;
 
 #endif /* NGX_HTTP_DRIZZLE_MODULE_H */
 

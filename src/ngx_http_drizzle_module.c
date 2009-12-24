@@ -82,7 +82,7 @@ static ngx_http_module_t ngx_http_drizzle_module_ctx = {
     NULL,    /* create_main_conf */
     NULL,    /* merge_main_conf */
 
-    ngx_http_upstream_drizzle_create_srv_conf,
+    ngx_http_upstream_drizzle_create_conf,
              /* create_srv_conf */
     NULL,    /* merge_srv_conf */
 
