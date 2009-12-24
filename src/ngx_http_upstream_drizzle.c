@@ -400,6 +400,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_http_request_t                      *r;
     drizzle_con_st                          *con;
     ngx_str_t                                dbname;
+    drizzle_return_t                         ret;
+    int                                      fd;
 
     dscf = dp->conf;
 
@@ -450,7 +452,83 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     drizzle_con_set_tcp(con, (char *) peer->host, peer->port);
 
-    return NGX_DONE;
+    ret = drizzle_con_connect(con);
+
+    if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
+       ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+                       "failed to connect: %d: %s in drizzle upstream \"%V\"",
+                       (int) ret,
+                       drizzle_error(&dscf->drizzle),
+                       &peer->name);
+
+        return NGX_ERROR;
+    }
+
+    /* register the file descriptor (fd) into the nginx event model */
+
+    fd = drizzle_con_fd(con);
+
+    if (fd == -1) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "failed to get the drizzle connection fd");
+
+        goto invalid;
+    }
+
+    dp->nginx_con = ngx_get_connection(fd, r->connection->log);
+
+    if (dp->nginx_con == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "failed to get a free nginx connection");
+
+        goto invalid;
+    }
+
+    dp->nginx_con->log_error = r->connection->log_error;
+    dp->nginx_con->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
+
+    dp->nginx_con->data = r;
+    dp->nginx_con->log = r->connection->log;
+
+    dp->nginx_con->read->log = r->connection->log;
+    dp->nginx_con->read->handler = ngx_http_drizzle_event_handler;
+    dp->nginx_con->read->data = dp->nginx_con;
+
+    dp->nginx_con->write->log = r->connection->log;
+    dp->nginx_con->write->handler = ngx_http_drizzle_event_handler;
+    dp->nginx_con->write->data = dp->nginx_con;
+
+    if (ngx_add_conn == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "no ngx_add_conn found in the nginx core");
+
+        goto invalid;
+    }
+
+    if (ngx_add_conn(dp->nginx_con) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "failed to add connection into nginx event model");
+
+        goto invalid;
+    }
+
+    if (ret == DRIZZLE_RETURN_OK) {
+        dp->state = state_db_send_query;
+
+        return NGX_DONE;
+    }
+
+    /* ret == DRIZZLE_RETURN_IO_WAIT */
+
+    dp->state = state_db_connect;
+
+    return NGX_AGAIN;
+
+invalid:
+
+    drizzle_con_close(con);
+
+    return NGX_ERROR;
 }
 
 

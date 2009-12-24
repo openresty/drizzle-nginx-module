@@ -7,6 +7,12 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_processor.h"
 
+void
+ngx_http_drizzle_event_handler(ngx_event_t *ev)
+{
+}
+
+
 ngx_int_t
 ngx_http_drizzle_process_events(ngx_http_request_t *r)
 {
