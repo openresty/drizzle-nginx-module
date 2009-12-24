@@ -536,6 +536,7 @@ static void
 ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state)
 {
+    /* TODO */
 }
 
 
