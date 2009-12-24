@@ -14,6 +14,15 @@ enum {
 static ngx_int_t ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
         ngx_http_upstream_srv_conf_t *uscf);
 
+static ngx_int_t ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
+    ngx_http_upstream_srv_conf_t *uscf);
+
+static ngx_int_t ngx_http_upstream_get_drizzle_peer(ngx_peer_connection_t *pc,
+        void *data);
+
+static void ngx_http_upstream_free_drizzle_peer(ngx_peer_connection_t *pc,
+        void *data, ngx_uint_t state);
+
 /* just a work-around to override the default u->output_filter */
 static ngx_int_t ngx_http_drizzle_output_filter(ngx_http_request_t *r,
         ngx_chain_t *in);
@@ -197,6 +206,51 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
                   &uscf->host, uscf->file_name, uscf->line);
 
     return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
+    ngx_http_upstream_srv_conf_t *uscf)
+{
+    ngx_http_upstream_drizzle_peer_data_t  *dp;
+    ngx_http_upstream_drizzle_srv_conf_t   *dscf;
+
+    dp = r->upstream->peer.data;
+
+    if (dp == NULL) {
+        dp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
+        if (dp == NULL) {
+            return NGX_ERROR;
+        }
+
+        r->upstream->peer.data = dp;
+    }
+
+    dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+
+    dp->conf     = dscf;
+    dp->upstream = r->upstream;
+    dp->request  = r;
+
+    r->upstream->peer.get = ngx_http_upstream_get_drizzle_peer;
+    r->upstream->peer.free = ngx_http_upstream_free_drizzle_peer;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_get_drizzle_peer(ngx_peer_connection_t *pc, void *data)
+{
+    return NGX_OK;
+}
+
+
+static void
+ngx_http_upstream_free_drizzle_peer(ngx_peer_connection_t *pc,
+        void *data, ngx_uint_t state)
+{
 }
 
 

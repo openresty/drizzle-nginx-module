@@ -56,7 +56,6 @@ typedef struct {
     ngx_http_upstream_t                   *upstream;
     ngx_http_request_t                    *request;
 
-    void                                  *data;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 
