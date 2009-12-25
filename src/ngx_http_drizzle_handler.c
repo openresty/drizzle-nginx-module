@@ -18,6 +18,12 @@ static void ngx_http_drizzle_abort_request(ngx_http_request_t *r);
 static void ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
         ngx_int_t rc);
 
+static ngx_int_t ngx_http_drizzle_process_header(ngx_http_request_t *r);
+
+static ngx_int_t ngx_http_drizzle_input_filter_init(void *data);
+
+static ngx_int_t ngx_http_drizzle_input_filter(void *data, ssize_t bytes);
+
 
 ngx_int_t
 ngx_http_drizzle_handler(ngx_http_request_t *r)
@@ -78,15 +84,15 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
     u->create_request = ngx_http_drizzle_create_request;
     u->reinit_request = ngx_http_drizzle_reinit_request;
-    u->process_header = NULL;
+    u->process_header = ngx_http_drizzle_process_header;
     u->abort_request = ngx_http_drizzle_abort_request;
     u->finalize_request = ngx_http_drizzle_finalize_request;
 
     /* we bypass the upstream input filter mechanism in
      * ngx_http_upstream_process_headers */
 
-    u->input_filter_init = NULL;
-    u->input_filter = NULL;
+    u->input_filter_init = ngx_http_drizzle_input_filter_init;
+    u->input_filter = ngx_http_drizzle_input_filter;
     u->input_filter_ctx = NULL;
 
 #if defined(nginx_version) && nginx_version >= 8011
@@ -164,5 +170,42 @@ static void
 ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
         ngx_int_t rc)
 {
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_process_header(ngx_http_request_t *r)
+{
+    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+           "ngx_http_drizzle_process_header should not be called"
+           " by the upstream");
+
+    return NGX_ERROR;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_input_filter_init(void *data)
+{
+    ngx_http_request_t          *r = data;
+
+    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+           "ngx_http_drizzle_input_filter_init should not be called"
+           " by the upstream");
+
+    return NGX_ERROR;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_input_filter(void *data, ssize_t bytes)
+{
+    ngx_http_request_t          *r = data;
+
+    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+           "ngx_http_drizzle_input_filter should not be called"
+           " by the upstream");
+
+    return NGX_ERROR;
 }
 
