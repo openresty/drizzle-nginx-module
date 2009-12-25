@@ -44,6 +44,7 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
     conf->current = 0;
     conf->servers = NULL;
 
+    /* XXX when should be free this global drizzle struct? */
     (void) drizzle_create(&conf->drizzle);
 
     drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
@@ -397,8 +398,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_upstream_drizzle_peers_t       *peers;
     ngx_http_upstream_drizzle_peer_t        *peer;
-    ngx_http_request_t                      *r;
-    drizzle_con_st                          *con;
+    ngx_connection_t                        *c = NULL;
+    drizzle_con_st                          *dc = NULL;
     ngx_str_t                                dbname;
     drizzle_return_t                         ret;
     int                                      fd;
@@ -413,18 +414,20 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     peer = &peers->peer[dscf->current++];
 
-    r = dp->request;
+    pc->sockaddr = peer->sockaddr;
+    pc->socklen = peer->socklen;
+    pc->cached = 0;
 
     /* set up the peer's drizzle connection */
 
-    con = &dp->drizzle_con;
+    dc = &dp->drizzle_con;
 
-    (void) drizzle_con_create(&dscf->drizzle, con);
+    (void) drizzle_con_create(&dscf->drizzle, dc);
 
     /* set protocol for the drizzle connection */
 
     if (peer->protocol == ngx_http_mysql_protocol) {
-        drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
+        drizzle_con_add_options(dc, DRIZZLE_CON_MYSQL);
     }
 
     /* set dbname for the drizzle connection */
@@ -435,27 +438,29 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         dbname = peer->dbname;
     }
 
-    ngx_memcpy(con->db, dbname.data, dbname.len);
-    con->db[dbname.len] = '\0';
+    ngx_memcpy(dc->db, dbname.data, dbname.len);
+    dc->db[dbname.len] = '\0';
 
     /* set user for the drizzle connection */
 
-    ngx_memcpy(con->user, peer->user.data, peer->user.len);
-    con->user[peer->user.len] = '\0';
+    ngx_memcpy(dc->user, peer->user.data, peer->user.len);
+    dc->user[peer->user.len] = '\0';
 
     /* set password for the drizzle connection */
 
-    ngx_memcpy(con->password, peer->password.data, peer->password.len);
-    con->password[peer->password.len] = '\0';
+    ngx_memcpy(dc->password, peer->password.data, peer->password.len);
+    dc->password[peer->password.len] = '\0';
 
     /* set host and port for the drizzle connection */
 
-    drizzle_con_set_tcp(con, (char *) peer->host, peer->port);
+    drizzle_con_set_tcp(dc, (char *) peer->host, peer->port);
 
-    ret = drizzle_con_connect(con);
+    /* ask drizzle to connect to the remote */
+
+    ret = drizzle_con_connect(dc);
 
     if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
-       ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+       ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
                        "failed to connect: %d: %s in drizzle upstream \"%V\"",
                        (int) ret,
                        drizzle_error(&dscf->drizzle),
@@ -464,49 +469,41 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         return NGX_ERROR;
     }
 
-    /* register the file descriptor (fd) into the nginx event model */
+    /* add the file descriptor (fd) into an nginx connection structure */
 
-    fd = drizzle_con_fd(con);
+    fd = drizzle_con_fd(dc);
 
     if (fd == -1) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+        ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "failed to get the drizzle connection fd");
 
         goto invalid;
     }
 
-    dp->nginx_con = ngx_get_connection(fd, r->connection->log);
+    c = pc->connection = ngx_get_connection(fd, pc->log);
 
-    if (dp->nginx_con == NULL) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+    if (c == NULL) {
+        ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "failed to get a free nginx connection");
 
         goto invalid;
     }
 
-    dp->nginx_con->log_error = r->connection->log_error;
-    dp->nginx_con->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
+    c->log_error = pc->log_error;
+    c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
 
-    dp->nginx_con->data = r;
-    dp->nginx_con->log = r->connection->log;
-
-    dp->nginx_con->read->log = r->connection->log;
-    dp->nginx_con->read->handler = ngx_http_drizzle_event_handler;
-    dp->nginx_con->read->data = dp->nginx_con;
-
-    dp->nginx_con->write->log = r->connection->log;
-    dp->nginx_con->write->handler = ngx_http_drizzle_event_handler;
-    dp->nginx_con->write->data = dp->nginx_con;
+    /* register the connection with the drizzle fd into the
+     * nginx event model */
 
     if (ngx_add_conn == NULL) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+        ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "no ngx_add_conn found in the nginx core");
 
         goto invalid;
     }
 
-    if (ngx_add_conn(dp->nginx_con) != NGX_OK) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+    if (ngx_add_conn(c) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "failed to add connection into nginx event model");
 
         goto invalid;
@@ -526,7 +523,21 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
 invalid:
 
-    drizzle_con_close(con);
+    if (pc->connection) {
+
+        if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
+                    "failed to remove database connection from nginx event pool!");
+        }
+
+        ngx_free_connection(pc->connection);
+
+        pc->connection = NULL;
+    }
+
+    if (dc) {
+        drizzle_con_close(dc);
+    }
 
     return NGX_ERROR;
 }
