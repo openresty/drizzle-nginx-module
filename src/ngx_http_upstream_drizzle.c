@@ -466,7 +466,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
                        drizzle_error(&dscf->drizzle),
                        &peer->name);
 
-        return NGX_ERROR;
+        goto invalid;
     }
 
     /* add the file descriptor (fd) into an nginx connection structure */
@@ -536,7 +536,7 @@ invalid:
     }
 
     if (dc) {
-        drizzle_con_close(dc);
+        drizzle_con_free(dc);
     }
 
     return NGX_ERROR;
@@ -547,7 +547,15 @@ static void
 ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state)
 {
-    /* TODO */
+    ngx_http_upstream_drizzle_peer_data_t   *dp = data;
+    drizzle_con_st                          *dc;
+
+    dc = &dp->drizzle_con;
+    drizzle_con_free(dc);
+
+    if (pc->connection) {
+        ngx_free_connection(pc->connection);
+    }
 }
 
 

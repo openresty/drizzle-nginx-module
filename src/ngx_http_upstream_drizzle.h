@@ -73,7 +73,6 @@ typedef struct {
 
     ngx_http_drizzle_state_t                state;
 
-    ngx_connection_t                       *nginx_con;
     drizzle_con_st                          drizzle_con;
     drizzle_result_st                       drizzle_res;
 
