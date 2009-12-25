@@ -12,7 +12,13 @@ typedef enum {
 
 
 typedef struct {
+
+#if defined(nginx_version) && nginx_version >= 8022
     ngx_addr_t                      *addrs;
+#else
+    ngx_peer_addr_t                 *addrs;
+#endif
+
     ngx_uint_t                       naddrs;
     in_port_t                        port;
     ngx_str_t                        user;
