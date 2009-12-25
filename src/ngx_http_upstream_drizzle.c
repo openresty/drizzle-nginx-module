@@ -315,8 +315,6 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
     dp->conf     = dscf;
-    dp->upstream = u;
-    dp->request  = r;
 
     dp->query.len  = 0;
     dp->dbname.len = 0;

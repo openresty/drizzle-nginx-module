@@ -71,8 +71,7 @@ typedef struct {
 typedef struct {
     ngx_http_upstream_drizzle_srv_conf_t  *conf;
 
-    ngx_http_upstream_t                    *upstream;
-    ngx_http_request_t                     *request;
+    /* ngx_http_upstream_t                    *upstream; */
 
     ngx_str_t                               dbname;
     ngx_str_t                               query;
