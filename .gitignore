@@ -38,3 +38,4 @@ src/drizzle.h
 src/processor.c
 src/output.c
 src/output.h
+libdrizzle

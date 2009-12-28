@@ -6,6 +6,7 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_drizzle_processor.h"
+#include "ngx_http_upstream_drizzle.h"
 #include "ngx_http_drizzle_util.h"
 
 /* for read/write event handlers */
@@ -205,6 +206,12 @@ static void
 ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
         ngx_int_t rc)
 {
+    ngx_http_upstream_t                     *u = r->upstream;
+    ngx_http_upstream_drizzle_peer_data_t   *dp;
+
+    dp = u->peer.data;
+
+    drizzle_result_free(&dp->drizzle_res);
 }
 
 

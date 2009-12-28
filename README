@@ -67,14 +67,14 @@ Output
     Below is the HTTP response body part:
 
     Header part
-        u_char         endian type (1 means big-endian and little
+        uint8_t        endian type (1 means big-endian and little
                        endian otherwise)
 
         uint32_t       format version
                        (v1.2.3 is represented as 1002003 in
                         decimal)
 
-        u_char         result type
+        uint8_t        result type
                        (0 means normal SQL result type,
                         fixed for now)
 
@@ -86,6 +86,7 @@ Output
 
         uint64_t       database rows affected
         uint64_t       insert id (if none, 0)
+        uint16_t       column count
 
     Body part
 

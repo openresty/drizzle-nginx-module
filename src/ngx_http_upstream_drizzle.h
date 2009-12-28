@@ -83,6 +83,7 @@ typedef struct {
     drizzle_con_st                          drizzle_con;
     drizzle_result_st                       drizzle_res;
     drizzle_column_st                       drizzle_col;
+    uint64_t                                drizzle_row;
 
     ngx_str_t                               *name;
 } ngx_http_upstream_drizzle_peer_data_t;
