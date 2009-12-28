@@ -24,14 +24,20 @@ static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
 /* config directives for module drizzle */
 static ngx_command_t ngx_http_drizzle_cmds[] = {
     {
+        ngx_string("drizzle_server"),
+        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
+        ngx_http_upstream_drizzle_server,
+        NGX_HTTP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+    {
         ngx_string("drizzle_query"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
             |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
         ngx_http_drizzle_set_complex_value_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_drizzle_loc_conf_t, query),
-        NULL
-    },
+        NULL },
     {
         ngx_string("drizzle_dbname"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
@@ -39,8 +45,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         ngx_http_drizzle_set_complex_value_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_drizzle_loc_conf_t, dbname),
-        NULL
-    },
+        NULL },
     {
         ngx_string("drizzle_pass"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
@@ -48,16 +53,31 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         ngx_http_drizzle_pass,
         NGX_HTTP_LOC_CONF_OFFSET,
         0,
-        NULL
-    },
-    {
-        ngx_string("drizzle_server"),
-        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
-        ngx_http_upstream_drizzle_server,
-        NGX_HTTP_SRV_CONF_OFFSET,
-        0,
-        NULL
-    },
+        NULL },
+    { ngx_string("drizzle_connect_timeout"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, upstream.connect_timeout),
+      NULL },
+    { ngx_string("drizzle_send_query_timeout"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
+      NULL },
+    { ngx_string("drizzle_recv_cols_timeout"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
+      NULL },
+    { ngx_string("drizzle_recv_rows_timeout"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
+      NULL },
 
     ngx_null_command
 };
@@ -106,6 +126,26 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+    conf->upstream.connect_timeout = NGX_CONF_UNSET_MSEC;
+    conf->upstream.send_timeout = NGX_CONF_UNSET_MSEC;
+
+    conf->recv_cols_timeout = NGX_CONF_UNSET_MSEC;
+    conf->recv_rows_timeout = NGX_CONF_UNSET_MSEC;
+
+    /* the hardcoded values */
+    conf->upstream.cyclic_temp_file = 0;
+    conf->upstream.buffering = 0;
+    conf->upstream.ignore_client_abort = 0;
+    conf->upstream.send_lowat = 0;
+    conf->upstream.bufs.num = 0;
+    conf->upstream.busy_buffers_size = 0;
+    conf->upstream.max_temp_file_size = 0;
+    conf->upstream.temp_file_write_size = 0;
+    conf->upstream.intercept_errors = 1;
+    conf->upstream.intercept_404 = 1;
+    conf->upstream.pass_request_headers = 0;
+    conf->upstream.pass_request_body = 0;
+
     /* set by ngx_pcalloc:
      *      conf->dbname = NULL
      *      conf->query  = NULL
@@ -120,6 +160,18 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_drizzle_loc_conf_t *prev = parent;
     ngx_http_drizzle_loc_conf_t *conf = child;
+
+    ngx_conf_merge_msec_value(conf->upstream.connect_timeout,
+                              prev->upstream.connect_timeout, 60000);
+
+    ngx_conf_merge_msec_value(conf->upstream.send_timeout,
+                              prev->upstream.send_timeout, 60000);
+
+    ngx_conf_merge_msec_value(conf->recv_cols_timeout,
+                              prev->recv_cols_timeout, 60000);
+
+    ngx_conf_merge_msec_value(conf->recv_rows_timeout,
+                              prev->recv_rows_timeout, 60000);
 
     if (conf->dbname == NULL) {
         conf->dbname = prev->dbname;

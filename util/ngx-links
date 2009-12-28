@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use Cwd qw( cwd );
 use Getopt::Std;
 
 my %opts;
@@ -48,7 +49,7 @@ while (my $entry = readdir $dir) {
         warn "overriding existing symlink $target\n";
     }
     #warn "creating $target --> $root/$entry\n";
-    system("ln -svf $source $target") == 0 or
+    system("ln -svf `pwd`/$source $target") == 0 or
         die "Failed to create the symlink\n";;
 
     push @links, $target;

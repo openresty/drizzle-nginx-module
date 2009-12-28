@@ -325,7 +325,11 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
-    dp->conf     = dscf;
+    dp->srv_conf = dscf;
+
+    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+    dp->loc_conf = dlcf;
 
     dp->query.len  = 0;
     dp->dbname.len = 0;
@@ -342,8 +346,6 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     u->peer.data = dp;
     u->peer.get = ngx_http_upstream_drizzle_get_peer;
     u->peer.free = ngx_http_upstream_drizzle_free_peer;
-
-    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
     /* prepare dbname */
 
@@ -416,7 +418,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     dd("drizzle get peer");
 
-    dscf = dp->conf;
+    dscf = dp->srv_conf;
 
     peers = dscf->peers;
 

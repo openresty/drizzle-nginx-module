@@ -18,6 +18,9 @@ typedef struct {
     /* SQL query to be executed */
     ngx_http_complex_value_t            *query;
 
+    ngx_msec_t                          recv_cols_timeout;
+    ngx_msec_t                          recv_rows_timeout;
+
 } ngx_http_drizzle_loc_conf_t;
 
 

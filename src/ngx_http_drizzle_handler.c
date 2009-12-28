@@ -121,7 +121,6 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c = u->peer.connection;
 
-#if 0
     if (c->write->timedout) {
         dd("drizzle connection write timeout");
 
@@ -129,7 +128,6 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
                 NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
-#endif
 
     if (ngx_http_upstream_drizzle_test_connect(c) != NGX_OK) {
         dd("drizzle connection is broken");

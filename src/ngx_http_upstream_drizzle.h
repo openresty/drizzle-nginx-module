@@ -41,6 +41,7 @@ typedef struct {
     u_char                         *host;
 
     ngx_http_upstream_drizzle_protocol_t      protocol;
+
 } ngx_http_upstream_drizzle_peer_t;
 
 
@@ -69,7 +70,8 @@ typedef struct {
 
 
 typedef struct {
-    ngx_http_upstream_drizzle_srv_conf_t  *conf;
+    ngx_http_drizzle_loc_conf_t            *loc_conf;
+    ngx_http_upstream_drizzle_srv_conf_t   *srv_conf;
 
     /* ngx_http_upstream_t                    *upstream; */
 
