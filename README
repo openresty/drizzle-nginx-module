@@ -53,16 +53,16 @@ Output
     For the HTTP response header part, the 200 OK status
     code should always be returned.
 
-    The X-DBD special header should be set to the database
-    driver that generates this output. For instance, this
+    The Content-Type header is set to
+    application/x-resty-dbd-stream.
+
+    And the driver generating this response is also set a
+    X-Resty-DBD header. For instance, this
     module adds the following output header:
 
-        X-DBD: drizzle 0.03
+        X-Resty-DBD: drizzle 0.0.1
 
-    where 0.03 is this module's own version number.
-
-    The Content-Type is always set to
-    "application/octet-stream".
+    where 0.0.1 is this module's own version number.
 
     Below is the HTTP response body part:
 
@@ -78,10 +78,10 @@ Output
                        (0 means normal SQL result type,
                         fixed for now)
 
-        uint32_t       standard error code
-        uint32_t       driver-specific error code
+        uint16_t       standard error code
+        uint16_t       driver-specific error code
 
-        uint32_t       driver-specific error string length
+        uint16_t       driver-specific error string length
         u_char*        driver-specific error string data
 
         uint64_t       database rows affected

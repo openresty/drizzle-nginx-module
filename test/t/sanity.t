@@ -24,4 +24,5 @@ __DATA__
 --- request
 GET /mysql
 --- response_body
+abc
 
