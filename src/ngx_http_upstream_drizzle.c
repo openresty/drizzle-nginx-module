@@ -103,7 +103,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "%s in drizzle upstream \"%V\"", u.err, &u.url);
+                               "drizzle: %s in upstream \"%V\"", u.err, &u.url);
         }
 
         return NGX_CONF_ERROR;
@@ -125,7 +125,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             if (ds->dbname.len >= DRIZZLE_MAX_DB_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                       "\"dbname\" value too large in drizzle upstream \"%V\""
+                       "drizzle: \"dbname\" value too large in upstream \"%V\""
                        " (at most %d bytes)",
                        dscf->peers->name,
                        (int) DRIZZLE_MAX_DB_SIZE);
@@ -145,7 +145,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             if (ds->user.len >= DRIZZLE_MAX_USER_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                       "\"user\" value too large in drizzle upstream \"%V\""
+                       "drizzle: \"user\" value too large in upstream \"%V\""
                        " (at most %d bytes)",
                        dscf->peers->name,
                        (int) DRIZZLE_MAX_USER_SIZE);
@@ -165,7 +165,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             if (ds->password.len >= DRIZZLE_MAX_PASSWORD_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                       "\"password\" value too large in drizzle upstream \"%V\""
+                       "drizzle: \"password\" value too large in upstream \"%V\""
                        " (at most %d bytes)",
                        dscf->peers->name,
                        (int) DRIZZLE_MAX_PASSWORD_SIZE);
@@ -204,7 +204,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 break;
             default:
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "invalid protocol \"%V\"", &protocol);
+                               "drizzle: invalid protocol \"%V\""
+                               " in drizzle_server", &protocol);
 
                 return NGX_CONF_ERROR;
             }
@@ -213,7 +214,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
         }
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "invalid parameter \"%V\"", &value[i]);
+                           "drizzle: invalid parameter \"%V\" in"
+                           " drizzle_server", &value[i]);
 
         return NGX_CONF_ERROR;
     }
@@ -302,7 +304,8 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
      * is not allowed for now */
 
     ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                  "no drizzle_server defined in upstream \"%V\" in %s:%ui",
+                  "drizzle: no drizzle_server defined in upstream \"%V\""
+                  " in %s:%ui",
                   &uscf->host, uscf->file_name, uscf->line);
 
     return NGX_OK;
@@ -366,7 +369,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
         if (dbname.len) {
             if (dbname.len >= DRIZZLE_MAX_DB_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
-                       "\"dbname\" value too large in drizzle upstream \"%V\"",
+                       "drizzle: \"dbname\" value too large in upstream \"%V\"",
                        dscf->peers->name);
 
                 return NGX_ERROR;
@@ -380,7 +383,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     if (dlcf->query == NULL) {
         ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
-                       "empty \"query\" in drizzle upstream \"%V\"",
+                       "drizzle: empty \"query\" in upstream \"%V\"",
                        dscf->peers->name);
 
         goto empty_query;
@@ -401,7 +404,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 empty_query:
 
     ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
-                   "empty \"query\" in drizzle upstream \"%V\"",
+                   "drizzle: empty \"query\" in upstream \"%V\"",
                    dscf->peers->name);
 
     return NGX_ERROR;
@@ -428,7 +431,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     peers = dscf->peers;
 
-    if (dscf->current >= peers->number) {
+    /* poor men's round robin */
+    if (dscf->current > peers->number - 1) {
         dscf->current = 0;
     }
 
@@ -496,7 +500,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
        ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
-                       "failed to connect: %d: %s in drizzle upstream \"%V\"",
+                       "drizzle: failed to connect: %d: %s in upstream \"%V\"",
                        (int) ret,
                        drizzle_error(&dscf->drizzle),
                        &peer->name);
@@ -510,7 +514,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     if (fd == -1) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                "failed to get the drizzle connection fd");
+                "drizzle: failed to get the drizzle connection fd");
 
         goto invalid;
     }
@@ -519,7 +523,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     if (c == NULL) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                "failed to get a free nginx connection");
+                "drizzle: failed to get a free nginx connection");
 
         goto invalid;
     }
@@ -548,14 +552,14 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     if (ngx_add_conn == NULL) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                "no ngx_add_conn found in the nginx core");
+                "drizzle: no ngx_add_conn found in the nginx core");
 
         goto invalid;
     }
 
     if (ngx_add_conn(c) != NGX_OK) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                "failed to add connection into nginx event model");
+                "drizzle: failed to add connection into nginx event model");
 
         goto invalid;
     }
@@ -584,7 +588,7 @@ invalid:
 
         if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                    "failed to remove database connection from nginx event pool!");
+                    "drizzle: failed to remove connection from nginx event pool!");
         }
 
         ngx_free_connection(pc->connection);
@@ -613,7 +617,14 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
     drizzle_con_free(dc);
 
     if (pc->connection) {
+
+        if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
+                    "drizzle: failed to remove connection from nginx event pool!");
+        }
+
         ngx_free_connection(pc->connection);
+
         pc->connection = NULL;
     }
 }
