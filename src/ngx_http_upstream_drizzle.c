@@ -475,7 +475,13 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_memcpy(dc->password, peer->password.data, peer->password.len);
     dc->password[peer->password.len] = '\0';
 
+    /* TODO add support for uds (unix domain socket) */
+
     /* set host and port for the drizzle connection */
+
+    drizzle_con_set_tcp(dc, (char *) peer->host, peer->port);
+
+    /* ask drizzle to connect to the remote */
 
     dd("drizzle connecting: host %s, port %d, dbname \"%.*s\", "
             "user \"%.*s\", pass \"%.*s\", dc pass \"%s\", "
@@ -485,10 +491,6 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
             peer->user.len, peer->user.data,
             peer->password.len, peer->password.data,
             dc->password, (int) peer->protocol);
-
-    drizzle_con_set_tcp(dc, (char *) peer->host, peer->port);
-
-    /* ask drizzle to connect to the remote */
 
     ret = drizzle_con_connect(dc);
 
