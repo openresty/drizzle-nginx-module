@@ -275,8 +275,13 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
                 peers->peer[n].dbname = server[i].dbname;
                 peers->peer[n].protocol = server[i].protocol;
 
-                len = sizeof("255.255.255.255");
+                len = NGX_SOCKADDR_STRLEN + 1 /* for '\0' */;
+
                 peers->peer[n].host = ngx_palloc(cf->pool, len);
+
+                if (peers->peer[n].host == NULL) {
+                    return NGX_ERROR;
+                }
 
                 len = ngx_sock_ntop(peers->peer[n].sockaddr,
                         peers->peer[n].host,
