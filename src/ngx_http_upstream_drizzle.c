@@ -342,7 +342,6 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     dp->query.len  = 0;
     dp->dbname.len = 0;
-    dp->state = state_db_init;
 
     /* to force ngx_output_chain not to use ngx_chain_writer */
 
@@ -533,19 +532,6 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     rev = c->read;
     wev = c->write;
-
-    /*
-    rev->timedout = 0;
-    wev->timedout = 0;
-
-    if (rev->timer_set) {
-        ngx_del_timer(rev);
-    }
-
-    if (wev->timer_set) {
-        ngx_del_timer(wev);
-    }
-    */
 
     /* register the connection with the drizzle fd into the
      * nginx event model */

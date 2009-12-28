@@ -26,13 +26,10 @@ typedef struct {
 
 /* states for the drizzle client state machine */
 typedef enum {
-    state_db_init,
     state_db_connect,
     state_db_send_query,
-    state_db_recv_fields,
-    state_db_recv_rows,
-    state_db_fin,
-    state_db_err
+    state_db_recv_cols,
+    state_db_recv_rows
 
 } ngx_http_drizzle_state_t;
 
