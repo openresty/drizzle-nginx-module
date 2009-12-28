@@ -39,7 +39,7 @@ while (my $entry = readdir $dir) {
     }
 
     my $target = "$root/$base.$ext";
-    if (-e $target) {
+    if (-e $target && ! -l $target) {
         die "target $target already exists, and not a symlink, not overriding...Abort.\n";
     } elsif (-l $target) {
         #warn "it's a link";

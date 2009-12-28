@@ -68,7 +68,7 @@ static void dd(const char * fmt, ...) {
 #endif
 
 #define dd_drizzle_result(result) \
-    dd("Result:     row_count=%" PRId64 "\n" \
+    dd("drizzle result:     row_count=%" PRId64 "\n" \
          "            insert_id=%" PRId64 "\n" \
          "        warning_count=%u\n" \
          "         column_count=%u\n\n", \
@@ -78,7 +78,7 @@ static void dd(const char * fmt, ...) {
          drizzle_result_column_count(result))
 
 #define dd_drizzle_column(column) \
-    dd("Field:   catalog=%s\n" \
+    dd("drizzle column:   catalog=%s\n" \
          "              db=%s\n" \
          "           table=%s\n" \
          "       org_table=%s\n" \
