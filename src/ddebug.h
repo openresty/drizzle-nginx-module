@@ -67,5 +67,34 @@ static void dd(const char * fmt, ...) {
 
 #endif
 
+#define dd_drizzle_result(result) \
+    dd("Result:     row_count=%" PRId64 "\n" \
+         "            insert_id=%" PRId64 "\n" \
+         "        warning_count=%u\n" \
+         "         column_count=%u\n\n", \
+         drizzle_result_row_count(result), \
+         drizzle_result_insert_id(result), \
+         drizzle_result_warning_count(result), \
+         drizzle_result_column_count(result))
+
+#define dd_drizzle_column(column) \
+    dd("Field:   catalog=%s\n" \
+         "              db=%s\n" \
+         "           table=%s\n" \
+         "       org_table=%s\n" \
+         "            name=%s\n" \
+         "        org_name=%s\n" \
+         "         charset=%u\n" \
+         "            size=%u\n" \
+         "        max_size=%zu\n" \
+         "            type=%u\n" \
+         "           flags=%u\n\n", \
+         drizzle_column_catalog(column), drizzle_column_db(column), \
+         drizzle_column_table(column), drizzle_column_orig_table(column), \
+         drizzle_column_name(column), drizzle_column_orig_name(column), \
+         drizzle_column_charset(column), drizzle_column_size(column), \
+         drizzle_column_max_size(column), drizzle_column_type(column), \
+         drizzle_column_flags(column));
+
 #endif /* DDEBUG_H */
 

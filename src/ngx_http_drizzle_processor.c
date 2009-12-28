@@ -45,8 +45,6 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     dp = u->peer.data;
     dc = &dp->drizzle_con;
 
-    dd("dp state: %d", dp->state);
-
     /* libdrizzle uses standard poll() event constants
      * and depends on drizzle_con_wait() to set them.
      * we can directly call drizzle_con_wait() here to
@@ -95,9 +93,13 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     ngx_http_upstream_t         *u;
     drizzle_return_t             ret;
 
+    dd("drizzle connect");
+
     u = r->upstream;
 
     ret = drizzle_con_connect(dc);
+
+    dp->state = state_db_connect;
 
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
         return NGX_AGAIN;
@@ -119,8 +121,6 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
 
     /* ret == DRIZZLE_RETURN_OK */
 
-    dp->state = state_db_connect;
-
     return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
 }
 
@@ -130,8 +130,51 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
-    /* TODO */
-    return NGX_OK;
+    ngx_http_upstream_t         *u;
+    drizzle_return_t             ret;
+
+    dd("drizzle send query");
+
+    u = r->upstream;
+
+    (void) drizzle_query(dc, &dp->drizzle_res, (const char *) dp->query.data,
+            dp->query.len, &ret);
+
+    if (ret == DRIZZLE_RETURN_IO_WAIT) {
+
+        if (dp->state != state_db_send_query) {
+            dp->state = state_db_send_query;
+
+            if (c->write->timer_set) {
+                ngx_del_timer(c->write);
+            }
+
+            ngx_add_timer(c->write, u->conf->send_timeout);
+
+        }
+
+        return NGX_AGAIN;
+    }
+
+    if (c->write->timer_set) {
+        ngx_del_timer(c->write);
+    }
+
+    if (ret != DRIZZLE_RETURN_OK) {
+       ngx_log_error(NGX_LOG_EMERG, c->log, 0,
+                       "drizzle: failed to connect: %d: %s in upstream \"%V\"",
+                       (int) ret,
+                       drizzle_error(dc->drizzle),
+                       &u->peer.name);
+
+       return NGX_ERROR;
+    }
+
+    /* ret == DRIZZLE_RETURN_OK */
+
+    dd_drizzle_result(&dp->drizzle_res);
+
+    return ngx_http_upstream_drizzle_recv_cols(r, c, dp, dc);
 }
 
 
@@ -140,6 +183,8 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
+    dd("drizzle recv cols");
+
     /* TODO */
     return NGX_OK;
 }

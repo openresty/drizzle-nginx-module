@@ -139,7 +139,7 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    ngx_http_drizzle_process_events(r);
+    (void) ngx_http_drizzle_process_events(r);
 }
 
 
@@ -167,7 +167,7 @@ ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    ngx_http_drizzle_process_events(r);
+    (void) ngx_http_drizzle_process_events(r);
 }
 
 
