@@ -35,6 +35,9 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_upstream_t            *u;
     ngx_http_drizzle_loc_conf_t    *mlcf;
 
+    /* XXX: we should support POST/PUT methods to set long SQL
+     * queries in the request bodies. */
+
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
         return NGX_HTTP_NOT_ALLOWED;
     }
@@ -208,7 +211,7 @@ ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
 static ngx_int_t
 ngx_http_drizzle_process_header(ngx_http_request_t *r)
 {
-    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
            "ngx_http_drizzle_process_header should not be called"
            " by the upstream");
 
@@ -221,7 +224,7 @@ ngx_http_drizzle_input_filter_init(void *data)
 {
     ngx_http_request_t          *r = data;
 
-    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
            "ngx_http_drizzle_input_filter_init should not be called"
            " by the upstream");
 
@@ -234,7 +237,7 @@ ngx_http_drizzle_input_filter(void *data, ssize_t bytes)
 {
     ngx_http_request_t          *r = data;
 
-    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
            "ngx_http_drizzle_input_filter should not be called"
            " by the upstream");
 

@@ -200,7 +200,7 @@ ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
         return "is duplicate";
     }
 
-    *field = ngx_pcalloc(cf->pool, sizeof(ngx_http_complex_value_t));
+    *field = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t));
     if (*field == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -208,6 +208,7 @@ ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     value = cf->args->elts;
 
     if (value[1].len == 0) {
+        ngx_memzero(*field, sizeof(ngx_http_complex_value_t));
         return NGX_OK;
     }
 
@@ -242,6 +243,11 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     u.url = value[1];
     u.no_resolve = 1;
+
+    if (u.naddrs) {
+        return "does not accept concrete remote addresses, "
+            "use a virtual upstream name instead";
+    }
 
     dlcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
 

@@ -46,7 +46,7 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
     conf->current = 0;
     conf->servers = NULL;
 
-    /* XXX when should be free this global drizzle struct? */
+    /* XXX when should we free this global drizzle struct? */
     (void) drizzle_create(&conf->drizzle);
 
     drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
@@ -122,6 +122,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 == 0)
         {
             ds->dbname.len = value[i].len - (sizeof("dbname=") - 1);
+
             if (ds->dbname.len >= DRIZZLE_MAX_DB_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
                        "\"dbname\" value too large in drizzle upstream \"%V\""
