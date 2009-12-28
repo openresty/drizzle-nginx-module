@@ -8,27 +8,16 @@
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_upstream_drizzle.h"
 
-/* drizzle service port bounds for configuration validation */
-enum {
-    drizzle_min_port = 1,
-    drizzle_max_port = 65535
-};
-
-
 /* Forward declaration */
 
 static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
         ngx_command_t *cmd, void *conf);
 
-static char* ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
-/*
-static char* ngx_http_drizzle_dbname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-static char* ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-*/
+static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
 
-static void* ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
-static char* ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
+static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
         void *child);
 
 
@@ -63,9 +52,9 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
     },
     {
         ngx_string("drizzle_server"),
-        NGX_HTTP_UPS_CONF|NGX_CONF_TAKE1,
+        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
         ngx_http_upstream_drizzle_server,
-        0,
+        NGX_HTTP_SRV_CONF_OFFSET,
         0,
         NULL
     },
@@ -107,31 +96,38 @@ ngx_module_t ngx_http_drizzle_module = {
 };
 
 
-static void*
+static void *
 ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 {
     ngx_http_drizzle_loc_conf_t             *conf;
 
-    conf = ngx_palloc(cf->pool, sizeof(ngx_http_drizzle_loc_conf_t));
+    conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_drizzle_loc_conf_t));
     if (conf == NULL) {
         return NULL;
     }
 
-    conf->dbname = NGX_CONF_UNSET_PTR;
-    conf->query  = NGX_CONF_UNSET_PTR;
+    /* set by ngx_pcalloc:
+     *      conf->dbname = NULL
+     *      conf->query  = NULL
+     */
 
     return conf;
 }
 
 
-static char*
+static char *
 ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_drizzle_loc_conf_t *prev = parent;
     ngx_http_drizzle_loc_conf_t *conf = child;
 
-    ngx_conf_merge_ptr_value(conf->dbname, prev->dbname, NULL);
-    ngx_conf_merge_ptr_value(conf->query, prev->query, NULL);
+    if (conf->dbname == NULL) {
+        conf->dbname = prev->dbname;
+    }
+
+    if (conf->query == NULL) {
+        conf->query = prev->query;
+    }
 
     return NGX_CONF_OK;
 }
@@ -177,7 +173,7 @@ ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 }
 
 
-static char*
+static char *
 ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_drizzle_loc_conf_t             *dlcf = conf;

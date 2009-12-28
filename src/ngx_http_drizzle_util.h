@@ -1,9 +1,13 @@
 #ifndef NGX_HTTP_DRIZZLE_UTIL_H
 #define NGX_HTTP_DRIZZLE_UTIL_H
 
-void
-ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
+void ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc);
+
+void ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
+    ngx_http_upstream_t *u, ngx_int_t rc);
+
+ngx_int_t ngx_http_upstream_drizzle_test_connect(ngx_connection_t *c);
 
 #ifndef ngx_str3cmp
 

@@ -10,15 +10,16 @@ run_tests();
 __DATA__
 
 === TEST 1: sanity
+--- http_config
+    upstream backend {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+    }
 --- config
     location /mysql {
-        drizzle;
-        drizzle_host 127.0.0.1;
-        drizzle_user monty;
-        drizzle_pass some_pass;
-        drizzle_db   test;
-        drizzle_port  3306;
-        drizzle_sql  'select * from cats';
+        drizzle_pass backend;
+        #drizzle_dbname $dbname;
+        drizzle_query 'select * from cats';
     }
 --- request
 GET /mysql

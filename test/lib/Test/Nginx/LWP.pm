@@ -4,7 +4,7 @@ use lib 'lib';
 use lib 'inc';
 use Test::Base -Base;
 
-our $VERSION = '0.03';
+our $VERSION = '0.06';
 
 use LWP::UserAgent;
 use Time::HiRes qw(sleep);
@@ -26,6 +26,10 @@ use Test::Nginx::Util qw(
     $RunTestHelper
     $NoNginxManager
     $RepeatEach
+    worker_connections
+    master_process_enabled
+    config_preamble
+    repeat_each
 );
 
 our $UserAgent = LWP::UserAgent->new;
@@ -34,7 +38,9 @@ $UserAgent->agent(__PACKAGE__);
 
 #use Smart::Comments::JSON '##';
 
-our @EXPORT = qw( plan run_tests run_test );
+our @EXPORT = qw( plan run_tests run_test
+    repeat_each config_preamble worker_connections
+    master_process_enabled);
 
 sub run_test_helper ($);
 
@@ -143,6 +149,8 @@ sub run_test_helper ($) {
             $req->header($key => $val);
         }
     }
+
+    #warn "req: ", $req->as_string, "\n";
     #warn "DONE!!!!!!!!!!!!!!!!!!!!";
 
     my $res = $UserAgent->request($req);
@@ -355,6 +363,8 @@ The following sections are supported:
 
 =item config
 
+=item http_config
+
 =item request
 
 =item request_headers
@@ -402,6 +412,14 @@ L<http://wiki.nginx.org/NginxHttpChunkinModule>
 L<http://wiki.nginx.org/NginxHttpMemcModule>
 
 =back
+
+=head1 SOURCE REPOSITORY
+
+This module has a Git repository on Github, which has access for all.
+
+    http://github.com/agentzh/test-nginx
+
+If you want a commit bit, feel free to drop me a line.
 
 =head1 AUTHOR
 

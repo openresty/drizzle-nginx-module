@@ -26,3 +26,13 @@ test/t/servroot/
 releng
 reset
 *.t_
+src/handler.h
+src/util.c
+src/module.h
+src/module.c
+src/drizzle.c
+src/processor.h
+src/handler.c
+src/util.h
+src/drizzle.h
+src/processor.c

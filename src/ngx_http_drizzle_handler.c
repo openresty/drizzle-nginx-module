@@ -1,6 +1,6 @@
 /* Copyright (C) agentzh */
 
-#define DDEBUG 0
+#define DDEBUG 1
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
@@ -9,7 +9,10 @@
 #include "ngx_http_drizzle_util.h"
 
 /* for read/write event handlers */
-static void ngx_http_drizzle_rw_handler(ngx_http_request_t *r,
+static void ngx_http_drizzle_rev_handler(ngx_http_request_t *r,
+        ngx_http_upstream_t *u);
+
+static void ngx_http_drizzle_wev_handler(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
 
 static ngx_int_t ngx_http_drizzle_create_request(ngx_http_request_t *r);
@@ -102,33 +105,64 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_upstream_init(r);
 
     /* override the read/write event handler to our own */
-    u->write_event_handler = ngx_http_drizzle_rw_handler;
-    u->read_event_handler  = ngx_http_drizzle_rw_handler;
+    u->write_event_handler = ngx_http_drizzle_wev_handler;
+    u->read_event_handler  = ngx_http_drizzle_rev_handler;
 
     return NGX_DONE;
 }
 
 
 static void
-ngx_http_drizzle_rw_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
+ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
+{
+    ngx_connection_t            *c;
+
+    dd("drizzle wev handler");
+
+    c = u->peer.connection;
+
+#if 0
+    if (c->write->timedout) {
+        dd("drizzle connection write timeout");
+
+        ngx_http_upstream_drizzle_next(r, u,
+                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+        return;
+    }
+#endif
+
+    if (ngx_http_upstream_drizzle_test_connect(c) != NGX_OK) {
+        dd("drizzle connection is broken");
+
+        ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
+        return;
+    }
+
+    ngx_http_drizzle_process_events(r);
+}
+
+
+static void
+ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_connection_t            *c;
 
     c = u->peer.connection;
 
-    if (c->write->timedout) {
-        /* XXX we can't call ngx_http_upstream_next because it's
-         * declared static. sigh. */
-        ngx_http_upstream_drizzle_finalize_request(r, u,
+    dd("drizzle rev handler");
+
+    if (c->read->timedout) {
+        dd("drizzle connection read timeout");
+
+        ngx_http_upstream_drizzle_next(r, u,
                 NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
-    if (c->read->timedout) {
-        /* XXX we can't call ngx_http_upstream_next because it's
-         * declared static. sigh. */
-        ngx_http_upstream_drizzle_finalize_request(r, u,
-                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+    if (ngx_http_upstream_drizzle_test_connect(c) != NGX_OK) {
+        dd("drizzle connection is broken");
+
+        ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
     }
 
@@ -153,8 +187,8 @@ ngx_http_drizzle_reinit_request(ngx_http_request_t *r)
     u = r->upstream;
 
     /* override the read/write event handler to our own */
-    u->write_event_handler = ngx_http_drizzle_rw_handler;
-    u->read_event_handler  = ngx_http_drizzle_rw_handler;
+    u->write_event_handler = ngx_http_drizzle_wev_handler;
+    u->read_event_handler  = ngx_http_drizzle_rev_handler;
 
     return NGX_OK;
 }
