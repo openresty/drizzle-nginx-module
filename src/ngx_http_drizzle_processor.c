@@ -15,7 +15,6 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 {
     ngx_http_upstream_t                         *u;
     ngx_connection_t                            *c;
-    ngx_event_t                                 *rev, *wev;
     ngx_http_upstream_drizzle_peer_data_t       *dp;
     drizzle_con_st                              *dc;
     drizzle_return_t                             ret;
@@ -25,23 +24,28 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     u = r->upstream;
     c = u->peer.connection;
 
-    rev = c->read;
-    wev = c->write;
-
     dp = u->peer.data;
     dc = &dp->drizzle_con;
 
-    if (wev->timer_set) {
-        ngx_del_timer(wev);
-    }
-
-    if (rev->timer_set) {
-        ngx_del_timer(rev);
-    }
-
     dd("dp state: %d", dp->state);
 
+    /* libdrizzle uses standard poll() event constants
+     * and depends on drizzle_con_wait() to set them.
+     * we can directly call drizzle_con_wait() here to
+     * set those drizzle internal event states, because
+     * epoll() and other underlying event mechamism used
+     * by the nginx core can play well enough with poll().
+     * */
     drizzle_con_wait(dc->drizzle);
+
+#if 0
+    switch (dp->state) {
+    case state_db_connect:
+        rc = ngx_http_upstream_drizzle_connect(r, c, dp, dc);
+        if (rc == NGX_AGAIN) {
+        }
+    }
+#endif
 
     ret = drizzle_con_connect(dc);
 
