@@ -79,25 +79,6 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-#if 0
-    ret = drizzle_con_connect(dc);
-
-    if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
-       ngx_log_error(NGX_LOG_EMERG, c->log, 0,
-                       "failed to connect: %d: %s in drizzle upstream \"%V\"",
-                       (int) ret,
-                       drizzle_error(dc->drizzle),
-                       &u->peer.name);
-
-       return NGX_ERROR;
-    }
-
-    dd("ret value: %d", ret);
-
-    if (ret == DRIZZLE_RETURN_OK) {
-    }
-#endif
-
     if (rc == NGX_ERROR) {
         ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
     }
@@ -111,8 +92,36 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
-    /* TODO */
-    return NGX_OK;
+    ngx_http_upstream_t         *u;
+    drizzle_return_t             ret;
+
+    u = r->upstream;
+
+    ret = drizzle_con_connect(dc);
+
+    if (ret == DRIZZLE_RETURN_IO_WAIT) {
+        return NGX_AGAIN;
+    }
+
+    if (c->write->timer_set) {
+        ngx_del_timer(c->write);
+    }
+
+    if (ret != DRIZZLE_RETURN_OK) {
+       ngx_log_error(NGX_LOG_EMERG, c->log, 0,
+                       "drizzle: failed to connect: %d: %s in upstream \"%V\"",
+                       (int) ret,
+                       drizzle_error(dc->drizzle),
+                       &u->peer.name);
+
+       return NGX_ERROR;
+    }
+
+    /* ret == DRIZZLE_RETURN_OK */
+
+    dp->state = state_db_connect;
+
+    return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
 }
 
 
