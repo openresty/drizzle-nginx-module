@@ -599,6 +599,8 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 
     dd("drizzle free peer");
 
+    drizzle_result_free(&dp->drizzle_res);
+
     dc = &dp->drizzle_con;
     drizzle_con_free(dc);
 
