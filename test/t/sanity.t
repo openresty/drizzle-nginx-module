@@ -44,11 +44,11 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{02}\x{00}".  # col count
-"\x{01}\x{00}".  # std col type
+"\x{01}\x{00}".  # std col type (bigint/int)
 "\x{03}\x{00}".  # drizzle col type
 "\x{02}\x{00}".     # col name len
 "id".   # col name data
-"\x{13}\x{80}".  # std col type
+"\x{13}\x{80}".  # std col type (blob/str)
 "\x{fc}\x{00}".  # drizzle col type
 "\x{04}\x{00}".  # col name len
 "name".  # col name data
