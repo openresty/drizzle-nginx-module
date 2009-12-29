@@ -82,8 +82,14 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+    if (rc == NGX_ERROR) {
         ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
+
+        return NGX_ERROR;
+    }
+
+    if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        ngx_http_upstream_drizzle_finalize_request(r, u, rc);
 
         return NGX_ERROR;
     }

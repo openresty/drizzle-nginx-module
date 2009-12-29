@@ -107,7 +107,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: result header buffer overflown");
+               "diizzle: FATAL: result header buffer error");
         return NGX_ERROR;
     }
 
