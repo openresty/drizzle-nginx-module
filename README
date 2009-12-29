@@ -106,9 +106,14 @@ Output
     On the nginx output chain link level, the following
     components should be put into a single ngx_buf_t struct:
 
-        * the header AND the column list
+        * the header
 
-        * each field in each row (if any)
+        * each column and the column list terminator
+
+        * each row's valid flag byte and row list terminator
+
+        * each field in each row (if any) but the field data
+          can span multiple bufs
 
 Status
     This module is highly experimental and under very active
