@@ -6,9 +6,13 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_output.h"
 #include "ngx_http_drizzle_processor.h"
+#include "ngx_http_resty_dbd_stream.h"
 
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
+
+static ngx_http_rds_col_type_t ngx_http_drizzle_std_col_type(
+        drizzle_column_type_t col_type);
 
 
 ngx_int_t
@@ -192,8 +196,88 @@ ngx_http_drizzle_output_chain(ngx_http_request_t *r, ngx_chain_t *cl)
 ngx_int_t
 ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 {
-    /* TODO */
-    return NGX_OK;
+    ngx_http_upstream_t                 *u = r->upstream;
+    drizzle_column_type_t                col_type = 0;
+    const char                          *col_name = NULL;
+    uint16_t                             col_name_len = 0;
+    size_t                               size;
+    ngx_buf_t                           *b;
+    ngx_chain_t                         *cl;
+    ngx_int_t                            rc;
+
+    if (col != NULL) {
+        col_type = drizzle_column_type(col);
+        col_name = drizzle_column_name(col);
+        col_name_len = (uint16_t) strlen(col_name);
+    }
+
+    if (col == NULL) {
+        /* terminator */
+        size = sizeof(uint16_t);
+    } else {
+        size = sizeof(uint16_t)     /* std col type */
+             + sizeof(uint16_t)     /* driver-specific col type */
+             + sizeof(uint16_t)     /* col name str len */
+             + col_name_len         /* col name str len */
+             ;
+    }
+
+    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+
+    if (cl == NULL) {
+        return NGX_ERROR;
+    }
+
+    b = cl->buf;
+
+    b->tag = u->output.tag;
+    b->flush = 1;
+    b->memory = 1;
+    b->temporary = 1;
+
+    b->start = ngx_palloc(r->pool, size);
+
+    if (b->start == NULL) {
+        return NGX_ERROR;
+    }
+
+    b->end = b->start + size;
+    b->pos = b->last = b->start;
+
+    if (col == NULL) {
+        *(uint16_t *) b->last = 0; /* 16-bit 0 terminator */
+        b->last += sizeof(uint16_t);
+
+    } else {
+        /* std column type */
+        *(uint16_t *) b->last = ngx_http_drizzle_std_col_type(col_type);
+        b->last += sizeof(uint16_t);
+
+        /* drizzle column type */
+        *(uint16_t *) b->last = col_type;
+        b->last += sizeof(uint16_t);
+
+        /* column name string length */
+        *(uint16_t *) b->last = col_name_len;
+        b->last += sizeof(uint16_t);
+
+        /* column name string data */
+        b->last = ngx_copy(b->last, col_name, col_name_len);
+    }
+
+    if (b->last != b->end) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+               "diizzle: FATAL: result header buffer error");
+        return NGX_ERROR;
+    }
+
+    rc = ngx_http_drizzle_output_chain(r, cl);
+
+    if (rc == NGX_ERROR) {
+        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    return rc;
 }
 
 
@@ -211,5 +295,98 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 {
     /* TODO */
     return NGX_OK;
+}
+
+
+static ngx_http_rds_col_type_t
+ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
+{
+    switch (col_type) {
+    case DRIZZLE_COLUMN_TYPE_DECIMAL:
+        return rds_col_type_decimal;
+
+    case DRIZZLE_COLUMN_TYPE_TINY:
+        return rds_col_type_smallint;
+
+    case DRIZZLE_COLUMN_TYPE_SHORT:
+        return rds_col_type_smallint;
+
+    case DRIZZLE_COLUMN_TYPE_LONG:
+        return rds_col_type_bigint;
+
+    case DRIZZLE_COLUMN_TYPE_FLOAT:
+        return rds_col_type_real;
+
+    case DRIZZLE_COLUMN_TYPE_DOUBLE:
+        return rds_col_type_double;
+
+    case DRIZZLE_COLUMN_TYPE_NULL:
+        return rds_col_type_unknown;
+
+    case DRIZZLE_COLUMN_TYPE_TIMESTAMP:
+        return rds_col_type_timestamp;
+
+    case DRIZZLE_COLUMN_TYPE_LONGLONG:
+        return rds_col_type_bigint;
+
+    case DRIZZLE_COLUMN_TYPE_INT24:
+        return rds_col_type_smallint;
+
+    case DRIZZLE_COLUMN_TYPE_DATE:
+        return rds_col_type_timestamp;
+
+    case DRIZZLE_COLUMN_TYPE_TIME:
+        return rds_col_type_time;
+
+    case DRIZZLE_COLUMN_TYPE_DATETIME:
+        return rds_col_type_timestamp;
+
+    case DRIZZLE_COLUMN_TYPE_YEAR:
+        return rds_col_type_smallint;
+
+    case DRIZZLE_COLUMN_TYPE_NEWDATE:
+        return rds_col_type_timestamp;
+
+    case DRIZZLE_COLUMN_TYPE_VARCHAR:
+        return rds_col_type_varchar;
+
+    case DRIZZLE_COLUMN_TYPE_BIT:
+        return rds_col_type_bit;
+
+    case DRIZZLE_COLUMN_TYPE_NEWDECIMAL:
+        return rds_col_type_decimal;
+
+    case DRIZZLE_COLUMN_TYPE_ENUM:
+        return rds_col_type_varchar;
+
+    case DRIZZLE_COLUMN_TYPE_SET:
+        return rds_col_type_varchar;
+
+    case DRIZZLE_COLUMN_TYPE_TINY_BLOB:
+        return rds_col_type_blob;
+
+    case DRIZZLE_COLUMN_TYPE_MEDIUM_BLOB:
+        return rds_col_type_blob;
+
+    case DRIZZLE_COLUMN_TYPE_LONG_BLOB:
+        return rds_col_type_blob;
+
+    case DRIZZLE_COLUMN_TYPE_BLOB:
+        return rds_col_type_blob;
+
+    case DRIZZLE_COLUMN_TYPE_VAR_STRING:
+        return rds_col_type_varchar;
+
+    case DRIZZLE_COLUMN_TYPE_STRING:
+        return rds_col_type_varchar;
+
+    case DRIZZLE_COLUMN_TYPE_GEOMETRY:
+        return rds_col_type_varchar;
+
+    default:
+        return rds_col_type_unknown;
+    }
+
+    return rds_col_type_blob;
 }
 
