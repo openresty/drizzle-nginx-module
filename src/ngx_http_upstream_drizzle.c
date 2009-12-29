@@ -602,10 +602,11 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 
     drizzle_result_free(&dp->drizzle_res);
 
-    dc = &dp->drizzle_con;
-    drizzle_con_free(dc);
-
     if (pc->connection) {
+        dd("drizzle free peer connection");
+
+        dc = &dp->drizzle_con;
+        drizzle_con_free(dc);
 
         if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, pc->log, 0,

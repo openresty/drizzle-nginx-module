@@ -39,6 +39,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
                       "ngx_http_drizzle_module does not support "
                       "subrequest in memory");
+
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
