@@ -29,7 +29,8 @@ typedef enum {
     state_db_connect,
     state_db_send_query,
     state_db_recv_cols,
-    state_db_recv_rows
+    state_db_recv_rows,
+    state_db_idle
 
 } ngx_http_drizzle_state_t;
 

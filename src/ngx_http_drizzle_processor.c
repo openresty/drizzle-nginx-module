@@ -28,6 +28,9 @@ static ngx_int_t ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc);
 
+static ngx_int_t ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
+        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp);
+
 
 ngx_int_t
 ngx_http_drizzle_process_events(ngx_http_request_t *r)
@@ -60,6 +63,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         rc = ngx_http_upstream_drizzle_connect(r, c, dp, dc);
         break;
 
+    case state_db_idle: /* from connection pool */
     case state_db_send_query:
         rc = ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
         break;
@@ -183,8 +187,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     if (drizzle_result_column_count(&dp->drizzle_res) == 0) {
         /* no data set following the header */
-        ngx_http_upstream_drizzle_finalize_request(r, u, NGX_OK);
-        return NGX_DONE;
+        return ngx_http_upstream_drizzle_done(r, u, dp);
     }
 
     return ngx_http_upstream_drizzle_recv_cols(r, c, dp, dc);
@@ -314,8 +317,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
                     ngx_del_timer(c->read);
                 }
 
-                ngx_http_upstream_drizzle_finalize_request(r, u, NGX_OK);
-                return NGX_DONE;
+                return ngx_http_upstream_drizzle_done(r, u, dp);
             }
 
             dd("drizzle row: %" PRId64 "\n", dp->drizzle_row);
@@ -384,5 +386,25 @@ io_wait:
     }
 
     return NGX_AGAIN;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
+        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp)
+{
+    /* to persuade Maxim Dounin's ngx_http_upstream_keepalive
+     * module to cache the current connection */
+
+    u->header_sent = 1;
+    u->length = 0;
+    r->headers_out.status = NGX_HTTP_OK;
+
+    /* reset the state machine */
+    dp->state = state_db_idle;
+
+    ngx_http_upstream_drizzle_finalize_request(r, u, NGX_OK);
+
+    return NGX_DONE;
 }
 

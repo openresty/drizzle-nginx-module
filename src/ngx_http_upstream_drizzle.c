@@ -555,7 +555,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
         wev->ready = 1;
 
-        dp->state = state_db_send_query;
+        /* to ensure send_query sets corresponding timers */
+        dp->state = state_db_idle;
 
         return NGX_DONE;
     }
@@ -623,6 +624,10 @@ ngx_http_drizzle_output_filter(ngx_http_request_t *r,
         ngx_chain_t *in)
 {
     dd("drizzle output filter");
+
+    /* just to ensure u->reinit_request always gets called for
+     * upstream_next */
+    r->upstream->request_sent = 1;
 
     return ngx_http_drizzle_process_events(r);
 }

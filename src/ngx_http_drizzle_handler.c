@@ -122,6 +122,10 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     dd("drizzle wev handler");
 
+    /* just to ensure u->reinit_request always gets called for
+     * upstream_next */
+    u->request_sent = 1;
+
     c = u->peer.connection;
 
     if (c->write->timedout) {
@@ -148,9 +152,13 @@ ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_connection_t            *c;
 
-    c = u->peer.connection;
-
     dd("drizzle rev handler");
+
+    /* just to ensure u->reinit_request always gets called for
+     * upstream_next */
+    u->request_sent = 1;
+
+    c = u->peer.connection;
 
     if (c->read->timedout) {
         dd("drizzle connection read timeout");
