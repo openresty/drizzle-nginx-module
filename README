@@ -3,7 +3,7 @@ Name
         mysql, drizzle, and sqlite3 by libdrizzle
 
 Description
-    This is an nginx module integrating libdrizzle
+    This is an nginx upstream module integrating libdrizzle
     (https://launchpad.net/libdrizzle) into nginx in an
     non-blocking and streamming way.
 
@@ -13,42 +13,37 @@ Description
     or mysql protocol. Also it can serve as a direct REST
     interface to those RDBMS backends.
 
-    Currently it's not in the form of a standard nginx upstream
-    module, but fiddling with nginx's connection/event API
-    directly. This will change in the next few days or so.
-
-    After this stuff becomes a real upstream module, we can
-    take full advantage of the per-worker connection pool
-    mechanism provided by Maxim Dounin's ngx_upstream_keepalive
-    module:
+    We can also take full advantage of the per-worker
+    connection pool mechanism provided by Maxim Dounin's
+    ngx_upstream_keepalive module:
 
         http://mdounin.ru/hg/ngx_http_upstream_keepalive/
 
 Synopsis
 
-    # GET /mysql
-    location /mysql {
-        drizzle;
-        drizzle_host    127.0.0.1;
-        drizzle_user    db_user;
-        drizzle_pass    db_password;
-        drizzle_db      db_name;
-        drizzle_port    3306;
-        drizzle_sql     'select name from cats';
+    http {
+        ...
+
+        upstream backend {
+            drizzle_server 127.0.0.1:3306 dbname=test
+                 password=some_pass user=monty protocol=mysql;
+        }
+
+        server {
+            location /mysql {
+                set $my_sql 'select * from cats';
+                drizzle_pass backend;
+                drizzle_query $my_sql;
+            }
+            ...
+        }
     }
-
-You'd better use pure IPs for "drizzle_host" like 127.0.0.1
-rather than domains like "localhost", or you may observe server
-hangs for reasons that we don't know ;)
-
-Status
-    This module is NOT working yet but we're working hard
-    on it ;)
 
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
     driver modules like ngx_postgresql and ngx_oracle.
+    This data format is named "Resty DBD Stream".
 
     For the HTTP response header part, the 200 OK status
     code should always be returned.
@@ -105,8 +100,8 @@ Output
                         the row list terminator)
 
         0*Field (count is predetermined by column number)
-            uint32_t        field length
-            u_char          field data (in textual representation)
+            uint64_t        field length
+            uint8_t*        field data (in textual representation)
 
     On the nginx output chain link level, the following
     components should be put into a single ngx_buf_t struct:
@@ -115,6 +110,10 @@ Output
 
         * each field in each row (if any)
 
+Status
+    This module is highly experimental and under very active
+    development.
+
 Installation
     You should first install libdrizzle which can be obtained
     from here:
@@ -122,12 +121,12 @@ Installation
         https://launchpad.net/libdrizzle
 
     Grab the nginx source code from nginx.net (<http://nginx.net/>), for
-    example, the version 0.8.29 (see nginx compatibility), and then build
+    example, the version 0.8.30 (see nginx compatibility), and then build
     the source with this module:
 
-        $ wget 'http://sysoev.ru/nginx/nginx-0.8.29.tar.gz'
-        $ tar -xzvf nginx-0.8.29.tar.gz
-        $ cd nginx-0.8.29/
+        $ wget 'http://sysoev.ru/nginx/nginx-0.8.30.tar.gz'
+        $ tar -xzvf nginx-0.8.30.tar.gz
+        $ cd nginx-0.8.30/
 
         # Here we assume you would install you nginx under /opt/nginx/.
         $ ./configure --prefix=/opt/nginx \
