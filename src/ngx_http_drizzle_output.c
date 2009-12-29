@@ -16,13 +16,14 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 {
     ngx_http_upstream_t             *u = r->upstream;
     const char                      *errstr;
-    size_t                           errstr_len, size;
+    size_t                           size;
+    uint16_t                         errstr_len;
     ngx_buf_t                       *b;
     ngx_chain_t                     *cl;
 
     errstr = drizzle_result_error(res);
 
-    errstr_len = strlen(errstr);
+    errstr_len = (uint16_t) strlen(errstr);
 
     size = sizeof(uint8_t)      /* endian type */
          + sizeof(uint32_t)     /* format version */
@@ -85,7 +86,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     b->last += sizeof(uint16_t);
 
     /* driver-specific errstr len */
-    *(uint16_t *) b->last = (uint16_t) errstr_len;
+    *(uint16_t *) b->last = errstr_len;
     b->last += sizeof(uint16_t);
 
     /* driver-specific errstr data */
