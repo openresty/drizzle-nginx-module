@@ -35,6 +35,13 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_upstream_t            *u;
     ngx_http_drizzle_loc_conf_t    *mlcf;
 
+    if (r->subrequest_in_memory) {
+        ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+                      "ngx_http_drizzle_module does not support "
+                      "subrequest in memory");
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     /* XXX: we should support POST/PUT methods to set long SQL
      * queries in the request bodies. */
 
