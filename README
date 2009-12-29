@@ -90,17 +90,18 @@ Output
 
     Body part
 
-      0*Column (terminated by 32-bit 0)
+      0*Column (terminated by 16-bit 0)
 
-        uint32_t        (non-zero) standard column type code
-        uint32_t        driver-specific column type length
-        u_char*         driver-specific column type data
-        uint32_t        column name length
+        uint16_t        non-zero value for standard column type
+                        code and for the column list
+                        terminatoandr otherwise.
+        uint16_t        driver-specific column type code
+        uint16_t        column name length
         u_char*         column name data
 
-      0*Row (terminated by 1 byte' zero)
+      0*Row (terminated by 8-bit zero)
 
-        u_char          valid row (1 means valid, and 0 means
+        uint8_t         valid row (1 means valid, and 0 means
                         the row list terminator)
 
         0*Field (count is predetermined by column number)

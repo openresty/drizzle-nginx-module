@@ -28,9 +28,6 @@ static ngx_int_t ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc);
 
-static ngx_int_t ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
-        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp);
-
 
 ngx_int_t
 ngx_http_drizzle_process_events(ngx_http_request_t *r)
@@ -191,9 +188,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         return rc;
     }
 
-    if (drizzle_result_column_count(&dp->drizzle_res) == 0) {
+    if (rc == NGX_DONE) {
         /* no data set following the header */
-        return ngx_http_upstream_drizzle_done(r, u, dp);
+        return rc;
     }
 
     return ngx_http_upstream_drizzle_recv_cols(r, c, dp, dc);
@@ -395,7 +392,7 @@ io_wait:
 }
 
 
-static ngx_int_t
+ngx_int_t
 ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
         ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp)
 {

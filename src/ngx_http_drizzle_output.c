@@ -5,6 +5,7 @@
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_output.h"
+#include "ngx_http_drizzle_processor.h"
 
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
@@ -20,10 +21,14 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     uint16_t                         errstr_len;
     ngx_buf_t                       *b;
     ngx_chain_t                     *cl;
+    uint16_t                         col_count;
+    ngx_int_t                        rc;
 
     errstr = drizzle_result_error(res);
 
     errstr_len = (uint16_t) strlen(errstr);
+
+    col_count = drizzle_result_column_count(res);
 
     size = sizeof(uint8_t)      /* endian type */
          + sizeof(uint32_t)     /* format version */
@@ -38,6 +43,12 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
          + sizeof(uint64_t)     /* insert id */
          + sizeof(uint16_t)     /* column count */
          ;
+
+    if (col_count == 0) {
+        size += sizeof(uint16_t)    /* col list terminator */
+              + sizeof(uint8_t)     /* row list terminator */
+              ;
+    }
 
     cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
 
@@ -103,8 +114,17 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     b->last += sizeof(uint64_t);
 
     /* column count */
-    *(uint16_t *) b->last = drizzle_result_column_count(res);
+    *(uint16_t *) b->last = col_count;
     b->last += sizeof(uint16_t);
+
+    if (col_count == 0) {
+        /* column list terminator */
+        *(uint16_t *) b->last = (uint16_t) 0;
+        b->last += sizeof(uint16_t);
+
+        /* row list terminator */
+        *b->last++ = 0;
+    }
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
@@ -112,7 +132,17 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    return ngx_http_drizzle_output_chain(r, cl);
+    rc = ngx_http_drizzle_output_chain(r, cl);
+
+    if (rc == NGX_ERROR) {
+        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    if (col_count == 0) {
+        return ngx_http_upstream_drizzle_done(r, u, u->peer.data);
+    }
+
+    return rc;
 }
 
 
