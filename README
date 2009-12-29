@@ -100,7 +100,7 @@ Output
                         the row list terminator)
 
         0*Field (count is predetermined by column number)
-            uint64_t        field length
+            uint32_t        field length
             uint8_t*        field data (in textual representation)
 
     On the nginx output chain link level, the following

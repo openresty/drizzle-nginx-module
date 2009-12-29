@@ -132,7 +132,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: result header buffer error");
+               "diizzle: FATAL: output result header buffer error");
         return NGX_ERROR;
     }
 
@@ -267,7 +267,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: result header buffer error");
+               "diizzle: FATAL: output column buffer error");
         return NGX_ERROR;
     }
 
@@ -330,8 +330,71 @@ ngx_int_t
 ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         size_t len, size_t total, drizzle_field_t field)
 {
-    /* TODO */
-    return NGX_OK;
+    ngx_http_upstream_t                 *u = r->upstream;
+    size_t                               size;
+    ngx_buf_t                           *b;
+    ngx_chain_t                         *cl;
+    ngx_int_t                            rc;
+
+    if (offset == 0) {
+
+        if (len == 0 && total != 0) {
+            return NGX_DONE;
+        }
+
+        size = sizeof(uint32_t);     /* field total length */
+    }
+
+    /* (more) field data */
+    size += (uint32_t) len;
+
+    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+
+    if (cl == NULL) {
+        return NGX_ERROR;
+    }
+
+    b = cl->buf;
+
+    b->tag = u->output.tag;
+    b->flush = 1;
+    b->memory = 1;
+    b->temporary = 1;
+
+    b->start = ngx_palloc(r->pool, size);
+
+    if (b->start == NULL) {
+        return NGX_ERROR;
+    }
+
+    b->end = b->start + size;
+    b->pos = b->last = b->start;
+
+    if (offset == 0) {
+        /* field total length */
+        *(uint32_t *) b->last = (uint32_t) total;
+        b->last += sizeof(uint32_t);
+    }
+
+    /* field data */
+    if (len) {
+        b->last = ngx_copy(b->last, field, (uint32_t) len);
+    }
+
+    if (b->last != b->end) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+               "diizzle: FATAL: output field buffer error");
+
+        return NGX_ERROR;
+    }
+
+    rc = ngx_http_drizzle_output_chain(r, cl);
+
+    if (rc == NGX_ERROR) {
+        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    return rc;
 }
 
 
