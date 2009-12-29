@@ -198,6 +198,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 {
     ngx_http_upstream_t                 *u = r->upstream;
     drizzle_column_type_t                col_type = 0;
+    uint16_t                             std_col_type = 0;
     const char                          *col_name = NULL;
     uint16_t                             col_name_len = 0;
     size_t                               size;
@@ -250,7 +251,19 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 
     } else {
         /* std column type */
-        *(uint16_t *) b->last = ngx_http_drizzle_std_col_type(col_type);
+
+        std_col_type = (uint16_t) ngx_http_drizzle_std_col_type(col_type);
+
+#if 0
+        dd("std col type for %s: %d, %d (%d, %d, %d)",
+                col_name, std_col_type, rds_col_type_blob,
+                rds_rough_col_type_str,
+                rds_rough_col_type_str << 14,
+                (uint16_t) (19 | (rds_rough_col_type_str << 14))
+                );
+#endif
+
+        *(uint16_t *) b->last = std_col_type;
         b->last += sizeof(uint16_t);
 
         /* drizzle column type */
@@ -401,6 +414,8 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 static ngx_http_rds_col_type_t
 ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
 {
+    dd("drizzle col type: %d", col_type);
+
     switch (col_type) {
     case DRIZZLE_COLUMN_TYPE_DECIMAL:
         return rds_col_type_decimal;
@@ -487,6 +502,7 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
         return rds_col_type_unknown;
     }
 
-    return rds_col_type_blob;
+    /* impossible to reach here */
+    return rds_col_type_unknown;
 }
 

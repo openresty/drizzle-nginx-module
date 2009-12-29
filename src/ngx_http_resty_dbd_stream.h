@@ -11,9 +11,9 @@
 
 enum {
     rds_rough_col_type_int = 0,
-    rds_rough_col_type_float,
-    rds_rough_col_type_str,
-    rds_rough_col_type_bool
+    rds_rough_col_type_float = 1,
+    rds_rough_col_type_str = 2,
+    rds_rough_col_type_bool = 3
 } ngx_http_rds_rough_col_type_t;
 
 typedef enum {
