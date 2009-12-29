@@ -40,3 +40,4 @@ src/output.c
 src/output.h
 libdrizzle
 ctags
+src/stream.h
