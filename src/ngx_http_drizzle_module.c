@@ -1,7 +1,7 @@
 /* Copyright (C) chaoslawful */
 /* Copyright (C) agentzh */
 
-#define DDEBUG 1
+#define DDEBUG 0
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
