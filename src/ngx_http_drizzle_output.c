@@ -284,8 +284,45 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 ngx_int_t
 ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
 {
-    /* TODO */
-    return NGX_OK;
+    ngx_http_upstream_t                 *u = r->upstream;
+    size_t                               size;
+    ngx_buf_t                           *b;
+    ngx_chain_t                         *cl;
+    ngx_int_t                            rc;
+
+    size = sizeof(uint8_t);
+
+    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+
+    if (cl == NULL) {
+        return NGX_ERROR;
+    }
+
+    b = cl->buf;
+
+    b->tag = u->output.tag;
+    b->flush = 1;
+    b->memory = 1;
+    b->temporary = 1;
+
+    b->start = ngx_palloc(r->pool, size);
+
+    if (b->start == NULL) {
+        return NGX_ERROR;
+    }
+
+    b->end = b->start + size;
+    b->pos = b->last = b->start;
+
+    *b->last++ = (row != 0);
+
+    rc = ngx_http_drizzle_output_chain(r, cl);
+
+    if (rc == NGX_ERROR) {
+        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    return rc;
 }
 
 

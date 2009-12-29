@@ -1,11 +1,13 @@
 # vi:filetype=perl
 
 use lib 'lib';
-use Test::Nginx::LWP;
+use Test::Nginx::Socket;
 
-plan tests => $Test::Nginx::LWP::RepeatEach * 2 * blocks();
+plan tests => repeat_each() * 2 * blocks();
 
 run_tests();
+
+no_diff();
 
 __DATA__
 
@@ -23,6 +25,6 @@ __DATA__
     }
 --- request
 GET /mysql
---- response_body
-abc
+--- response_body eval
+"\x{00}\x{01}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{02}\x{00}\x{01}\x{00}\x{03}\x{00}\x{02}\x{00}id\x{13}\x{80}\x{fc}\x{00}\x{04}\x{00}name\x{00}\x{00}\x{01}\x{01}\x{00}"
 
