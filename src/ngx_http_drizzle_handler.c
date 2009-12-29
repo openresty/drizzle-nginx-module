@@ -36,6 +36,9 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_drizzle_loc_conf_t    *mlcf;
 
     if (r->subrequest_in_memory) {
+        /* TODO: add support for subrequest in memory by
+         * emitting output into u->buffer instead */
+
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
                       "ngx_http_drizzle_module does not support "
                       "subrequest in memory");
