@@ -5,6 +5,7 @@
 root=`pwd`
 cd ~/work
 version=$1
+home=~
 opts=$2
 lwp-mirror "http://sysoev.ru/nginx/nginx-$version.tar.gz" nginx-$version.tar.gz
 tar -xzvf nginx-$version.tar.gz
@@ -12,7 +13,8 @@ cd nginx-$version/
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=/opt/nginx \
           --add-module=$root $opts \
-          --with-debug
+          --add-module=$home/work/ngx_http_upstream_keepalive-2ce9d8a1ca93
+          #--with-debug
           #--with-cc-opt="-g3 -O0"
           #--add-module=$root/../echo-nginx-module \
   #--without-http_ssi_module  # we cannot disable ssi because echo_location_async depends on it (i dunno why?!)

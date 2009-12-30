@@ -1,6 +1,6 @@
 /* Copyright (C) agentzh */
 
-#define DDEBUG 0
+#define DDEBUG 1
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
@@ -25,8 +25,7 @@ static void ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state);
 
 /* just a work-around to override the default u->output_filter */
-static ngx_int_t ngx_http_drizzle_output_filter(ngx_http_request_t *r,
-        ngx_chain_t *in);
+static ngx_int_t ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in);
 
 
 void *
@@ -345,9 +344,8 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     /* to force ngx_output_chain not to use ngx_chain_writer */
 
-    u->output.output_filter = (ngx_event_pipe_output_filter_pt)
-                                ngx_http_drizzle_output_filter;
-    u->output.filter_ctx = NULL;
+    u->output.output_filter = ngx_http_drizzle_output_filter;
+    u->output.filter_ctx = r;
     u->output.in   = NULL;
     u->output.busy = NULL;
 
@@ -621,15 +619,34 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 
 
 static ngx_int_t
-ngx_http_drizzle_output_filter(ngx_http_request_t *r,
-        ngx_chain_t *in)
+ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in)
 {
+    ngx_http_request_t              *r = data;
+    ngx_int_t                        rc;
+
     dd("drizzle output filter");
 
     /* just to ensure u->reinit_request always gets called for
      * upstream_next */
     r->upstream->request_sent = 1;
 
-    return ngx_http_drizzle_process_events(r);
+    rc = ngx_http_drizzle_process_events(r);
+
+    dd("process events returns %d", rc);
+
+    /* discard the ret val from process events because
+     * we can only return NGX_AGAIN here to prevent
+     * ngx_http_upstream_process_header from being called
+     * and avoid u->write_event_handler to be set to
+     * ngx_http_upstream_dummy. */
+
+    return NGX_AGAIN;
+}
+
+
+ngx_flag_t
+ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t    *peer)
+{
+    return (peer->get == ngx_http_upstream_drizzle_get_peer);
 }
 

@@ -2,6 +2,35 @@ Name
     drizzle-nginx-module - an upstream module that talks to
         mysql, drizzle, and sqlite3 by libdrizzle
 
+Synopsis
+
+    http {
+        ...
+
+        upstream cluster {
+            # simple round-robin
+            drizzle_server 127.0.0.1:3306 dbname=test
+                 password=some_pass user=monty protocol=mysql;
+            drizzle_server 127.0.0.1:1234 dbname=test2
+                 password=pass user=bob protocol=drizzle;
+        }
+
+        upstream backend {
+            drizzle_server 127.0.0.1:3306 dbname=test
+                 password=some_pass user=monty protocol=mysql;
+        }
+
+        server {
+            location /mysql {
+                set $my_sql 'select * from cats';
+                drizzle_query $my_sql;
+
+                drizzle_pass backend;
+            }
+            ...
+        }
+    }
+
 Description
     This is an nginx upstream module integrating libdrizzle
     (https://launchpad.net/libdrizzle) into nginx in an
@@ -19,25 +48,19 @@ Description
 
         http://mdounin.ru/hg/ngx_http_upstream_keepalive/
 
-Synopsis
-
-    http {
-        ...
+    Here's a sample configuration:
 
         upstream backend {
             drizzle_server 127.0.0.1:3306 dbname=test
                  password=some_pass user=monty protocol=mysql;
+            keepalive 1 single;
         }
 
-        server {
-            location /mysql {
-                set $my_sql 'select * from cats';
-                drizzle_pass backend;
-                drizzle_query $my_sql;
-            }
-            ...
-        }
-    }
+    If you want to turn off "single" in the "keepalive"
+    directive, be careful not to use two different databases
+    with identical host and port pair, because the
+    upstream_keepalive module simply compare socket address
+    to distinguish different servers.
 
 Output
     This module generates binary query results in a format

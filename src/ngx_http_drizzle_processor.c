@@ -44,6 +44,22 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     c = u->peer.connection;
 
     dp = u->peer.data;
+
+    if ( ! ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
+        dd("it is not my peer");
+
+        if (dp == NULL) {
+            ngx_log_error(NGX_LOG_ERR, c->log, 0,
+                           "drizzle: process events: peer data empty");
+
+            return NGX_ERROR;
+        }
+
+        /* XXX this is a hack just for working together with
+         * Maxim Dounin's ngx_http_upstream_keepalive module */
+        dp = ((ngx_http_upstream_faked_keepalive_peer_data_t *) dp)->data;
+    }
+
     dc = &dp->drizzle_con;
 
     /* libdrizzle uses standard poll() event constants
@@ -53,6 +69,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
      * epoll() and other underlying event mechamism used
      * by the nginx core can play well enough with poll().
      * */
+
     drizzle_con_wait(dc->drizzle);
 
     switch (dp->state) {
@@ -402,6 +419,7 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     u->header_sent = 1;
     u->length = 0;
     r->headers_out.status = NGX_HTTP_OK;
+    u->headers_in.status_n = NGX_HTTP_OK;
 
     /* reset the state machine */
     dp->state = state_db_idle;

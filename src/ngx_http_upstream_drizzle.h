@@ -94,5 +94,7 @@ char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
 void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);
 
+ngx_flag_t ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t *peer);
+
 #endif /* NGX_HTTP_UPSTREAM_DRIZZLE_H */
 
