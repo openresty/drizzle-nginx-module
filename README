@@ -53,7 +53,7 @@ Description
         upstream backend {
             drizzle_server 127.0.0.1:3306 dbname=test
                  password=some_pass user=monty protocol=mysql;
-            keepalive 1 single;
+            keepalive 100 single;
         }
 
     If you want to turn off "single" in the "keepalive"
