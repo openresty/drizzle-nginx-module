@@ -35,5 +35,10 @@ ngx_int_t ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
         ngx_http_upstream_drizzle_peer_data_t *dp,
         ngx_http_upstream_drizzle_srv_conf_t *dscf);
 
+void ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf,
+        ngx_uint_t  state);
+
 #endif /* NGX_HTTP_DRIZZLE_KEEPALIVE_H */
 

@@ -90,7 +90,8 @@ typedef struct {
     ngx_http_drizzle_loc_conf_t            *loc_conf;
     ngx_http_upstream_drizzle_srv_conf_t   *srv_conf;
 
-    /* ngx_http_upstream_t                    *upstream; */
+    ngx_http_upstream_t                    *upstream;
+    ngx_http_request_t                     *request;
 
     ngx_str_t                               dbname;
     ngx_str_t                               query;
@@ -114,6 +115,10 @@ char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);
 
 ngx_flag_t ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t *peer);
+
+void ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
+        ngx_connection_t *c, drizzle_con_st *dc,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf);
 
 #endif /* NGX_HTTP_UPSTREAM_DRIZZLE_H */
 

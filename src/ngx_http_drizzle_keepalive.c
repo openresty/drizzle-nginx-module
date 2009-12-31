@@ -11,6 +11,11 @@
 #include <ngx_http.h>
 #include <nginx.h>
 
+static void ngx_http_drizzle_keepalive_dummy_handler(ngx_event_t *ev);
+
+static void ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev);
+
+
 char *
 ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf)
@@ -231,5 +236,118 @@ ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
     }
 
     return NGX_DECLINED;
+}
+
+
+void
+ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf,
+        ngx_uint_t  state)
+{
+    ngx_uint_t                               status;
+    ngx_http_drizzle_keepalive_cache_t      *item;
+    ngx_queue_t                             *q;
+    ngx_connection_t                        *c;
+    ngx_http_upstream_t                     *u;
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0,
+                   "drizzle: free keepalive peer");
+
+    if (state & NGX_PEER_FAILED) {
+        dp->failed = 1;
+    }
+
+    u = dp->upstream;
+    status = u->headers_in.status_n;
+
+    if (!dp->failed
+        && pc->connection != NULL
+        && (status == NGX_HTTP_NOT_FOUND
+            || (status == NGX_HTTP_OK && u->header_sent && u->length == 0)))
+    {
+        c = pc->connection;
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, pc->log, 0,
+                       "drizzle: free keepalive peer: saving connection %p",
+                       c);
+
+        if (ngx_queue_empty(&dscf->free)) {
+            /* connection pool is already full */
+
+            q = ngx_queue_last(&dscf->cache);
+            ngx_queue_remove(q);
+
+            item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                                  queue);
+
+            ngx_http_upstream_drizzle_free_connection(pc->log, item->connection,
+                    item->drizzle_con, dscf);
+
+        } else {
+            q = ngx_queue_head(&dscf->free);
+            ngx_queue_remove(q);
+
+            item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                                  queue);
+        }
+
+        item->connection = c;
+        ngx_queue_insert_head(&dscf->cache, q);
+
+        pc->connection = NULL;
+
+        if (c->read->timer_set) {
+            ngx_del_timer(c->read);
+        }
+        if (c->write->timer_set) {
+            ngx_del_timer(c->write);
+        }
+
+        c->write->handler = ngx_http_drizzle_keepalive_dummy_handler;
+        c->read->handler = ngx_http_drizzle_keepalive_close_handler;
+
+        c->data = item;
+        c->idle = 1;
+        c->log = ngx_cycle->log;
+        c->read->log = ngx_cycle->log;
+        c->write->log = ngx_cycle->log;
+
+        item->socklen = pc->socklen;
+        ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
+
+        item->drizzle_con = dp->drizzle_con;
+    }
+}
+
+
+static void
+ngx_http_drizzle_keepalive_dummy_handler(ngx_event_t *ev)
+{
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ev->log, 0,
+                   "drizzle: keepalive dummy handler");
+}
+
+
+static void
+ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev)
+{
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
+    ngx_http_drizzle_keepalive_cache_t      *item;
+    ngx_connection_t                        *c;
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ev->log, 0,
+                   "drizzle: keepalive close handler");
+
+    c = ev->data;
+    item = c->data;
+    dscf = item->srv_conf;
+
+    ngx_queue_remove(&item->queue);
+
+    ngx_http_upstream_drizzle_free_connection(ev->log, item->connection,
+            item->drizzle_con, dscf);
+
+    ngx_queue_insert_head(&dscf->free, &item->queue);
 }
 

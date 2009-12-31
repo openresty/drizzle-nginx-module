@@ -345,6 +345,9 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     u = r->upstream;
 
+    dp->upstream = u;
+    dp->request  = r;
+
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
     dp->srv_conf = dscf;
@@ -436,6 +439,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     int                                      fd;
     ngx_event_t                             *rev, *wev;
     ngx_int_t                                rc;
+    ngx_http_upstream_t                     *u;
+    ngx_http_request_t                      *r;
 
     dd("drizzle get peer");
 
@@ -480,6 +485,12 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
             ngx_queue_empty(&dscf->free))
     {
+        u = dp->upstream;
+        r = dp->request;
+
+        ngx_http_upstream_drizzle_finalize_request(r, u,
+                NGX_HTTP_SERVICE_UNAVAILABLE);
+
         return NGX_ERROR;
     }
 
@@ -617,21 +628,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
 invalid:
 
-    if (pc->connection) {
-
-        if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                    "drizzle: failed to remove connection from nginx event pool!");
-        }
-
-        ngx_free_connection(pc->connection);
-
-        pc->connection = NULL;
-    }
-
-    if (dc) {
-        drizzle_con_free(dc);
-    }
+    ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
+            dc, dscf);
 
     return NGX_ERROR;
 }
@@ -642,24 +640,21 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state)
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
-    drizzle_con_st                          *dc;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf = dp->srv_conf;
 
     dd("drizzle free peer");
 
     drizzle_result_free(&dp->drizzle_res);
 
+    if (dscf->max_cached) {
+        ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
+    }
+
     if (pc->connection) {
-        dd("drizzle free peer connection");
+        /* actually free the drizzle connection */
 
-        dc = dp->drizzle_con;
-        drizzle_con_free(dc);
-
-        if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                    "drizzle: failed to remove connection from nginx event pool!");
-        }
-
-        ngx_free_connection(pc->connection);
+        ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
+                dp->drizzle_con, dscf);
 
         pc->connection = NULL;
     }
@@ -696,5 +691,28 @@ ngx_flag_t
 ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t    *peer)
 {
     return (peer->get == ngx_http_upstream_drizzle_get_peer);
+}
+
+
+void
+ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
+        ngx_connection_t *c, drizzle_con_st *dc,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+{
+    dd("drizzle free peer connection");
+
+    if (dc) {
+        drizzle_con_free(dc);
+        ngx_pfree(dscf->pool, dc);
+    }
+
+    if (c) {
+        if (ngx_del_conn(c, NGX_CLOSE_EVENT) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, log, 0,
+                    "drizzle: failed to remove connection from nginx event pool!");
+        }
+
+        ngx_free_connection(c);
+    }
 }
 
