@@ -5,9 +5,122 @@
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_keepalive.h"
+#include "ngx_http_drizzle_util.h"
+
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
+
+char *
+ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf)
+{
+    ngx_http_upstream_drizzle_srv_conf_t        *dscf = conf;
+    ngx_str_t                                   *value;
+    ngx_uint_t                                   i;
+    ngx_int_t                                    n;
+    u_char                                      *data;
+    ngx_uint_t                                   len;
+
+    if (dscf->max_cached) {
+        return "is duplicate";
+    }
+
+    value = cf->args->elts;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+
+        if (ngx_strncmp(value[i].data, "max=", sizeof("max=") - 1)
+                == 0)
+        {
+            len = value[i].len - (sizeof("max=") - 1);
+            data = &value[i].data[sizeof("max=") - 1];
+
+            n = ngx_atoi(data, len);
+
+            if (n == NGX_ERROR || n <= 0) {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "invalid \"max\" value \"%V\" "
+                                   "in \"%V\" directive",
+                                   &value[i], &cmd->name);
+
+                return NGX_CONF_ERROR;
+            }
+
+            dscf->max_cached = n;
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "mode=", sizeof("mode=") - 1)
+                == 0)
+        {
+            len = value[i].len - (sizeof("mode=") - 1);
+            data = &value[i].data[sizeof("mode=") - 1];
+
+            switch (len) {
+            case 6:
+                if (ngx_str6cmp(data, 's', 'i', 'n', 'g', 'l', 'e')) {
+                    dscf->single = 1;
+                }
+                break;
+
+            case 5:
+                if (ngx_str5cmp(data, 'm', 'u', 'l', 't', 'i')) {
+                    dscf->single = 0;
+                }
+                break;
+
+            default:
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "drizzle: invalid \"mode\" value \"%V\" "
+                                   "in \"%V\" directive",
+                                   &value[i], &cmd->name);
+
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "overflow=", sizeof("overflow=") - 1)
+                == 0)
+        {
+            len = value[i].len - (sizeof("overflow=") - 1);
+            data = &value[i].data[sizeof("overflow=") - 1];
+
+            switch (len) {
+            case 6:
+                if (ngx_str6cmp(data, 'r', 'e', 'j', 'e', 'c', 't')) {
+                    dscf->overflow = drizzle_keepalive_overflow_reject;
+                } else if (ngx_str6cmp(data, 'i', 'g', 'n', 'o', 'r', 'e')) {
+                    dscf->overflow = drizzle_keepalive_overflow_ignore;
+                }
+                break;
+
+            default:
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "drizzle: invalid \"overflow\" value \"%V\" "
+                                   "in \"%V\" directive",
+                                   &value[i], &cmd->name);
+
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "drizzle: invalid parameter \"%V\" in"
+                           " \"%V\" directive",
+                           &value[i], &cmd->name);
+
+        return NGX_CONF_ERROR;
+    }
+
+    return NGX_CONF_OK;
+}
+
 
 ngx_int_t
 ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
@@ -33,5 +146,90 @@ ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
     }
 
     return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+{
+    ngx_http_drizzle_keepalive_cache_t      *item;
+    ngx_queue_t                             *q;
+    ngx_connection_t                        *c;
+
+    if (!ngx_queue_empty(&dscf->cache)) {
+
+        q = ngx_queue_head(&dscf->cache);
+        ngx_queue_remove(q);
+
+        item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t, queue);
+        c = item->connection;
+
+        ngx_queue_insert_head(&dscf->free, q);
+
+        c->idle = 0;
+        c->log = pc->log;
+        c->read->log = pc->log;
+        c->write->log = pc->log;
+
+        pc->connection = c;
+        pc->cached = 1;
+
+        dp->name = &item->name;
+        dp->drizzle_con = item->drizzle_con;
+
+        return NGX_DONE;
+    }
+
+    return NGX_DECLINED;
+}
+
+
+ngx_int_t
+ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+{
+    ngx_queue_t                             *q, *cache;
+    ngx_http_drizzle_keepalive_cache_t      *item;
+    ngx_connection_t                        *c;
+
+    /* search cache for suitable connection */
+
+    cache = &dscf->cache;
+
+    for (q = ngx_queue_head(cache);
+         q != ngx_queue_sentinel(cache);
+         q = ngx_queue_next(q))
+    {
+        item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t, queue);
+        c = item->connection;
+
+        /* XXX maybe we should take dbname and user into account
+         * as well? */
+        if (ngx_memn2cmp((u_char *) &item->sockaddr, (u_char *) pc->sockaddr,
+                         item->socklen, pc->socklen)
+                == 0)
+        {
+            ngx_queue_remove(q);
+            ngx_queue_insert_head(&dscf->free, q);
+
+            c->idle = 0;
+            c->log = pc->log;
+            c->read->log = pc->log;
+            c->write->log = pc->log;
+
+            pc->connection = c;
+            pc->cached = 1;
+
+            dp->name = &item->name;
+            dp->drizzle_con = item->drizzle_con;
+
+            return NGX_DONE;
+        }
+    }
+
+    return NGX_DECLINED;
 }
 

@@ -15,13 +15,24 @@ typedef struct {
 
     socklen_t                            socklen;
     struct sockaddr_storage              sockaddr;
-    ngx_str_t                            dbname;
     drizzle_con_st                      *drizzle_con;
+    ngx_str_t                            name;
 
 } ngx_http_drizzle_keepalive_cache_t;
 
 
+char * ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
+
 ngx_int_t ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf);
+
+ngx_int_t ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_http_upstream_drizzle_srv_conf_t *dscf);
+
+ngx_int_t ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
+        ngx_http_upstream_drizzle_peer_data_t *dp,
         ngx_http_upstream_drizzle_srv_conf_t *dscf);
 
 #endif /* NGX_HTTP_DRIZZLE_KEEPALIVE_H */

@@ -60,7 +60,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         dp = ((ngx_http_upstream_faked_keepalive_peer_data_t *) dp)->data;
     }
 
-    dc = &dp->drizzle_con;
+    dc = dp->drizzle_con;
 
     /* libdrizzle uses standard poll() event constants
      * and depends on drizzle_con_wait() to set them.

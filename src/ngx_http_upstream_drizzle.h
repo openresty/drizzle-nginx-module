@@ -8,6 +8,12 @@
 #include <libdrizzle/drizzle_client.h>
 
 typedef enum {
+    drizzle_keepalive_overflow_reject,
+    drizzle_keepalive_overflow_ignore
+
+} ngx_http_drizzle_keepalive_overflow_t;
+
+typedef enum {
     ngx_http_drizzle_protocol = 0,
     ngx_http_mysql_protocol
 
@@ -70,11 +76,12 @@ typedef struct {
     drizzle_st                           drizzle;
     ngx_pool_t                          *pool;
 
-    /* connection pool related fields */
+    /* keepalive related fields */
     ngx_flag_t                           single;
     ngx_queue_t                          free;
     ngx_queue_t                          cache;
     ngx_uint_t                           max_cached;
+    ngx_http_drizzle_keepalive_overflow_t    overflow;
 
 } ngx_http_upstream_drizzle_srv_conf_t;
 
@@ -90,19 +97,18 @@ typedef struct {
 
     ngx_http_drizzle_state_t                state;
 
-    drizzle_con_st                          drizzle_con;
+    drizzle_con_st                         *drizzle_con;
     drizzle_result_st                       drizzle_res;
     drizzle_column_st                       drizzle_col;
     uint64_t                                drizzle_row;
 
-    ngx_str_t                               *name;
+    ngx_str_t                              *name;
+
+    ngx_flag_t                              failed;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 
 char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
-
-char * ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 
 void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);

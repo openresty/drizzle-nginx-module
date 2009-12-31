@@ -316,7 +316,11 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
 
     dscf->peers = peers;
 
-    return ngx_http_drizzle_keepalive_init(cf->pool, dscf);
+    if (dscf->max_cached) {
+        return ngx_http_drizzle_keepalive_init(cf->pool, dscf);
+    }
+
+    return NGX_OK;
 }
 
 
@@ -430,14 +434,28 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     drizzle_return_t                         ret;
     int                                      fd;
     ngx_event_t                             *rev, *wev;
+    ngx_int_t                                rc;
 
     dd("drizzle get peer");
 
     dscf = dp->srv_conf;
 
+    dp->failed = 0;
+
+    /* try to get an idle connection from our single-mode
+     * keep-alive pool */
+
+    if (dscf->max_cached && dscf->single) {
+        rc = ngx_http_drizzle_keepalive_get_peer_single(pc, dp, dscf);
+        if (rc != NGX_DECLINED) {
+            return rc;
+        }
+    }
+
+    /* now we select a peer using poors' round robin */
+
     peers = dscf->peers;
 
-    /* poor men's round robin */
     if (dscf->current > peers->number - 1) {
         dscf->current = 0;
     }
@@ -450,9 +468,22 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     pc->socklen = peer->socklen;
     pc->cached = 0;
 
+    if (dscf->max_cached && ! dscf->single) {
+        rc = ngx_http_drizzle_keepalive_get_peer_multi(pc, dp, dscf);
+        if (rc != NGX_DECLINED) {
+            return rc;
+        }
+    }
+
     /* set up the peer's drizzle connection */
 
-    dc = &dp->drizzle_con;
+    dc = ngx_pcalloc(dscf->pool, sizeof(drizzle_con_st));
+
+    if (dc == NULL) {
+        return NGX_ERROR;
+    }
+
+    dp->drizzle_con = dc;
 
     (void) drizzle_con_create(&dscf->drizzle, dc);
 
@@ -612,7 +643,7 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
     if (pc->connection) {
         dd("drizzle free peer connection");
 
-        dc = &dp->drizzle_con;
+        dc = dp->drizzle_con;
         drizzle_con_free(dc);
 
         if (ngx_del_conn(pc->connection, NGX_CLOSE_EVENT) != NGX_OK) {
@@ -657,89 +688,5 @@ ngx_flag_t
 ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t    *peer)
 {
     return (peer->get == ngx_http_upstream_drizzle_get_peer);
-}
-
-
-char *
-ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf)
-{
-    ngx_http_upstream_drizzle_srv_conf_t        *dscf = conf;
-    ngx_str_t                                   *value;
-    ngx_uint_t                                   i;
-    ngx_int_t                                    n;
-    u_char                                      *data;
-    ngx_uint_t                                   len;
-
-    if (dscf->max_cached) {
-        return "is duplicate";
-    }
-
-    value = cf->args->elts;
-
-    for (i = 1; i < cf->args->nelts; i++) {
-
-        if (ngx_strncmp(value[i].data, "max=", sizeof("max=") - 1)
-                == 0)
-        {
-            len = value[i].len - (sizeof("max=") - 1);
-            data = &value[i].data[sizeof("max=") - 1];
-
-            n = ngx_atoi(data, len);
-
-            if (n == NGX_ERROR || n <= 0) {
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "invalid \"max\" value \"%V\" "
-                                   "in \"%V\" directive",
-                                   &value[i], &cmd->name);
-
-                return NGX_CONF_ERROR;
-            }
-
-            dscf->max_cached = n;
-
-            continue;
-        }
-
-        if (ngx_strncmp(value[i].data, "mode=", sizeof("mode=") - 1)
-                == 0)
-        {
-            len = value[i].len - (sizeof("mode=") - 1);
-            data = &value[i].data[sizeof("mode=") - 1];
-
-            switch (len) {
-            case 6:
-                if (ngx_str6cmp(data, 's', 'i', 'n', 'g', 'l', 'e')) {
-                    dscf->single = 1;
-                }
-                break;
-
-            case 5:
-                if (ngx_str5cmp(data, 'm', 'u', 'l', 't', 'i')) {
-                    dscf->single = 0;
-                }
-                break;
-
-            default:
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "drizzle: invalid \"mode\" value \"%V\" "
-                                   "in \"%V\" directive",
-                                   &value[i], &cmd->name);
-
-                return NGX_CONF_ERROR;
-            }
-
-            continue;
-        }
-
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "drizzle: invalid parameter \"%V\" in"
-                           " \"%V\" directive",
-                           &value[i], &cmd->name);
-
-        return NGX_CONF_ERROR;
-    }
-
-    return NGX_CONF_OK;
 }
 
