@@ -35,15 +35,21 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 
     dd("drizzle create srv conf");
 
-    conf = ngx_palloc(cf->pool,
+    conf = ngx_pcalloc(cf->pool,
                        sizeof(ngx_http_upstream_drizzle_srv_conf_t));
     if (conf == NULL) {
         return NULL;
     }
 
-    conf->peers   = NULL;
-    conf->current = 0;
-    conf->servers = NULL;
+    /* set by ngx_pcalloc:
+     *      conf->peers   = NULL
+     *      conf->current = 0
+     *      conf->servers = NULL
+     *      conf->single = 0
+     *      conf->max_cached = 0
+     */
+
+    conf->pool = cf->pool;
 
     /* XXX when should we free this global drizzle struct? */
     (void) drizzle_create(&conf->drizzle);
