@@ -2,6 +2,16 @@ Name
     drizzle-nginx-module - an upstream module that talks to
         mysql, drizzle, and sqlite3 by libdrizzle
 
+Status
+    This module is at its very early phase of development and
+    considered highly experimental. But you're encouraged to
+    test it out on your side and report any quirks that you
+    experience.
+
+    We need your help! If you find this module useful and/or
+    interesting, please consider joining the development!
+    Commit bit can be freely delivered at your request ;)
+
 Synopsis
 
     http {
@@ -42,25 +52,60 @@ Description
     or mysql protocol. Also it can serve as a direct REST
     interface to those RDBMS backends.
 
-    We can also take full advantage of the per-worker
-    connection pool mechanism provided by Maxim Dounin's
-    ngx_upstream_keepalive module:
-
-        http://mdounin.ru/hg/ngx_http_upstream_keepalive/
+    It also has a builtin per-worker connection pool
+    mechanism.
 
     Here's a sample configuration:
 
         upstream backend {
             drizzle_server 127.0.0.1:3306 dbname=test
                  password=some_pass user=monty protocol=mysql;
-            keepalive 100 single;
+            drizzle_keepalive max=100 mode=single overflow=reject;
         }
 
-    If you want to turn off "single" in the "keepalive"
-    directive, be careful not to use two different databases
-    with identical host and port pair, because the
-    upstream_keepalive module simply compare socket address
-    to distinguish different servers.
+    The drizzle_keepalive directive has the following options:
+
+        * max=<num>
+            Specify the capacity of the connection pool for
+            the current upstream block. The <num> value MUST
+            be non-zero. If set to 0, it effectively disables
+            the connection pool. And this is the default
+            if no "drizzle_keepalive" directive is specified.
+
+        * mode=<mode>
+            This supports two values, "single" and "multi".
+            "single" mode means the pool does not distinguish
+            various drizzle servers in the current ustream
+            block while "multi" means the pool will merely
+            reuse connections which have identical server
+            host names and ports. Note that it will igore
+            differences between dbnames or users.
+
+        * overflow=<action>
+            This option specifies what to do when the
+            connection pool is already full while new
+            database connection is required. Either "reject"
+            (without quotes) or "ignore" can be specified.
+            In case of "reject", it will reject the current
+            request, and returns "503 Service Unavaliable"
+            error page. For "ignore", this module will
+            go on creating a new DB connection.
+
+    For now, the connection pool uses a simple LIFO algorithm
+    to assign idle connections in the pool. That is,
+    most recently (successfully) used connections will be
+    reused first the next time. And new idle connections
+    will always replace the oldest idle connections in the
+    pool even if the pool is already full.
+
+Caveats
+
+    * Other usptream modules like "upstream_hash" and
+      "upstream_keepalive" MUST NOT be used with this module
+      in a single upstream block.
+
+    * Directives like "server" MUST NOT be mixed with
+      "drizzle_server" either.
 
 Output
     This module generates binary query results in a format
@@ -184,6 +229,14 @@ Authors
     agentzh (章亦春)
 
 Copyright & License
+    The implementation of the builtin connection pool has borrowed
+    a lot of code from Maxim Dounin's upstream_keepalive module.
+    This part of code is copyrighted by Maxim Dounin.
+
+    I also borrowed a lot of code from ngx_http_upstream.c and
+    ngx_http_memcached_module.c in the nginx 0.8.30 core. This
+    part of code is copyrighted by Igor Sysoev.
+
     This module is licenced under the BSD license.
 
     Copyright (c) 2009, Taobao Inc., Alibaba Group ( http://www.taobao.com ).

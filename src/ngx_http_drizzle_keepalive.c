@@ -43,7 +43,7 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
 
             n = ngx_atoi(data, len);
 
-            if (n == NGX_ERROR || n <= 0) {
+            if (n == NGX_ERROR || n < 0) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "invalid \"max\" value \"%V\" "
                                    "in \"%V\" directive",
