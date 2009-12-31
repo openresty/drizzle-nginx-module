@@ -42,3 +42,5 @@ libdrizzle
 ctags
 src/stream.h
 nginx
+keepalive
+reindex
