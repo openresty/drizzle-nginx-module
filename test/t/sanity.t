@@ -81,7 +81,7 @@ insert into cats (id, name) values (3, 'bob');
     upstream backend {
         drizzle_server 127.0.0.1:3306 dbname=test
              password=some_pass user=monty protocol=mysql;
-        keepalive 1 single;
+        drizzle_keepalive max=1;
     }
 --- config
     location /mysql {
@@ -121,5 +121,43 @@ GET /mysql
 "3".  # field data
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
+"\x{00}"  # row list terminator
+--- ONLY
+
+=== TEST 2: update
+little-endian systems only
+
+db init:
+
+create table cats (id integer, name text);
+insert into cats (id) values (2);
+insert into cats (id, name) values (3, 'bob');
+
+--- http_config
+    upstream backend {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2;
+    }
+--- config
+    location /mysql {
+        drizzle_pass backend;
+        #drizzle_dbname $dbname;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- response_body eval
+"\x{00}". # endian
+"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{00}". # result type
+"\x{00}\x{00}".  # std errcode
+"\x{00}\x{00}" . # driver errcode
+"\x{28}\x{00}".  # driver errstr len
+"Rows matched: 1  Changed: 0  Warnings: 0".  # driver errstr data
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
+"\x{00}\x{00}".  # col count
+"\x{00}\x{00}".  # col list terminator
 "\x{00}"  # row list terminator
 

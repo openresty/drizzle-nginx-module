@@ -65,8 +65,30 @@ typedef struct {
     ngx_array_t                         *servers;
 
     drizzle_st                           drizzle;
+    ngx_pool_t                          *pool;
+
+    /* connection pool related fields */
+    ngx_flag_t                           single;
+    ngx_queue_t                          free;
+    ngx_queue_t                          cache;
+    ngx_uint_t                           max_cached;
 
 } ngx_http_upstream_drizzle_srv_conf_t;
+
+
+typedef struct {
+    ngx_http_upstream_drizzle_srv_conf_t  *srv_conf;
+
+    ngx_queue_t                          queue;
+
+    ngx_connection_t                    *connection;
+
+    socklen_t                            socklen;
+    struct sockaddr_storage              sockaddr;
+    ngx_str_t                            dbname;
+    drizzle_con_st                      *drizzle_con;
+
+} ngx_http_upstream_drizzle_cache_t;
 
 
 typedef struct {
@@ -90,6 +112,9 @@ typedef struct {
 
 
 char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
+
+char * ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 
 void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);

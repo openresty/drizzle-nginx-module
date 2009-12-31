@@ -31,6 +31,13 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         0,
         NULL },
     {
+        ngx_string("drizzle_keepalive"),
+        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
+        ngx_http_upstream_drizzle_keepalive,
+        NGX_HTTP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+    {
         ngx_string("drizzle_query"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
             |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,

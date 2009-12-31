@@ -324,7 +324,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     dd("drizzle init peer");
 
-    dp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
+    dp = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
     if (dp == NULL) {
         return NGX_ERROR;
     }
@@ -648,5 +648,89 @@ ngx_flag_t
 ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t    *peer)
 {
     return (peer->get == ngx_http_upstream_drizzle_get_peer);
+}
+
+
+char *
+ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf)
+{
+    ngx_http_upstream_drizzle_srv_conf_t        *dscf = conf;
+    ngx_str_t                                   *value;
+    ngx_uint_t                                   i;
+    ngx_int_t                                    n;
+    u_char                                      *data;
+    ngx_uint_t                                   len;
+
+    if (dscf->max_cached) {
+        return "is duplicate";
+    }
+
+    value = cf->args->elts;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+
+        if (ngx_strncmp(value[i].data, "max=", sizeof("max=") - 1)
+                == 0)
+        {
+            len = value[i].len - (sizeof("max=") - 1);
+            data = &value[i].data[sizeof("max=") - 1];
+
+            n = ngx_atoi(data, len);
+
+            if (n == NGX_ERROR || n <= 0) {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "invalid \"max\" value \"%V\" "
+                                   "in \"%V\" directive",
+                                   &value[i], &cmd->name);
+
+                return NGX_CONF_ERROR;
+            }
+
+            dscf->max_cached = n;
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "mode=", sizeof("mode=") - 1)
+                == 0)
+        {
+            len = value[i].len - (sizeof("mode=") - 1);
+            data = &value[i].data[sizeof("mode=") - 1];
+
+            switch (len) {
+            case 6:
+                if (ngx_str6cmp(data, 's', 'i', 'n', 'g', 'l', 'e')) {
+                    dscf->single = 1;
+                }
+                break;
+
+            case 5:
+                if (ngx_str5cmp(data, 'm', 'u', 'l', 't', 'i')) {
+                    dscf->single = 0;
+                }
+                break;
+
+            default:
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "drizzle: invalid \"mode\" value \"%V\" "
+                                   "in \"%V\" directive",
+                                   &value[i], &cmd->name);
+
+                return NGX_CONF_ERROR;
+            }
+
+            continue;
+        }
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "drizzle: invalid parameter \"%V\" in"
+                           " \"%V\" directive",
+                           &value[i], &cmd->name);
+
+        return NGX_CONF_ERROR;
+    }
+
+    return NGX_CONF_OK;
 }
 
