@@ -48,6 +48,7 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
      *      conf->servers = NULL
      *      conf->single = 0
      *      conf->max_cached = 0
+     *      conf->overflow = 0 (drizzle_keepalive_overflow_ignore)
      */
 
     conf->pool = cf->pool;
@@ -473,6 +474,13 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         if (rc != NGX_DECLINED) {
             return rc;
         }
+    }
+
+    if (dscf->overflow == drizzle_keepalive_overflow_reject &&
+
+            ngx_queue_empty(&dscf->free))
+    {
+        return NGX_ERROR;
     }
 
     /* set up the peer's drizzle connection */

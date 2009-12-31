@@ -68,6 +68,7 @@ GET /mysql
 "\x{00}"  # row list terminator
 
 
+
 === TEST 2: keep-alive
 little-endian systems only
 
@@ -122,9 +123,10 @@ GET /mysql
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- ONLY
 
-=== TEST 2: update
+
+
+=== TEST 3: update
 little-endian systems only
 
 db init:

@@ -8,8 +8,8 @@
 #include <libdrizzle/drizzle_client.h>
 
 typedef enum {
-    drizzle_keepalive_overflow_reject,
-    drizzle_keepalive_overflow_ignore
+    drizzle_keepalive_overflow_ignore = 0,
+    drizzle_keepalive_overflow_reject
 
 } ngx_http_drizzle_keepalive_overflow_t;
 
