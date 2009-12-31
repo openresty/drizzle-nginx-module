@@ -44,3 +44,5 @@ src/stream.h
 nginx
 keepalive
 reindex
+src/keepalive.c
+src/keepalive.h
