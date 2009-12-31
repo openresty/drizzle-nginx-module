@@ -5,6 +5,7 @@
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_upstream_drizzle.h"
+#include "ngx_http_drizzle_keepalive.h"
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
 
@@ -249,71 +250,73 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
 
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
-    if (dscf->servers) {
-        server = uscf->servers->elts;
+    if (dscf->servers == NULL || dscf->servers->nelts == 0) {
+        /* XXX an upstream implicitly defined by drizzle_pass, etc.,
+         * is not allowed for now */
 
-        n = 0;
+        ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                      "drizzle: no drizzle_server defined in upstream \"%V\""
+                      " in %s:%ui",
+                      &uscf->host, uscf->file_name, uscf->line);
 
-        for (i = 0; i < uscf->servers->nelts; i++) {
-            n += server[i].naddrs;
-        }
-
-        peers = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_drizzle_peers_t)
-                + sizeof(ngx_http_upstream_drizzle_peer_t) * (n - 1));
-
-        if (peers == NULL) {
-            return NGX_ERROR;
-        }
-
-        peers->single = (n == 1);
-        peers->number = n;
-        peers->name = &uscf->host;
-
-        n = 0;
-
-        for (i = 0; i < uscf->servers->nelts; i++) {
-            for (j = 0; j < server[i].naddrs; j++) {
-                peers->peer[n].sockaddr = server[i].addrs[j].sockaddr;
-                peers->peer[n].socklen = server[i].addrs[j].socklen;
-                peers->peer[n].name = server[i].addrs[j].name;
-                peers->peer[n].port = server[i].port;
-                peers->peer[n].user = server[i].user;
-                peers->peer[n].password = server[i].password;
-                peers->peer[n].dbname = server[i].dbname;
-                peers->peer[n].protocol = server[i].protocol;
-
-                len = NGX_SOCKADDR_STRLEN + 1 /* for '\0' */;
-
-                peers->peer[n].host = ngx_palloc(cf->pool, len);
-
-                if (peers->peer[n].host == NULL) {
-                    return NGX_ERROR;
-                }
-
-                len = ngx_sock_ntop(peers->peer[n].sockaddr,
-                        peers->peer[n].host,
-                        len - 1, 0 /* no port */);
-
-                peers->peer[n].host[len] = '\0';
-
-                n++;
-            }
-        }
-
-        dscf->peers = peers;
-
-        return NGX_OK;
+        return NGX_ERROR;
     }
 
-    /* XXX an upstream implicitly defined by drizzle_pass, etc.,
-     * is not allowed for now */
+    /* dscf->servers != NULL */
 
-    ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                  "drizzle: no drizzle_server defined in upstream \"%V\""
-                  " in %s:%ui",
-                  &uscf->host, uscf->file_name, uscf->line);
+    server = uscf->servers->elts;
 
-    return NGX_OK;
+    n = 0;
+
+    for (i = 0; i < uscf->servers->nelts; i++) {
+        n += server[i].naddrs;
+    }
+
+    peers = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_drizzle_peers_t)
+            + sizeof(ngx_http_upstream_drizzle_peer_t) * (n - 1));
+
+    if (peers == NULL) {
+        return NGX_ERROR;
+    }
+
+    peers->single = (n == 1);
+    peers->number = n;
+    peers->name = &uscf->host;
+
+    n = 0;
+
+    for (i = 0; i < uscf->servers->nelts; i++) {
+        for (j = 0; j < server[i].naddrs; j++) {
+            peers->peer[n].sockaddr = server[i].addrs[j].sockaddr;
+            peers->peer[n].socklen = server[i].addrs[j].socklen;
+            peers->peer[n].name = server[i].addrs[j].name;
+            peers->peer[n].port = server[i].port;
+            peers->peer[n].user = server[i].user;
+            peers->peer[n].password = server[i].password;
+            peers->peer[n].dbname = server[i].dbname;
+            peers->peer[n].protocol = server[i].protocol;
+
+            len = NGX_SOCKADDR_STRLEN + 1 /* for '\0' */;
+
+            peers->peer[n].host = ngx_palloc(cf->pool, len);
+
+            if (peers->peer[n].host == NULL) {
+                return NGX_ERROR;
+            }
+
+            len = ngx_sock_ntop(peers->peer[n].sockaddr,
+                    peers->peer[n].host,
+                    len - 1, 0 /* no port */);
+
+            peers->peer[n].host[len] = '\0';
+
+            n++;
+        }
+    }
+
+    dscf->peers = peers;
+
+    return ngx_http_drizzle_keepalive_init(cf->pool, dscf);
 }
 
 

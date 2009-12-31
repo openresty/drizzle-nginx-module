@@ -1,8 +1,11 @@
 #ifndef NGX_HTTP_UPSTREAM_DRIZZLE_H
 #define NGX_HTTP_UPSTREAM_DRIZZLE_H
 
+#include "ngx_http_drizzle_module.h"
 #include <ngx_core.h>
 #include <ngx_http.h>
+#include <nginx.h>
+#include <libdrizzle/drizzle_client.h>
 
 typedef enum {
     ngx_http_drizzle_protocol = 0,
@@ -74,21 +77,6 @@ typedef struct {
     ngx_uint_t                           max_cached;
 
 } ngx_http_upstream_drizzle_srv_conf_t;
-
-
-typedef struct {
-    ngx_http_upstream_drizzle_srv_conf_t  *srv_conf;
-
-    ngx_queue_t                          queue;
-
-    ngx_connection_t                    *connection;
-
-    socklen_t                            socklen;
-    struct sockaddr_storage              sockaddr;
-    ngx_str_t                            dbname;
-    drizzle_con_st                      *drizzle_con;
-
-} ngx_http_upstream_drizzle_cache_t;
 
 
 typedef struct {
