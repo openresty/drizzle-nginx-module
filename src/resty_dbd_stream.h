@@ -1,7 +1,7 @@
 #ifndef RESTY_DBD_STREAME_H
 #define RESTY_DBD_STREAME_H
 
-#define resty_dbd_stream_version ((uint32_t) 1)
+#define resty_dbd_stream_version 1
 #define resty_dbd_stream_version_string "0.0.1"
 
 enum {

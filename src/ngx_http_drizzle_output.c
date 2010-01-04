@@ -84,7 +84,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     /* RDS format version */
 
-    *(uint32_t *) b->last = resty_dbd_stream_version;
+    *(uint32_t *) b->last = (uint32_t) resty_dbd_stream_version;
     b->last += sizeof(uint32_t);
 
     /* result type fixed to 0 */
@@ -445,7 +445,7 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
         return rds_col_type_bigint;
 
     case DRIZZLE_COLUMN_TYPE_INT24:
-        return rds_col_type_smallint;
+        return rds_col_type_integer;
 
     case DRIZZLE_COLUMN_TYPE_DATE:
         return rds_col_type_timestamp;
