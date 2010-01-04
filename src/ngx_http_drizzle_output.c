@@ -6,7 +6,7 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_output.h"
 #include "ngx_http_drizzle_processor.h"
-#include "ngx_http_resty_dbd_stream.h"
+#include "resty_dbd_stream.h"
 
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
