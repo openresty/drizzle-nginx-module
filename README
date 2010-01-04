@@ -230,6 +230,12 @@ TODO
         as an alternative approach to the simple round-robin.
     *   implement weighted round-robin algorithm for the
         upstream server clusters.
+    *   add the "max_idel_time" option to the "drizzle_server"
+        directive, so that the connection pool will automatically
+        release idle connections for the timeout you specify.
+    *   add the "min" option to the "drizzle_server" directive
+        so that the connection pool will automatically create
+        that number of connections and put them into the pool.
     *   implement the "drizzle_escape" directive so that one
         can do variable value escaping as well as simple type
         checking. For instance:
