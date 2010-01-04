@@ -120,8 +120,8 @@ Output
     For the HTTP response header part, the 200 OK status
     code should always be returned.
 
-    The Content-Type header is set to
-    application/x-resty-dbd-stream.
+    The Content-Type header MUST be set to
+    "application/x-resty-dbd-stream" (without quotes).
 
     And the driver generating this response is also set a
     X-Resty-DBD header. For instance, this
@@ -129,7 +129,8 @@ Output
 
         X-Resty-DBD-Module: drizzle 0.0.1
 
-    where 0.0.1 is this module's own version number.
+    where 0.0.1 is this module's own version number. This
+    X-Resty-DBD-Module header is optional though.
 
     Below is the HTTP response body part:
 
