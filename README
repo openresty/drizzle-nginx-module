@@ -107,6 +107,10 @@ Caveats
     * Directives like "server" MUST NOT be mixed with
       "drizzle_server" either.
 
+    * Upstream backends that don't use "drizzle_server" to
+      define server entries MUST NOT be used in the
+      "drizzle_pass" directive.
+
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
