@@ -46,18 +46,12 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     dp = u->peer.data;
 
     if ( ! ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
-        dd("it is not my peer");
+        ngx_log_error(NGX_LOG_ERR, c->log, 0,
+                       "drizzle: process events: it seems you "
+                       "are using a non-drizzle upstream backend"
+        );
 
-        if (dp == NULL) {
-            ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                           "drizzle: process events: peer data empty");
-
-            return NGX_ERROR;
-        }
-
-        /* XXX this is a hack just for working together with
-         * Maxim Dounin's ngx_http_upstream_keepalive module */
-        dp = ((ngx_http_upstream_faked_keepalive_peer_data_t *) dp)->data;
+        return NGX_ERROR;
     }
 
     dc = dp->drizzle_con;
