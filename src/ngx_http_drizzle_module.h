@@ -7,6 +7,9 @@
 
 #include <libdrizzle/drizzle_client.h>
 
+#define ngx_http_drizzle_module_version 1
+#define ngx_http_drizzle_module_version_string "0.0.1"
+
 extern ngx_module_t ngx_http_drizzle_module;
 
 typedef struct {
@@ -20,6 +23,8 @@ typedef struct {
 
     ngx_msec_t                          recv_cols_timeout;
     ngx_msec_t                          recv_rows_timeout;
+
+    ngx_flag_t                          enable_module_header;
 
 } ngx_http_drizzle_loc_conf_t;
 

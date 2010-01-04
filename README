@@ -123,7 +123,7 @@ Output
     X-Resty-DBD header. For instance, this
     module adds the following output header:
 
-        X-Resty-DBD: drizzle 0.0.1
+        X-Resty-DBD-Module: drizzle 0.0.1
 
     where 0.0.1 is this module's own version number.
 

@@ -6,7 +6,30 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_output.h"
 #include "ngx_http_drizzle_processor.h"
+#include "ngx_http_drizzle_util.h"
 #include "resty_dbd_stream.h"
+
+#define ngx_http_drizzle_module_header_key "X-Resty-DBD-Module"
+
+#define ngx_http_drizzle_module_header_key_len  \
+    (sizeof(ngx_http_drizzle_module_header_key) - 1)
+
+#define ngx_http_drizzle_module_header_val \
+    "ngx_drizzle " \
+      ngx_http_drizzle_module_version_string
+
+#define ngx_http_drizzle_module_header_val_len \
+    (sizeof(ngx_http_drizzle_module_header_val) - 1)
+
+#define ngx_http_drizzle_module_header_key_len  \
+    (sizeof(ngx_http_drizzle_module_header_key) - 1)
+
+
+#define ngx_http_drizzle_content_type \
+    "application/x-resty-dbd-stream"
+
+#define ngx_http_drizzle_content_type_len \
+    (sizeof(ngx_http_drizzle_content_type) - 1)
 
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
@@ -153,24 +176,44 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 static ngx_int_t
 ngx_http_drizzle_output_chain(ngx_http_request_t *r, ngx_chain_t *cl)
 {
-    ngx_http_upstream_t         *u = r->upstream;
-    ngx_int_t                    rc;
+    ngx_http_upstream_t                    *u = r->upstream;
+    ngx_int_t                               rc;
+    ngx_str_t                               key, value;
+    ngx_http_drizzle_loc_conf_t            *dlcf;
 
     if ( ! u->header_sent ) {
         ngx_http_clear_content_length(r);
 
         r->headers_out.status = NGX_HTTP_OK;
 
+        /* set the Content-Type header */
+
         r->headers_out.content_type.data =
-            (u_char *) "application/x-resty-dbd-stream";
+            (u_char *) ngx_http_drizzle_content_type;
 
         r->headers_out.content_type.len =
-            sizeof("application/x-resty-dbd-stream") - 1;
+            ngx_http_drizzle_content_type_len;
 
         r->headers_out.content_type_len =
-            sizeof("application/x-resty-dbd-stream") - 1;
+            ngx_http_drizzle_content_type_len;
 
-        /* TODO: set the "X-Resty-DBD: drizzle 0.0.1" header */
+        dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+        if (dlcf->enable_module_header) {
+            /* set the X-Resty-DBD-Module header */
+
+            key.data = (u_char *) ngx_http_drizzle_module_header_key;
+            key.len  = ngx_http_drizzle_module_header_key_len;
+
+            value.data = (u_char *) ngx_http_drizzle_module_header_val;
+            value.len = ngx_http_drizzle_module_header_val_len;
+
+            rc = ngx_http_drizzle_set_header(r, &key, &value);
+
+            if (rc != NGX_OK) {
+                return NGX_ERROR;
+            }
+        }
 
         rc = ngx_http_send_header(r);
 

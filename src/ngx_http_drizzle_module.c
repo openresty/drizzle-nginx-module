@@ -63,28 +63,39 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         0,
         NULL },
     { ngx_string("drizzle_connect_timeout"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.connect_timeout),
       NULL },
     { ngx_string("drizzle_send_query_timeout"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
       NULL },
     { ngx_string("drizzle_recv_cols_timeout"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
       NULL },
     { ngx_string("drizzle_recv_rows_timeout"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
+      NULL },
+    { ngx_string("drizzle_module_header"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, enable_module_header),
       NULL },
 
     ngx_null_command
@@ -140,6 +151,8 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
     conf->recv_cols_timeout = NGX_CONF_UNSET_MSEC;
     conf->recv_rows_timeout = NGX_CONF_UNSET_MSEC;
 
+    conf->enable_module_header = NGX_CONF_UNSET;
+
     /* the hardcoded values */
     conf->upstream.cyclic_temp_file = 0;
     conf->upstream.buffering = 0;
@@ -168,6 +181,9 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_drizzle_loc_conf_t *prev = parent;
     ngx_http_drizzle_loc_conf_t *conf = child;
+
+    ngx_conf_merge_value(conf->enable_module_header,
+            prev->enable_module_header, 1);
 
     ngx_conf_merge_msec_value(conf->upstream.connect_timeout,
                               prev->upstream.connect_timeout, 60000);

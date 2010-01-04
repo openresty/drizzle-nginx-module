@@ -3,6 +3,13 @@
 
 #include "ddebug.h"
 
+#include <nginx.h>
+#include <ngx_core.h>
+#include <ngx_http.h>
+
+ngx_int_t ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
+        ngx_str_t *value);
+
 void ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc);
 

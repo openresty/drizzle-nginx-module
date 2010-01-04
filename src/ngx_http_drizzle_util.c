@@ -9,6 +9,64 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
+ngx_int_t
+ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
+        ngx_str_t *value)
+{
+    ngx_table_elt_t             *h;
+    ngx_list_part_t             *part;
+    ngx_uint_t                  i;
+
+    dd("entered set_header");
+
+    part = &r->headers_out.headers.part;
+    h = part->elts;
+
+    for (i = 0; /* void */; i++) {
+
+        if (i >= part->nelts) {
+            if (part->next == NULL) {
+                break;
+            }
+
+            part = part->next;
+            h = part->elts;
+            i = 0;
+        }
+
+        if (h[i].key.len == key->len
+                && ngx_strncasecmp(h[i].key.data,
+                    key->data,
+                    h[i].key.len) == 0)
+        {
+            if (value->len == 0) {
+                h[i].hash = 0;
+            }
+
+            h[i].value = *value;
+
+            return NGX_OK;
+        }
+    }
+
+    if (value->len == 0) {
+        return NGX_OK;
+    }
+
+    h = ngx_list_push(&r->headers_out.headers);
+
+    if (h == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    h->hash = 1;
+    h->key = *key;
+    h->value = *value;
+
+    return NGX_OK;
+}
+
+
 /* the following functions are copied directly from
    ngx_http_upstream.c in nginx 0.8.30, just because
    they're static. sigh. */
