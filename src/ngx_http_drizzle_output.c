@@ -11,7 +11,7 @@
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
 
-static ngx_http_rds_col_type_t ngx_http_drizzle_std_col_type(
+static rds_col_type_t ngx_http_drizzle_std_col_type(
         drizzle_column_type_t col_type);
 
 
@@ -411,7 +411,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 }
 
 
-static ngx_http_rds_col_type_t
+static rds_col_type_t
 ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
 {
     dd("drizzle col type: %d", col_type);

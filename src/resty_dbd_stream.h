@@ -14,7 +14,7 @@ enum {
     rds_rough_col_type_float = 1 << 14,
     rds_rough_col_type_str = 2 << 14,
     rds_rough_col_type_bool = 3 << 14
-} ngx_http_rds_rough_col_type_t;
+} rds_rough_col_type_t;
 
 typedef enum {
     rds_col_type_unknown = 0 | rds_rough_col_type_str,
@@ -41,7 +41,7 @@ typedef enum {
     /* our additions */
     rds_col_type_blob = 19 | rds_rough_col_type_str
 
-} ngx_http_rds_col_type_t;
+} rds_col_type_t;
 
 #endif /* RESTY_DBD_STREAME_H */
 
