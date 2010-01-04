@@ -1,5 +1,0 @@
-* clean up code
-* timeout for database connect / query / data receiving
-* support multiple statements query / response
-* implement efficent db connection pool (hard...need more thinkings)
-

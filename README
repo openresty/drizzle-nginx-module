@@ -183,10 +183,6 @@ Output
         * each field in each row (if any) but the field data
           can span multiple bufs
 
-Status
-    This module is highly experimental and under very active
-    development.
-
 Installation
     You should first install libdrizzle which can be obtained
     from here:
@@ -223,6 +219,40 @@ Compatibility
 
     If you find that any particular version of Nginx above 0.7.44 does not
     work with this module, please consider reporting a bug.
+
+TODO
+    *   implement the "drizzle_upstream_next" mechanism for
+        failover support.
+    *   add support for multiple "drizzle_query" directives
+        in a single location.
+    *   provide a hash-by-key algorithm for the upstream
+        server clusters.
+        as an alternative approach to the simple round-robin.
+    *   implement weighted round-robin algorithm for the
+        upstream server clusters.
+    *   implement the "drizzle_escape" directive so that one
+        can do variable value escaping as well as simple type
+        checking. For instance:
+
+            drizzle_escape $model table;
+            drizzle_escape $col column;
+            drizzle_escape $val integer;
+            drizzle_query "select * from $model where $col > $val";
+
+    *   add "subrequest in memory" support so that this module
+        can be used with the ngx_eval module. For instance:
+
+            eval $res {
+               drizzle_escape $arg_user;
+               drizzle_escape $arg_pass;
+               drizzle_query "select count(1) from users
+                    where user=$arg_user and password=$arg_pass";
+               drizzle_pass backend;
+            };
+            if ($res ~ '...') {
+                return 403;
+            }
+            ....
 
 Authors
     chaoslawful (王晓哲)
