@@ -269,6 +269,8 @@ TODO
                 return 403;
             }
             ....
+    *   Completed the "drizzle_dbname" directive's implementation
+        such that we can switch dbname on a per-request basis.
 
 Authors
     chaoslawful (王晓哲)
