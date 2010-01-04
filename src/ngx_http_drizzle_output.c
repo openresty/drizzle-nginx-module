@@ -82,9 +82,9 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     *b->last++ = 1;
 #endif
 
-    /* format version 0.0.1 */
+    /* RDS format version */
 
-    *(uint32_t *) b->last = 1;
+    *(uint32_t *) b->last = resty_dbd_stream_version;
     b->last += sizeof(uint32_t);
 
     /* result type fixed to 0 */

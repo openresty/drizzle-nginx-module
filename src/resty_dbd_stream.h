@@ -1,6 +1,18 @@
 #ifndef RESTY_DBD_STREAME_H
 #define RESTY_DBD_STREAME_H
 
+#define resty_dbd_stream_version ((uint32_t) 1)
+#define resty_dbd_stream_version_string "0.0.1"
+
+enum {
+    rds_rough_col_type_int = 0 << 14,
+    rds_rough_col_type_float = 1 << 14,
+    rds_rough_col_type_str = 2 << 14,
+    rds_rough_col_type_bool = 3 << 14
+
+} rds_rough_col_type_t;
+
+
 /* The following types (or spellings thereof) are specified
  * by SQL:
  * bigint, bit, bit varying, boolean, char, character varying,
@@ -8,13 +20,6 @@
  * interval, numeric, decimal, real, smallint,
  * time (with or without time zone),
  * timestamp (with or without time zone), xml */
-
-enum {
-    rds_rough_col_type_int = 0 << 14,
-    rds_rough_col_type_float = 1 << 14,
-    rds_rough_col_type_str = 2 << 14,
-    rds_rough_col_type_bool = 3 << 14
-} rds_rough_col_type_t;
 
 typedef enum {
     rds_col_type_unknown = 0 | rds_rough_col_type_str,
