@@ -111,7 +111,7 @@ Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
     driver modules like ngx_postgresql and ngx_oracle.
-    This data format is named "Resty DBD Stream".
+    This data format is named "Resty DBD Stream" (RDS).
 
     For the HTTP response header part, the 200 OK status
     code should always be returned.
@@ -221,6 +221,11 @@ Compatibility
     work with this module, please consider reporting a bug.
 
 TODO
+    *   implement the "drizzle_max_output_size" directive.
+        When the RDS data is larger then the size specified,
+        the module will try to terminate the output as quickly
+        as possible but will still ensure the resulting
+        response body is still in valid RDS format.
     *   implement the "drizzle_upstream_next" mechanism for
         failover support.
     *   add support for multiple "drizzle_query" directives
