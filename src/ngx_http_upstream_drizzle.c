@@ -584,6 +584,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         goto invalid;
     }
 
+    c->log = pc->log;
     c->log_error = pc->log_error;
     c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
 
@@ -623,6 +624,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     dd("drizzle get peer: still connecting to remote");
 
     dp->state = state_db_connect;
+
+    c->log->action = "connecting to dirzzle upstream";
 
     return NGX_AGAIN;
 

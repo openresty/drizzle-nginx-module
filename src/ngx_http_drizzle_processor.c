@@ -72,6 +72,8 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         break;
 
     case state_db_idle: /* from connection pool */
+        c->log->action = "sending query to drizzle upstream";
+
     case state_db_send_query:
         rc = ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
         break;
@@ -140,6 +142,8 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
 
     /* ret == DRIZZLE_RETURN_OK */
 
+    c->log->action = "sending query to drizzle upstream";
+
     return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
 }
 
@@ -204,6 +208,8 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         return rc;
     }
 
+    c->log->action = "receiving result set columns from drizzle upstream";
+
     return ngx_http_upstream_drizzle_recv_cols(r, c, dp, dc);
 }
 
@@ -265,6 +271,9 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
             if (c->read->timer_set) {
                 ngx_del_timer(c->read);
             }
+
+            c->log->action = "receiving result set rows "
+                    "from drizzle upstream";
 
             return ngx_http_upstream_drizzle_recv_rows(r, c, dp, dc);
         }
@@ -407,6 +416,8 @@ ngx_int_t
 ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
         ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp)
 {
+    ngx_connection_t            *c;
+
     /* to persuade Maxim Dounin's ngx_http_upstream_keepalive
      * module to cache the current connection */
 
@@ -414,6 +425,10 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     u->length = 0;
     r->headers_out.status = NGX_HTTP_OK;
     u->headers_in.status_n = NGX_HTTP_OK;
+
+    c = u->peer.connection;
+
+    c->log->action = "being idle";
 
     /* reset the state machine */
     dp->state = state_db_idle;
