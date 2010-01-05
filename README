@@ -271,6 +271,8 @@ TODO
             ....
     *   Completed the "drizzle_dbname" directive's implementation
         such that we can switch dbname on a per-request basis.
+    *   Unix domain socket support in the "drizzle_server"
+        directive.
 
 Authors
     chaoslawful (王晓哲)
