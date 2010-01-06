@@ -3,7 +3,7 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(1);
+repeat_each(100);
 
 plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 2;
 
@@ -69,7 +69,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- ONLY
+
 
 
 === TEST 2: keep-alive
