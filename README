@@ -288,9 +288,9 @@ TODO
         Of course, regex constraints will require the pcre support in
         nginx.
     *   Make the "drizzle_query" directive reject variables that
-        have not processed by a drizzle_process directive. This
-        will pretect us from SQL injections. There will also be
-        an option ("strict=no") to disable such checks.
+        have not been processed by a drizzle_process directive.
+        This will pretect us from SQL injections. There will
+        also be an option ("strict=no") to disable such checks.
 
 Authors
     chaoslawful (王晓哲)
