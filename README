@@ -246,23 +246,25 @@ TODO
     *   add the "min" option to the "drizzle_server" directive
         so that the connection pool will automatically create
         that number of connections and put them into the pool.
-    *   implement the "drizzle_escape" directive so that one
-        can do variable value escaping as well as simple type
-        checking. For instance:
+    *   implement the "drizzle_quote" directive so that one
+        can do variable value escaping and quoting as well
+        as simple type checking. For instance:
 
-            drizzle_escape $model table;
-            drizzle_escape $col column;
-            drizzle_escape $val integer;
+            drizzle_quote $model table;
+            drizzle_quote $col column;
+            drizzle_quote $val integer;
             drizzle_query "select * from $model where $col > $val";
 
     *   add "subrequest in memory" support so that this module
         can be used with the ngx_eval module. For instance:
 
             eval $res {
-               drizzle_escape $arg_user;
-               drizzle_escape $arg_pass;
+               drizzle_quote $arg_user;
+               drizzle_quote $arg_pass;
+               drizzle_quote $arg_order keyword;  # asc or desc
                drizzle_query "select count(1) from users
-                    where user=$arg_user and password=$arg_pass";
+                    where user=$arg_user and password=$arg_pass
+                    order by id $arg_order";
                drizzle_pass backend;
             };
             if ($res ~ '...') {
@@ -273,6 +275,18 @@ TODO
         such that we can switch dbname on a per-request basis.
     *   Unix domain socket support in the "drizzle_server"
         directive.
+    *   Introduce a "drizzle_type" diretive to allow the user to
+        define custom types to be used in the "drizzle_quote"
+        directive. For example:
+
+            drizzle_type email
+                '^[-_A-Za-z0-9.]+\@[-_A-Za-z0-9.]+$' # regex constraint
+                inherit=string;  # parent type
+            drizzle_type $arg_email email;
+            drizzle_query "select * from users where email = $arg_email";
+
+        Of course, regex constraints will require the pcre support in
+        nginx.
 
 Authors
     chaoslawful (王晓哲)
