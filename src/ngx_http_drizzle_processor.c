@@ -38,12 +38,12 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     drizzle_con_st                              *dc;
     ngx_int_t                                    rc;
 
-    dd("drizzle process events");
-
     u = r->upstream;
     c = u->peer.connection;
 
     dp = u->peer.data;
+
+    dd("drizzle process events, state: %d", dp->state);
 
     if ( ! ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
@@ -64,7 +64,11 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
      * by the nginx core can play well enough with poll().
      * */
 
+    dd("before con wait");
+
     drizzle_con_wait(dc->drizzle);
+
+    dd("after con wait");
 
     switch (dp->state) {
     case state_db_connect:
@@ -91,6 +95,8 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
                        "drizzle: unknown state: %d", (int) dp->state);
         return NGX_ERROR;
     }
+
+    dd("rc == %d", rc);
 
     if (rc == NGX_ERROR) {
         ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
@@ -301,6 +307,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
     dd("drizzle recv rows");
 
     for (;;) {
+        dd("row: %d", (int) dp->drizzle_row);
         if (dp->drizzle_row == 0) {
             dp->drizzle_row = drizzle_row_read(&dp->drizzle_res, &ret);
 
@@ -349,8 +356,8 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
         /* dp->drizzle_row != 0 */
 
         for (;;) {
-            /* here we rely on libdrizzle to buffer each field
-             * for us */
+            dd("field: ");
+
             field = drizzle_field_read(&dp->drizzle_res, &offset, &len,
                                       &total, &ret);
 

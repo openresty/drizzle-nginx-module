@@ -69,6 +69,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
+--- timeout: 15
 
 
 

@@ -387,7 +387,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         size_t len, size_t total, drizzle_field_t field)
 {
     ngx_http_upstream_t                 *u = r->upstream;
-    size_t                               size;
+    size_t                               size = 0;
     ngx_buf_t                           *b;
     ngx_chain_t                         *cl;
     ngx_int_t                            rc;
@@ -438,6 +438,9 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     }
 
     if (b->last != b->end) {
+        dd("offset %d, len %d, size %d", (int) offset,
+                (int) len, (int) size);
+
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                "diizzle: FATAL: output field buffer error");
 
