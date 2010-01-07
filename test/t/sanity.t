@@ -169,7 +169,7 @@ GET /mysql
 
 
 
-=== TEST 3: select empty result
+=== TEST 4: select empty result
 little-endian systems only
 
 db init:
@@ -214,7 +214,8 @@ GET /mysql
 "\x{00}"  # row list terminator
 
 
-=== TEST 3: update & no module header
+
+=== TEST 5: update & no module header
 little-endian systems only
 
 db init:
