@@ -37,6 +37,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     ngx_http_upstream_drizzle_peer_data_t       *dp;
     drizzle_con_st                              *dc;
     ngx_int_t                                    rc;
+    drizzle_return_t                             ret;
 
     u = r->upstream;
     c = u->peer.connection;
@@ -66,7 +67,19 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     dd("before con wait");
 
-    drizzle_con_wait(dc->drizzle);
+    dd("libdrizzle poll() timeout: %d", dc->drizzle->timeout);
+
+    ret = drizzle_con_wait(dc->drizzle);
+
+    if (ret == DRIZZLE_RETURN_TIMEOUT) {
+        /* oh, we may hit a bug in libdrizzle here that
+           libdrizzle's state machine seems to assume
+           certain data section to be in a single packet */
+        ngx_log_error(NGX_LOG_ERR, c->log, 0,
+                       "drizzle: it seems I've hit a bug in libdrizzle. "
+                       "its poll returns timeout");
+        return NGX_ERROR;
+    }
 
     dd("after con wait");
 
