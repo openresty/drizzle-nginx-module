@@ -231,21 +231,28 @@ TODO
         the module will try to terminate the output as quickly
         as possible but will still ensure the resulting
         response body is still in valid RDS format.
+
     *   implement the "drizzle_upstream_next" mechanism for
         failover support.
+
     *   add support for multiple "drizzle_query" directives
         in a single location.
+
     *   provide a hash-by-key algorithm for the upstream
         server clusters.
         as an alternative approach to the simple round-robin.
+
     *   implement weighted round-robin algorithm for the
         upstream server clusters.
+
     *   add the "max_idle_time" option to the "drizzle_server"
         directive, so that the connection pool will automatically
         release idle connections for the timeout you specify.
+
     *   add the "min" option to the "drizzle_server" directive
         so that the connection pool will automatically create
         that number of connections and put them into the pool.
+
     *   implement the "drizzle_quote" directive so that one
         can do variable value escaping and quoting as well
         as simple type checking. For instance:
@@ -271,10 +278,13 @@ TODO
                 return 403;
             }
             ....
+
     *   Completed the "drizzle_dbname" directive's implementation
         such that we can switch dbname on a per-request basis.
+
     *   Unix domain socket support in the "drizzle_server"
         directive.
+
     *   Introduce a "drizzle_type" diretive to allow the user to
         define custom types to be used in the "drizzle_quote"
         directive. For example:
@@ -287,10 +297,19 @@ TODO
 
         Of course, regex constraints will require the pcre support in
         nginx.
+
     *   Make the "drizzle_query" directive reject variables that
         have not been processed by a drizzle_process directive.
         This will pretect us from SQL injections. There will
         also be an option ("strict=no") to disable such checks.
+
+Known Issues
+    *   When the remote mysql server is not listening, the nginx
+        worker may crash. this will be investigated soon.
+
+    *   When mysql's packets are splitted to 1 ~ 6 bytes long,
+        the state machine in libdrizzle may go wrong. This is
+        very likely a bug in libdrizzle.
 
 Authors
     chaoslawful (王晓哲)
