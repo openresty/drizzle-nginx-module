@@ -508,6 +508,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     dp->drizzle_con = dc;
 
+    dd("creating drizzle con");
+
     (void) drizzle_con_create(&dscf->drizzle, dc);
 
     /* set protocol for the drizzle connection */
@@ -648,17 +650,36 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf = dp->srv_conf;
+    ngx_event_t                             *rev, *wev;
 
     dd("drizzle free peer");
 
-    drizzle_result_free(&dp->drizzle_res);
+    if (dp->drizzle_con && dp->drizzle_res.con) {
+        dd("before drizzle result free");
+
+        dd("%p vs. %p", dp->drizzle_res.con, dp->drizzle_con);
+
+        drizzle_result_free(&dp->drizzle_res);
+
+        dd("after drizzle result free");
+    }
 
     if (dscf->max_cached) {
         ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
     }
 
     if (pc->connection) {
-        /* actually free the drizzle connection */
+        dd("actually free the drizzle connection");
+
+        rev = pc->connection->read;
+        if (rev->timer_set) {
+            ngx_del_timer(rev);
+        }
+
+        wev = pc->connection->write;
+        if (wev->timer_set) {
+            ngx_del_timer(wev);
+        }
 
         ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
                 dp->drizzle_con, dscf);
