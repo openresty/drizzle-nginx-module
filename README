@@ -304,9 +304,6 @@ TODO
         also be an option ("strict=no") to disable such checks.
 
 Known Issues
-    *   When the remote mysql server is not listening, the nginx
-        worker may crash. this will be investigated soon.
-
     *   When mysql's packets are splitted to 1 ~ 6 bytes long,
         the state machine in libdrizzle may go wrong. This is
         very likely a bug in libdrizzle.
