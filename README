@@ -306,7 +306,9 @@ TODO
 Known Issues
     *   When mysql's packets are splitted to 1 ~ 6 bytes long,
         the state machine in libdrizzle may go wrong. This is
-        very likely a bug in libdrizzle.
+        very likely a bug in libdrizzle. When this happens,
+        ngx_drizzle will throw out the 502 error page
+        immediately and put an error message in your error.log.
 
 Authors
     chaoslawful (王晓哲)
