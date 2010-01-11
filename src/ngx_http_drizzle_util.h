@@ -19,6 +19,8 @@ void ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
 ngx_int_t ngx_http_upstream_drizzle_test_connect(ngx_connection_t *c);
 
 
+#define ngx_http_drizzle_nelems(x) (sizeof(x) / sizeof(x[0]))
+
 #ifndef ngx_str3cmp
 
 #  define ngx_str3cmp(m, c0, c1, c2)                                       \

@@ -21,10 +21,17 @@ typedef struct {
     /* SQL query to be executed */
     ngx_http_complex_value_t            *query;
 
-    ngx_msec_t                          recv_cols_timeout;
-    ngx_msec_t                          recv_rows_timeout;
+    ngx_msec_t                           recv_cols_timeout;
+    ngx_msec_t                           recv_rows_timeout;
 
-    ngx_flag_t                          enable_module_header;
+    ngx_flag_t                           enable_module_header;
+
+    /* for quoting */
+    ngx_array_t                         *vars_to_quote;
+                /* of ngx_http_drizzle_var_to_quote_t */
+
+    ngx_array_t                         *user_types;
+                /* of ngx_http_drizzle_var_type_t */
 
 } ngx_http_drizzle_loc_conf_t;
 

@@ -46,3 +46,7 @@ keepalive
 reindex
 src/keepalive.c
 src/keepalive.h
+src/checker.h
+src/checker.c
+src/quoting.h
+src/quoting.c
