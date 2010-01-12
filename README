@@ -311,8 +311,8 @@ Known Issues
         page immediately and put an error message in your error.log.
 
 Authors
-    chaoslawful (王晓哲)
-    agentzh (章亦春)
+    chaoslawful (王晓哲) <chaoslawful at gmail dot com>,
+    agentzh (章亦春) <agentzh at gmail dot com>.
 
 Copyright & License
     The implementation of the builtin connection pool has borrowed
