@@ -25,12 +25,6 @@
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
 
-#define ngx_http_drizzle_content_type \
-    "application/x-resty-dbd-stream"
-
-#define ngx_http_drizzle_content_type_len \
-    (sizeof(ngx_http_drizzle_content_type) - 1)
-
 static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
         ngx_chain_t *cl);
 
@@ -189,13 +183,13 @@ ngx_http_drizzle_output_chain(ngx_http_request_t *r, ngx_chain_t *cl)
         /* set the Content-Type header */
 
         r->headers_out.content_type.data =
-            (u_char *) ngx_http_drizzle_content_type;
+            (u_char *) rds_content_type;
 
         r->headers_out.content_type.len =
-            ngx_http_drizzle_content_type_len;
+            rds_content_type_len;
 
         r->headers_out.content_type_len =
-            ngx_http_drizzle_content_type_len;
+            rds_content_type_len;
 
         dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 

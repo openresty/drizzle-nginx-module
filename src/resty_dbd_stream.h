@@ -4,6 +4,13 @@
 #define resty_dbd_stream_version 1
 #define resty_dbd_stream_version_string "0.0.1"
 
+#define rds_content_type \
+    "application/x-resty-dbd-stream"
+
+#define rds_content_type_len \
+    (sizeof(rds_content_type) - 1)
+
+
 enum {
     rds_rough_col_type_int = 0 << 14,
     rds_rough_col_type_float = 1 << 14,
