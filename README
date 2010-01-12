@@ -189,8 +189,8 @@ Output
           can span multiple bufs
 
 Installation
-    You should first install libdrizzle which can be obtained
-    from here:
+    You should first install the latest libdrizzle which can be
+    obtained from here (at least libdrizzle 0.6 is required):
 
         https://launchpad.net/libdrizzle
 
