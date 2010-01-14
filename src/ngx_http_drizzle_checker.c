@@ -1,4 +1,4 @@
-#define DDEBUG 1
+#define DDEBUG 2
 
 #include "ngx_http_drizzle_quoting.h"
 
