@@ -40,7 +40,7 @@ X-Resty-DBD-Module: ngx_drizzle \d+\.\d+\.\d+
 Content-Type: application/x-resty-dbd-stream
 --- response_body eval
 "\x{00}". # endian
-"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -57,7 +57,6 @@ Content-Type: application/x-resty-dbd-stream
 "\x{fc}\x{00}".  # drizzle col type
 "\x{04}\x{00}".  # col name len
 "name".  # col name data
-"\x{00}\x{00}".  # col list terminator
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
 "2".  # field data
@@ -98,7 +97,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -115,7 +114,6 @@ GET /mysql
 "\x{fc}\x{00}".  # drizzle col type
 "\x{04}\x{00}".  # col name len
 "name".  # col name data
-"\x{00}\x{00}".  # col list terminator
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
 "2".  # field data
@@ -155,7 +153,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -163,9 +161,7 @@ GET /mysql
 "Rows matched: 1  Changed: 0  Warnings: 0".  # driver errstr data
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
-"\x{00}\x{00}".  # col count
-"\x{00}\x{00}".  # col list terminator
-"\x{00}"  # row list terminator
+"\x{00}\x{00}"  # col count
 
 
 
@@ -193,7 +189,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -210,7 +206,6 @@ GET /mysql
 "\x{fc}\x{00}".  # drizzle col type
 "\x{04}\x{00}".  # col name len
 "name".  # col name data
-"\x{00}\x{00}".  # col list terminator
 "\x{00}"  # row list terminator
 
 
@@ -243,7 +238,7 @@ X-Resty-DBD-Module:
 Content-Type: application/x-resty-dbd-stream
 --- response_body eval
 "\x{00}". # endian
-"\x{01}\x{00}\x{00}\x{00}". # format version 0.0.1
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -251,7 +246,5 @@ Content-Type: application/x-resty-dbd-stream
 "Rows matched: 1  Changed: 0  Warnings: 0".  # driver errstr data
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
-"\x{00}\x{00}".  # col count
-"\x{00}\x{00}".  # col list terminator
-"\x{00}"  # row list terminator
+"\x{00}\x{00}"  # col count
 

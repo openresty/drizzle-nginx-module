@@ -1,8 +1,8 @@
 #ifndef RESTY_DBD_STREAME_H
 #define RESTY_DBD_STREAME_H
 
-#define resty_dbd_stream_version 1
-#define resty_dbd_stream_version_string "0.0.1"
+#define resty_dbd_stream_version 2
+#define resty_dbd_stream_version_string "0.0.2"
 
 #define rds_content_type \
     "application/x-resty-dbd-stream"

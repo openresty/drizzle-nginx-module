@@ -65,12 +65,6 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
          + sizeof(uint16_t)     /* column count */
          ;
 
-    if (col_count == 0) {
-        size += sizeof(uint16_t)    /* col list terminator */
-              + sizeof(uint8_t)     /* row list terminator */
-              ;
-    }
-
     cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
 
     if (cl == NULL) {
@@ -138,18 +132,9 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     *(uint16_t *) b->last = col_count;
     b->last += sizeof(uint16_t);
 
-    if (col_count == 0) {
-        /* column list terminator */
-        *(uint16_t *) b->last = (uint16_t) 0;
-        b->last += sizeof(uint16_t);
-
-        /* row list terminator */
-        *b->last++ = 0;
-    }
-
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: output result header buffer error");
+               "drizzle: FATAL: output result header buffer error");
         return NGX_ERROR;
     }
 
@@ -160,6 +145,8 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     }
 
     if (col_count == 0) {
+        /* we suppress row terminator here when there's no columns */
+
         return ngx_http_upstream_drizzle_done(r, u, u->peer.data);
     }
 
@@ -243,22 +230,19 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
     ngx_chain_t                         *cl;
     ngx_int_t                            rc;
 
-    if (col != NULL) {
-        col_type = drizzle_column_type(col);
-        col_name = drizzle_column_name(col);
-        col_name_len = (uint16_t) strlen(col_name);
+    if (col == NULL) {
+        return NGX_ERROR;
     }
 
-    if (col == NULL) {
-        /* terminator */
-        size = sizeof(uint16_t);
-    } else {
-        size = sizeof(uint16_t)     /* std col type */
-             + sizeof(uint16_t)     /* driver-specific col type */
-             + sizeof(uint16_t)     /* col name str len */
-             + col_name_len         /* col name str len */
-             ;
-    }
+    col_type = drizzle_column_type(col);
+    col_name = drizzle_column_name(col);
+    col_name_len = (uint16_t) strlen(col_name);
+
+    size = sizeof(uint16_t)     /* std col type */
+         + sizeof(uint16_t)     /* driver-specific col type */
+         + sizeof(uint16_t)     /* col name str len */
+         + col_name_len         /* col name str len */
+         ;
 
     cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
 
@@ -282,38 +266,32 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
     b->end = b->start + size;
     b->pos = b->last = b->start;
 
-    if (col == NULL) {
-        *(uint16_t *) b->last = 0; /* 16-bit 0 terminator */
-        b->last += sizeof(uint16_t);
+    /* std column type */
 
-    } else {
-        /* std column type */
-
-        std_col_type = (uint16_t) ngx_http_drizzle_std_col_type(col_type);
+    std_col_type = (uint16_t) ngx_http_drizzle_std_col_type(col_type);
 
 #if 0
-        dd("std col type for %s: %d, %d (%d, %d, %d)",
-                col_name, std_col_type, rds_col_type_blob,
-                rds_rough_col_type_str,
-                rds_rough_col_type_str << 14,
-                (uint16_t) (19 | (rds_rough_col_type_str << 14))
-                );
+    dd("std col type for %s: %d, %d (%d, %d, %d)",
+            col_name, std_col_type, rds_col_type_blob,
+            rds_rough_col_type_str,
+            rds_rough_col_type_str << 14,
+            (uint16_t) (19 | (rds_rough_col_type_str << 14))
+            );
 #endif
 
-        *(uint16_t *) b->last = std_col_type;
-        b->last += sizeof(uint16_t);
+    *(uint16_t *) b->last = std_col_type;
+    b->last += sizeof(uint16_t);
 
-        /* drizzle column type */
-        *(uint16_t *) b->last = col_type;
-        b->last += sizeof(uint16_t);
+    /* drizzle column type */
+    *(uint16_t *) b->last = col_type;
+    b->last += sizeof(uint16_t);
 
-        /* column name string length */
-        *(uint16_t *) b->last = col_name_len;
-        b->last += sizeof(uint16_t);
+    /* column name string length */
+    *(uint16_t *) b->last = col_name_len;
+    b->last += sizeof(uint16_t);
 
-        /* column name string data */
-        b->last = ngx_copy(b->last, col_name, col_name_len);
-    }
+    /* column name string data */
+    b->last = ngx_copy(b->last, col_name, col_name_len);
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,

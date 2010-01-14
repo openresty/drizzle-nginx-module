@@ -132,7 +132,7 @@ Output
     where 0.0.1 is this module's own version number. This
     X-Resty-DBD-Module header is optional though.
 
-    Below is the HTTP response body part:
+    Below is the HTTP response body format (version 0.0.2):
 
     Header part
         uint8_t        endian type (1 means big-endian and little
@@ -158,7 +158,10 @@ Output
 
     Body part
 
-      0*Column (terminated by 16-bit 0)
+      when the "column count" field in the Header part
+      is zero, then the whole body part is omitted.
+
+      0*Column (number of columns is determined by "column count")
 
         uint16_t        non-zero value for standard column type
                         code and for the column list

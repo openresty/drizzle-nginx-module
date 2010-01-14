@@ -276,17 +276,14 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
         /* ret == DRIZZLE_RETURN_OK */
 
-        rc = ngx_http_drizzle_output_col(r, col);
-
         if (col) {
+            rc = ngx_http_drizzle_output_col(r, col);
             drizzle_column_free(col);
-        }
 
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-            return rc;
-        }
-
-        if (col == NULL) { /* after the last column */
+            if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+                return rc;
+            }
+        } else { /* after the last column */
             if (c->read->timer_set) {
                 ngx_del_timer(c->read);
             }
