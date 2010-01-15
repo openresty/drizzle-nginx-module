@@ -58,9 +58,9 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 
     drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
 
-    /* we use 0 timeout for the underlying poll event model
+    /* we use 1ms timeout for the underlying poll event model
      * used by libdrizzle itself. */
-    drizzle_set_timeout(&conf->drizzle, 0);
+    drizzle_set_timeout(&conf->drizzle, 1);
 
     return conf;
 }
@@ -631,7 +631,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     dp->state = state_db_connect;
 
-    c->log->action = "connecting to dirzzle upstream";
+    c->log->action = "connecting to drizzle upstream";
 
     return NGX_AGAIN;
 
