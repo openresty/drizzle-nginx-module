@@ -31,7 +31,7 @@ enum {
 typedef enum {
     rds_col_type_unknown = 0 | rds_rough_col_type_str,
     rds_col_type_bigint = 1 | rds_rough_col_type_int,
-    rds_col_type_bit = 2 | rds_rough_col_type_bool,
+    rds_col_type_bit = 2 | rds_rough_col_type_str,
     rds_col_type_bit_varying = 3 | rds_rough_col_type_str,
 
     rds_col_type_bool = 4 | rds_rough_col_type_bool,
