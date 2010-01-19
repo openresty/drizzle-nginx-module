@@ -117,7 +117,7 @@ Output
     driver modules like ngx_postgresql and ngx_oracle.
     This data format is named "Resty DBD Stream" (RDS).
 
-    If you're a web app developers, you may be more interested
+    If you're a web app developer, you may be more interested
     in using a source filter module like ngx_rds_json module
     ( http://github.com/agentzh/rds-json-nginx-module ) to
     obtain JSON output.
