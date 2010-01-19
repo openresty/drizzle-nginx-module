@@ -117,6 +117,11 @@ Output
     driver modules like ngx_postgresql and ngx_oracle.
     This data format is named "Resty DBD Stream" (RDS).
 
+    If you're a web app developers, you may be more interested
+    in using a source filter module like ngx_rds_json module
+    ( http://github.com/agentzh/rds-json-nginx-module ) to
+    obtain JSON output.
+
     For the HTTP response header part, the 200 OK status
     code should always be returned.
 
@@ -313,6 +318,10 @@ Known Issues
         this happens, ngx_drizzle will throw out the 502 error
         page immediately and put an error message in your error.log.
 
+See Also
+    *   the ngx_rds_json module
+        ( http://github.com/agentzh/rds-json-nginx-module )
+
 Authors
     chaoslawful (王晓哲) <chaoslawful at gmail dot com>,
     agentzh (章亦春) <agentzh at gmail dot com>.
@@ -362,3 +371,4 @@ Copyright & License
     LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
