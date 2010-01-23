@@ -37,7 +37,9 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     ngx_http_upstream_drizzle_peer_data_t       *dp;
     drizzle_con_st                              *dc;
     ngx_int_t                                    rc;
+#if 0
     drizzle_return_t                             ret;
+#endif
 
     u = r->upstream;
     c = u->peer.connection;
@@ -57,6 +59,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     dc = dp->drizzle_con;
 
+#if 0
     /* libdrizzle uses standard poll() event constants
      * and depends on drizzle_con_wait() to set them.
      * we can directly call drizzle_con_wait() here to
@@ -80,6 +83,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
                        "its poll returns timeout");
         return NGX_ERROR;
     }
+#endif
 
     dd("after con wait");
 

@@ -9,6 +9,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
+
 ngx_int_t
 ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
         ngx_str_t *value)
