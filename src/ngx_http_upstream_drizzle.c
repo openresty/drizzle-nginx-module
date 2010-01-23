@@ -58,9 +58,9 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 
     drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
 
-    /* we use 1ms timeout for the underlying poll event model
+    /* we use 0 timeout for the underlying poll event model
      * used by libdrizzle itself. */
-    drizzle_set_timeout(&conf->drizzle, 1);
+    drizzle_set_timeout(&conf->drizzle, 0);
 
     return conf;
 }
