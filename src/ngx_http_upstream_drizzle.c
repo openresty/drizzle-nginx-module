@@ -735,9 +735,12 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
     }
 
     if (c) {
-        if (ngx_del_conn(c, NGX_CLOSE_EVENT) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERR, log, 0,
-                    "drizzle: failed to remove connection from nginx event pool!");
+        if (ngx_add_conn) {
+            if (ngx_del_conn(c, NGX_CLOSE_EVENT) != NGX_OK) {
+                ngx_log_error(NGX_LOG_ERR, log, 0,
+                    "drizzle: failed to remove connection from nginx event "
+                    "pool!");
+            }
         }
 
         ngx_free_connection(c);
