@@ -7,8 +7,8 @@
 
 #include <libdrizzle/drizzle_client.h>
 
-#define ngx_http_drizzle_module_version 5
-#define ngx_http_drizzle_module_version_string "0.0.5"
+#define ngx_http_drizzle_module_version 6
+#define ngx_http_drizzle_module_version_string "0.0.6"
 
 extern ngx_module_t ngx_http_drizzle_module;
 
