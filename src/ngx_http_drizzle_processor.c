@@ -113,7 +113,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    dd("rc == %d", rc);
+    dd("rc == %d", (int) rc);
 
     if (rc == NGX_ERROR) {
         ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
@@ -408,7 +408,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
             }
 
             if (field) {
-                dd("drizzle field: %.*s", len, field);
+                dd("drizzle field: %.*s", (int) len, field);
             }
         }
 

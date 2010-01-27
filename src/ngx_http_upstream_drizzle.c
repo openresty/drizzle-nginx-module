@@ -553,9 +553,9 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
             "user \"%.*s\", pass \"%.*s\", dc pass \"%s\", "
             "protocol %d",
             peer->host, (int) peer->port,
-            dbname.len, dbname.data,
-            peer->user.len, peer->user.data,
-            peer->password.len, peer->password.data,
+            (int) dbname.len, dbname.data,
+            (int) peer->user.len, peer->user.data,
+            (int) peer->password.len, peer->password.data,
             dc->password, (int) peer->protocol);
 
     ret = drizzle_con_connect(dc);
@@ -707,7 +707,7 @@ ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in)
 
     rc = ngx_http_drizzle_process_events(r);
 
-    dd("process events returns %d", rc);
+    dd("process events returns %d", (int) rc);
 
     /* discard the ret val from process events because
      * we can only return NGX_AGAIN here to prevent
