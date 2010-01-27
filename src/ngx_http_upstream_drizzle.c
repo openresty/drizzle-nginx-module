@@ -597,17 +597,21 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     rev = c->read;
     wev = c->write;
 
+    rev->log = pc->log;
+    wev->log = pc->log;
+
     /* register the connection with the drizzle fd into the
      * nginx event model */
 
-    if (ngx_add_conn == NULL) {
-        ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                "drizzle: no ngx_add_conn found in the nginx core");
-
-        goto invalid;
+    if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
+        rc = ngx_add_conn(c);
+    } else if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+        rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT);
+    } else {
+        rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT);
     }
 
-    if (ngx_add_conn(c) != NGX_OK) {
+    if (rc != NGX_OK) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "drizzle: failed to add connection into nginx event model");
 
@@ -736,12 +740,27 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
 
     if (c) {
         if (ngx_del_conn) {
-            if (ngx_del_conn(c, NGX_CLOSE_EVENT) != NGX_OK) {
-                ngx_log_error(NGX_LOG_ERR, log, 0,
-                    "drizzle: failed to remove connection from nginx event "
-                    "pool!");
+           ngx_del_conn(c, NGX_CLOSE_EVENT);
+        } else {
+            if (c->read->active || c->read->disabled) {
+                ngx_del_event(c->read, NGX_READ_EVENT, NGX_CLOSE_EVENT);
+            }
+
+            if (c->write->active || c->write->disabled) {
+                ngx_del_event(c->write, NGX_WRITE_EVENT, NGX_CLOSE_EVENT);
             }
         }
+
+        if (c->read->prev) {
+            ngx_delete_posted_event(c->read);
+        }
+
+        if (c->write->prev) {
+            ngx_delete_posted_event(c->write);
+        }
+
+        c->read->closed = 1;
+        c->write->closed = 1;
 
         ngx_free_connection(c);
     }
