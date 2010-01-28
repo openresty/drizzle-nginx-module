@@ -637,6 +637,15 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     c->log->action = "connecting to drizzle upstream";
 
+    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+        if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_CLEAR_EVENT) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
+                    "drizzle: failed to add connection into nginx event model");
+
+            goto invalid;
+        }
+    }
+
     return NGX_AGAIN;
 
 invalid:
