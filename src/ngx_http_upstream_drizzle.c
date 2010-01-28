@@ -663,7 +663,6 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf = dp->srv_conf;
-    ngx_event_t                             *rev, *wev;
 
     dd("drizzle free peer");
 
@@ -683,16 +682,6 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
 
     if (pc->connection) {
         dd("actually free the drizzle connection");
-
-        rev = pc->connection->read;
-        if (rev->timer_set) {
-            ngx_del_timer(rev);
-        }
-
-        wev = pc->connection->write;
-        if (wev->timer_set) {
-            ngx_del_timer(wev);
-        }
 
         ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
                 dp->drizzle_con, dscf);
@@ -740,6 +729,8 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
         ngx_connection_t *c, drizzle_con_st *dc,
         ngx_http_upstream_drizzle_srv_conf_t *dscf)
 {
+    ngx_event_t  *rev, *wev;
+
     dd("drizzle free peer connection");
 
     if (dc) {
@@ -748,28 +739,39 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
     }
 
     if (c) {
+        rev = c->read;
+        wev = c->write;
+
+        if (rev->timer_set) {
+            ngx_del_timer(rev);
+        }
+
+        if (wev->timer_set) {
+            ngx_del_timer(wev);
+        }
+
         if (ngx_del_conn) {
            ngx_del_conn(c, NGX_CLOSE_EVENT);
         } else {
-            if (c->read->active || c->read->disabled) {
-                ngx_del_event(c->read, NGX_READ_EVENT, NGX_CLOSE_EVENT);
+            if (rev->active || rev->disabled) {
+                ngx_del_event(rev, NGX_READ_EVENT, NGX_CLOSE_EVENT);
             }
 
-            if (c->write->active || c->write->disabled) {
-                ngx_del_event(c->write, NGX_WRITE_EVENT, NGX_CLOSE_EVENT);
+            if (wev->active || wev->disabled) {
+                ngx_del_event(wev, NGX_WRITE_EVENT, NGX_CLOSE_EVENT);
             }
         }
 
-        if (c->read->prev) {
-            ngx_delete_posted_event(c->read);
+        if (rev->prev) {
+            ngx_delete_posted_event(rev);
         }
 
-        if (c->write->prev) {
-            ngx_delete_posted_event(c->write);
+        if (wev->prev) {
+            ngx_delete_posted_event(wev);
         }
 
-        c->read->closed = 1;
-        c->write->closed = 1;
+        rev->closed = 1;
+        wev->closed = 1;
 
         ngx_free_connection(c);
     }
