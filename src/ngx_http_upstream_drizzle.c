@@ -1,6 +1,6 @@
 /* Copyright (C) agentzh */
 
-#define DDEBUG 0
+#define DDEBUG 1
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
@@ -604,10 +604,13 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
      * nginx event model */
 
     if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
+        dd("NGX_USE_RTSIG_EVENT");
         rc = ngx_add_conn(c);
     } else if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+        dd("NGX_USE_CLEAR_EVENT");
         rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT);
     } else {
+        dd("use other event...");
         rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT);
     }
 

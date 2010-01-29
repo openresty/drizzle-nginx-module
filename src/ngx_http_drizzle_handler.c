@@ -10,14 +10,6 @@
 
 /* for read/write event handlers */
 
-static void ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r,
-        ngx_flag_t read);
-
-static void ngx_http_drizzle_rev_handler(ngx_http_request_t *r,
-        ngx_http_upstream_t *u);
-
-static void ngx_http_drizzle_wev_handler(ngx_http_request_t *r,
-        ngx_http_upstream_t *u);
 
 static ngx_int_t ngx_http_drizzle_create_request(ngx_http_request_t *r);
 static ngx_int_t ngx_http_drizzle_reinit_request(ngx_http_request_t *r);
@@ -120,7 +112,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     r->main->count++;
 #endif
 
-    ngx_http_upstream_init(r);
+    ngx_http_upstream_dbd_init(r);
 
     /* override the read/write event handler to our own */
     u->write_event_handler = ngx_http_drizzle_wev_handler;
@@ -130,7 +122,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 }
 
 
-static void
+void
 ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_connection_t            *c;
@@ -164,7 +156,7 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 }
 
 
-static void
+void
 ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_connection_t            *c;
@@ -272,7 +264,7 @@ ngx_http_drizzle_input_filter(void *data, ssize_t bytes)
 }
 
 
-static void
+void
 ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r, ngx_flag_t read)
 {
     ngx_http_upstream_drizzle_peer_data_t       *dp;

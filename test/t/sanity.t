@@ -7,6 +7,7 @@ repeat_each(100);
 
 plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 2;
 
+worker_connections(1024);
 run_tests();
 
 no_diff();
@@ -68,8 +69,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- timeout: 15
-
+--- timeout: 60
 
 
 === TEST 2: keep-alive

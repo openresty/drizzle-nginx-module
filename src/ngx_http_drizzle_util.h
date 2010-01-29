@@ -8,6 +8,10 @@
 #include <ngx_http.h>
 
 
+void ngx_http_upstream_dbd_init(ngx_http_request_t *r);
+
+void ngx_http_upstream_dbd_init_request(ngx_http_request_t *r);
+
 ngx_int_t ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
         ngx_str_t *value);
 

@@ -146,6 +146,7 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     ret = drizzle_con_connect(dc);
 
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
+        dd("libdrizzle returned IO_WAIT while connecting");
         return NGX_AGAIN;
     }
 
