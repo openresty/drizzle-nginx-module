@@ -12,7 +12,7 @@ opts=$2
 cd nginx-$version/
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=/opt/nginx \
-          --add-module=$home/git/echo-nginx-module \
+          --add-module=$root/../echo-nginx-module \
           --add-module=$root $opts \
           --with-debug
           #--with-cc-opt="-g3 -O0"

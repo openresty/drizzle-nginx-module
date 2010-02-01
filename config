@@ -1,3 +1,19 @@
+ngx_feature="libdrizzle library"
+ngx_feature_name=
+ngx_feature_run=no
+ngx_feature_incs="#include <libdrizzle/drizzle_client.h>"
+ngx_feature_path=
+ngx_feature_libs="-ldrizzle"
+ngx_feature_test="drizzle_version();"
+. auto/feature
+
+if [ $ngx_found != yes ]; then
+ cat << END
+ $0: error: the ngx_drizzle addon requires the libdrizzle library.
+END
+ exit 1
+fi
+
 ngx_addon_name=ngx_http_drizzle_module
 HTTP_MODULES="$HTTP_MODULES ngx_http_drizzle_module"
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_http_drizzle_module.c $ngx_addon_dir/src/ngx_http_drizzle_handler.c $ngx_addon_dir/src/ngx_http_drizzle_processor.c $ngx_addon_dir/src/ngx_http_upstream_drizzle.c $ngx_addon_dir/src/ngx_http_drizzle_util.c $ngx_addon_dir/src/ngx_http_drizzle_output.c $ngx_addon_dir/src/ngx_http_drizzle_keepalive.c $ngx_addon_dir/src/ngx_http_drizzle_quoting.c $ngx_addon_dir/src/ngx_http_drizzle_checker.c"
