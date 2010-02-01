@@ -397,9 +397,11 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
     ngx_http_upstream_srv_conf_t   *uscf, **uscfp;
     ngx_http_upstream_main_conf_t  *umcf;
 
+#if defined(nginx_version) && nginx_version >= 8011
     if (r->aio) {
         return;
     }
+#endif
 
     u = r->upstream;
 
@@ -445,11 +447,16 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
         return;
     }
 
+#if defined(nginx_version) && nginx_version >= 8022
     u->peer.local = u->conf->local;
+#endif
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+#if defined(nginx_version) && nginx_version >= 8011
     u->output.alignment = clcf->directio_alignment;
+#endif
+
     u->output.pool = r->pool;
     u->output.bufs.num = 1;
     u->output.bufs.size = clcf->client_body_buffer_size;
