@@ -43,7 +43,7 @@ Synopsis
 
 Description
     This is an nginx upstream module integrating libdrizzle
-    (https://launchpad.net/libdrizzle) into nginx in an
+    ( https://launchpad.net/libdrizzle ) into nginx in an
     non-blocking and streamming way.
 
     Essentially it provides a very efficient and flexible way
