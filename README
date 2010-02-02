@@ -224,9 +224,9 @@ Installation
 Compatibility
     The following versions of Nginx should work with this module:
 
-    *   0.8.x (last tested version is 0.8.32)
+    *   0.8.x (last tested version is 0.8.33)
 
-    *   0.7.x >= 0.7.44 (last tested version is 0.7.64)
+    *   0.7.x >= 0.7.44 (last tested version is 0.7.65)
 
     Earlier versions of Nginx like 0.6.x and 0.5.x will *not* work.
 
