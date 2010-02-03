@@ -33,6 +33,8 @@ typedef struct {
     ngx_array_t                         *user_types;
                 /* of ngx_http_drizzle_var_type_t */
 
+    ngx_http_complex_value_t            *complex_target;
+
 } ngx_http_drizzle_loc_conf_t;
 
 

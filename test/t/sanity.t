@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(100);
 
-plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 2;
+plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 3;
 
 worker_connections(1024);
 run_tests();
@@ -70,6 +70,7 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 60
+
 
 
 === TEST 2: keep-alive
@@ -228,6 +229,47 @@ insert into cats (id, name) values (3, 'bob');
 --- config
     location /mysql {
         drizzle_pass backend;
+        drizzle_module_header off;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- response_headers
+X-Resty-DBD-Module: 
+Content-Type: application/x-resty-dbd-stream
+--- response_body eval
+"\x{00}". # endian
+"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{00}". # result type
+"\x{00}\x{00}".  # std errcode
+"\x{00}\x{00}" . # driver errcode
+"\x{28}\x{00}".  # driver errstr len
+"Rows matched: 1  Changed: 0  Warnings: 0".  # driver errstr data
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
+"\x{00}\x{00}"  # col count
+
+
+
+=== TEST 6: variables in drizzle_pass
+little-endian systems only
+
+db init:
+
+create table cats (id integer, name text);
+insert into cats (id) values (2);
+insert into cats (id, name) values (3, 'bob');
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
         drizzle_module_header off;
         drizzle_query "update cats set name='bob' where name='bob'";
     }

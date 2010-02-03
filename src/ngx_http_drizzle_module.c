@@ -172,6 +172,8 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
      *      conf->query  = NULL
      */
 
+    conf->complex_target = NGX_CONF_UNSET_PTR;
+
     return conf;
 }
 
@@ -204,6 +206,8 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     if (conf->query == NULL) {
         conf->query = prev->query;
     }
+
+    ngx_conf_merge_ptr_value(conf, prev, NULL);
 
     return NGX_CONF_OK;
 }
@@ -254,29 +258,17 @@ static char *
 ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_drizzle_loc_conf_t             *dlcf = conf;
+
     ngx_http_core_loc_conf_t                *clcf;
     ngx_str_t                               *value;
-    ngx_url_t                                u;
+    ngx_http_compile_complex_value_t         ccv;
+    ngx_url_t                                url;
+    ngx_uint_t                               n;
+
+    value = cf->args->elts;
 
     if (dlcf->upstream.upstream) {
         return "is duplicate";
-    }
-
-    value = cf->args->elts;
-    ngx_memzero(&u, sizeof(ngx_url_t));
-
-    u.url = value[1];
-    u.no_resolve = 1;
-
-    if (u.naddrs) {
-        return "does not accept concrete remote addresses, "
-            "use a virtual upstream name instead";
-    }
-
-    dlcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
-
-    if (dlcf->upstream.upstream == NULL) {
-        return NGX_CONF_ERROR;
     }
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
@@ -285,6 +277,39 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (clcf->name.data[clcf->name.len - 1] == '/') {
         clcf->auto_redirect = 1;
+    }
+
+    n = ngx_http_script_variables_count(&value[1]);
+    if (n) {
+        dlcf->complex_target = ngx_palloc(cf->pool,
+                sizeof(ngx_http_complex_value_t));
+        if (dlcf->complex_target == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+        ccv.cf = cf;
+        ccv.value = &value[1];
+        ccv.complex_value = dlcf->complex_target;
+
+        if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+
+        return NGX_CONF_OK;
+    }
+
+    dlcf->complex_target = NULL;
+
+    ngx_memzero(&url, sizeof(ngx_url_t));
+
+    url.url = value[1];
+    url.no_resolve = 1;
+
+    dlcf->upstream.upstream = ngx_http_upstream_add(cf, &url, 0);
+
+    if (dlcf->upstream.upstream == NULL) {
+        return NGX_CONF_ERROR;
     }
 
     return NGX_CONF_OK;

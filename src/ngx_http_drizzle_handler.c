@@ -7,6 +7,7 @@
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
+#include "ngx_http_upstream_drizzle.h"
 
 /* for read/write event handlers */
 
@@ -29,7 +30,9 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
     ngx_int_t                       rc;
     ngx_http_upstream_t            *u;
-    ngx_http_drizzle_loc_conf_t    *mlcf;
+    ngx_http_drizzle_loc_conf_t    *dlcf;
+    ngx_str_t                       target;
+    ngx_url_t                       url;
 
     if (r->subrequest_in_memory) {
         /* TODO: add support for subrequest in memory by
@@ -86,14 +89,41 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
 #endif
 
+    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+    if (dlcf->complex_target) {
+        /* variables used in the drizzle_pass directive */
+        if (ngx_http_complex_value(r, dlcf->complex_target, &target)
+                != NGX_OK)
+        {
+            dd("failed to compile");
+            return NGX_ERROR;
+        }
+
+        if (target.len == 0) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                    "drizzle: handler: empty \"drizzle_pass\" target");
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        url.host = target;
+        url.port = 0;
+        url.no_resolve = 1;
+
+        dlcf->upstream.upstream = ngx_http_upstream_drizzle_add(r, &url);
+
+        if (dlcf->upstream.upstream == NULL) {
+            dd("upstream \"%.*s\" not found", target.len, target.data);
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+    }
+
     u->schema.len = sizeof("drizzle://") - 1;
     u->schema.data = (u_char *) "drizzle://";
 
     u->output.tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
 
-    mlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
-
-    u->conf = &mlcf->upstream;
+    u->conf = &dlcf->upstream;
 
     u->create_request = ngx_http_drizzle_create_request;
     u->reinit_request = ngx_http_drizzle_reinit_request;

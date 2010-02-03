@@ -120,5 +120,9 @@ void ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
         ngx_connection_t *c, drizzle_con_st *dc,
         ngx_http_upstream_drizzle_srv_conf_t *dscf);
 
+ngx_http_upstream_srv_conf_t * ngx_http_upstream_drizzle_add(ngx_http_request_t *r,
+        ngx_url_t *url);
+
+
 #endif /* NGX_HTTP_UPSTREAM_DRIZZLE_H */
 
