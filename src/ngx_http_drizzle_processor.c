@@ -214,7 +214,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
                        drizzle_error(dc->drizzle),
                        &u->peer.name);
 
-        return NGX_ERROR;
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
     /* ret == DRIZZLE_RETURN_OK */
