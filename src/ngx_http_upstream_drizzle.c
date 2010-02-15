@@ -561,13 +561,16 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ret = drizzle_con_connect(dc);
 
     if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
-       ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
+        ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
                        "drizzle: failed to connect: %d: %s in upstream \"%V\"",
                        (int) ret,
                        drizzle_error(&dscf->drizzle),
                        &peer->name);
 
-        goto invalid;
+        drizzle_con_free(dc);
+        ngx_pfree(dscf->pool, dc);
+
+        return NGX_DECLINED;
     }
 
     /* add the file descriptor (fd) into an nginx connection structure */
