@@ -689,6 +689,7 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
                 dp->drizzle_con, dscf);
 
+        dp->drizzle_con = NULL;
         pc->connection = NULL;
     }
 }
@@ -818,7 +819,7 @@ ngx_http_upstream_drizzle_add(ngx_http_request_t *r, ngx_url_t *url)
         return uscfp[i];
     }
 
-    dd("No upstream found: %.*s", url->host.len, url->host.data);
+    dd("No upstream found: %.*s", (int) url->host.len, url->host.data);
 
     return NULL;
 }
