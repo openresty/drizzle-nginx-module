@@ -265,8 +265,6 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_url_t                                url;
     ngx_uint_t                               n;
 
-    value = cf->args->elts;
-
     if (dlcf->upstream.upstream) {
         return "is duplicate";
     }
@@ -278,6 +276,8 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (clcf->name.data[clcf->name.len - 1] == '/') {
         clcf->auto_redirect = 1;
     }
+
+    value = cf->args->elts;
 
     n = ngx_http_script_variables_count(&value[1]);
     if (n) {

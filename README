@@ -312,6 +312,7 @@ TODO
         also be an option ("strict=no") to disable such checks.
 
 Known Issues
+    *   drizzle_keepalive overflow=xxx is reportedly not working.
     *   This module does not (yet) work with the RTSIG event model.
     *   When mysql's packets are splitted to 1 ~ 4, 6 and etc.
         bytes long, the state machine in libdrizzle may go
