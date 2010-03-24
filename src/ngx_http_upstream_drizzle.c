@@ -561,13 +561,16 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ret = drizzle_con_connect(dc);
 
     if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_IO_WAIT) {
-       ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
+        ngx_log_error(NGX_LOG_EMERG, pc->log, 0,
                        "drizzle: failed to connect: %d: %s in upstream \"%V\"",
                        (int) ret,
                        drizzle_error(&dscf->drizzle),
                        &peer->name);
 
-        goto invalid;
+        drizzle_con_free(dc);
+        ngx_pfree(dscf->pool, dc);
+
+        return NGX_DECLINED;
     }
 
     /* add the file descriptor (fd) into an nginx connection structure */
@@ -689,6 +692,7 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
                 dp->drizzle_con, dscf);
 
+        dp->drizzle_con = NULL;
         pc->connection = NULL;
     }
 }
@@ -818,7 +822,7 @@ ngx_http_upstream_drizzle_add(ngx_http_request_t *r, ngx_url_t *url)
         return uscfp[i];
     }
 
-    dd("No upstream found: %.*s", url->host.len, url->host.data);
+    dd("No upstream found: %.*s", (int) url->host.len, url->host.data);
 
     return NULL;
 }
