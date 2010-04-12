@@ -198,7 +198,7 @@ Output
 
 Installation
     You should first install the latest libdrizzle which can be
-    obtained from here (at least libdrizzle 0.6 is required):
+    obtained from here (last tested version of libdrizzle is 0.8):
 
         https://launchpad.net/libdrizzle
 
@@ -224,7 +224,7 @@ Installation
 Compatibility
     The following versions of Nginx should work with this module:
 
-    *   0.8.x (last tested version is 0.8.33)
+    *   0.8.x (last tested version is 0.8.35)
 
     *   0.7.x >= 0.7.44 (last tested version is 0.7.65)
 
