@@ -137,7 +137,7 @@ Output
     where 0.0.1 is this module's own version number. This
     X-Resty-DBD-Module header is optional though.
 
-    Below is the HTTP response body format (version 0.0.2):
+    Below is the HTTP response body format (version 0.0.3):
 
     Header part
         uint8_t        endian type (1 means big-endian and little
@@ -181,8 +181,9 @@ Output
                         the row list terminator)
 
         0*Field (count is predetermined by column number)
-            uint32_t        field length
-            uint8_t*        field data (in textual representation)
+            uint32_t        field length ((uint32_t) -1 represents NULL)
+            uint8_t*        field data (in textual representation), is empty
+                            if field length == (uint32_t) -1
 
     On the nginx output chain link level, the following
     components should be put into a single ngx_buf_t struct:

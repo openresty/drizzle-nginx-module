@@ -113,7 +113,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
         dlcf->upstream.upstream = ngx_http_upstream_drizzle_add(r, &url);
 
         if (dlcf->upstream.upstream == NULL) {
-            dd("upstream \"%.*s\" not found", target.len, target.data);
+            //dd("upstream \"%.*s\" not found", target.len, target.data);
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
     }
@@ -122,6 +122,8 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     u->schema.data = (u_char *) "drizzle://";
 
     u->output.tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
+
+    dd("drizzle tag: %p", (void *) u->output.tag);
 
     u->conf = &dlcf->upstream;
 

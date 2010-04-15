@@ -295,7 +295,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 
     if (b->last != b->end) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: output column buffer error");
+               "drizzle: FATAL: output column buffer error");
         return NGX_ERROR;
     }
 
@@ -400,7 +400,12 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 
     if (offset == 0) {
         /* field total length */
-        *(uint32_t *) b->last = (uint32_t) total;
+        if (field == NULL) {
+            *(uint32_t *) b->last = (uint32_t) -1;
+        } else {
+            *(uint32_t *) b->last = (uint32_t) total;
+        }
+
         b->last += sizeof(uint32_t);
     }
 
@@ -414,7 +419,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
                 (int) len, (int) size);
 
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "diizzle: FATAL: output field buffer error");
+               "drizzle: FATAL: output field buffer error");
 
         return NGX_ERROR;
     }
