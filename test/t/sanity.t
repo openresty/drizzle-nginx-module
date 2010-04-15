@@ -41,7 +41,7 @@ X-Resty-DBD-Module: ngx_drizzle \d+\.\d+\.\d+
 Content-Type: application/x-resty-dbd-stream
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -61,7 +61,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
 "2".  # field data
-"\x{00}\x{00}\x{00}\x{00}".  # field len
+"\x{ff}\x{ff}\x{ff}\x{ff}".  # field len
 "".  # field data
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
@@ -98,7 +98,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -118,7 +118,7 @@ GET /mysql
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
 "2".  # field data
-"\x{00}\x{00}\x{00}\x{00}".  # field len
+"\x{ff}\x{ff}\x{ff}\x{ff}".  # field len
 "".  # field data
 "\x{01}".  # valid row flag
 "\x{01}\x{00}\x{00}\x{00}".  # field len
@@ -154,7 +154,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -190,7 +190,7 @@ insert into cats (id, name) values (3, 'bob');
 GET /mysql
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -239,7 +239,7 @@ X-Resty-DBD-Module:
 Content-Type: application/x-resty-dbd-stream
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
@@ -280,7 +280,7 @@ X-Resty-DBD-Module:
 Content-Type: application/x-resty-dbd-stream
 --- response_body eval
 "\x{00}". # endian
-"\x{02}\x{00}\x{00}\x{00}". # format version 0.0.2
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
 "\x{00}". # result type
 "\x{00}\x{00}".  # std errcode
 "\x{00}\x{00}" . # driver errcode
