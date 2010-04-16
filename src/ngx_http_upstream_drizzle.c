@@ -500,6 +500,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
                        "to upstream \"%V\"",
                        &peer->name);
 
+        /* XXX Here we cannot return 503 or finalize the request using 503
+         * ourselves due to a bug in ngx_http_upstream.c */
         return NGX_ERROR;
     }
 
