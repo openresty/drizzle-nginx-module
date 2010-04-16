@@ -80,6 +80,7 @@ Description
             reuse connections which have identical server
             host names and ports. Note that it will igore
             differences between dbnames or users.
+            Default to "single".
 
         * overflow=<action>
             This option specifies what to do when the

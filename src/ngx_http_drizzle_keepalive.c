@@ -163,7 +163,7 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
     ngx_queue_t                             *q;
     ngx_connection_t                        *c;
 
-    if (!ngx_queue_empty(&dscf->cache)) {
+    if (! ngx_queue_empty(&dscf->cache)) {
 
         q = ngx_queue_head(&dscf->cache);
         ngx_queue_remove(q);

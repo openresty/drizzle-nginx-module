@@ -122,7 +122,9 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
         }
     }
 
-    u->finalize_request(r, rc);
+    if (u->finalize_request) {
+        u->finalize_request(r, rc);
+    }
 
     if (u->peer.free) {
         u->peer.free(&u->peer, u->peer.data, 0);

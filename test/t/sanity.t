@@ -3,7 +3,7 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(100);
+repeat_each(2);
 
 plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 3;
 
@@ -86,7 +86,7 @@ insert into cats (id, name) values (3, 'bob');
     upstream backend {
         drizzle_server localhost dbname=test
              password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive max=1;
+        drizzle_keepalive max=1 mode=single overflow=reject;
     }
 --- config
     location /mysql {

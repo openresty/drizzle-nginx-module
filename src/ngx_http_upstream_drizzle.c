@@ -321,6 +321,8 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
 
     dscf->peers = peers;
 
+    dscf->active_conns = 0;
+
     if (dscf->max_cached) {
         return ngx_http_drizzle_keepalive_init(cf->pool, dscf);
     }
@@ -450,6 +452,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     dscf = dp->srv_conf;
 
+    dd("active conns %d", (int) dscf->active_conns);
+
     dp->failed = 0;
 
     /* try to get an idle connection from our single-mode
@@ -486,14 +490,15 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     }
 
     if (dscf->overflow == drizzle_keepalive_overflow_reject &&
-
-            ngx_queue_empty(&dscf->free))
+            dscf->active_conns >= dscf->max_cached)
     {
         u = dp->upstream;
         r = dp->request;
 
-        ngx_http_upstream_drizzle_finalize_request(r, u,
-                NGX_HTTP_SERVICE_UNAVAILABLE);
+        ngx_log_error(NGX_LOG_INFO, pc->log, 0,
+                       "drizzle: connection pool full, rejecting request "
+                       "to upstream \"%V\"",
+                       &peer->name);
 
         return NGX_ERROR;
     }
@@ -572,6 +577,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
         return NGX_DECLINED;
     }
+
+    dscf->active_conns++;
 
     /* add the file descriptor (fd) into an nginx connection structure */
 
@@ -739,6 +746,8 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
     ngx_event_t  *rev, *wev;
 
     dd("drizzle free peer connection");
+
+    dscf->active_conns--;
 
     if (dc) {
         drizzle_con_free(dc);

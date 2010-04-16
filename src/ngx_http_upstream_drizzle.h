@@ -80,6 +80,9 @@ typedef struct {
     ngx_flag_t                           single;
     ngx_queue_t                          free;
     ngx_queue_t                          cache;
+
+    ngx_uint_t                           active_conns;
+
     ngx_uint_t                           max_cached;
     ngx_http_drizzle_keepalive_overflow_t    overflow;
 
