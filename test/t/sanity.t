@@ -50,7 +50,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{02}\x{00}".  # col count
-"\x{01}\x{00}".  # std col type (bigint/int)
+"\x{09}\x{00}".  # std col type (integer)
 "\x{03}\x{00}".  # drizzle col type
 "\x{02}\x{00}".     # col name len
 "id".   # col name data
@@ -107,7 +107,7 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{02}\x{00}".  # col count
-"\x{01}\x{00}".  # std col type (bigint/int)
+"\x{09}\x{00}".  # std col type (integer)
 "\x{03}\x{00}".  # drizzle col type
 "\x{02}\x{00}".     # col name len
 "id".   # col name data
@@ -199,7 +199,7 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{02}\x{00}".  # col count
-"\x{01}\x{00}".  # std col type (bigint/int)
+"\x{09}\x{00}".  # std col type (integer)
 "\x{03}\x{00}".  # drizzle col type
 "\x{02}\x{00}".     # col name len
 "id".   # col name data
