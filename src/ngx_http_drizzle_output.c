@@ -450,7 +450,7 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
         return rds_col_type_smallint;
 
     case DRIZZLE_COLUMN_TYPE_LONG:
-        return rds_col_type_bigint;
+        return rds_col_type_integer;
 
     case DRIZZLE_COLUMN_TYPE_FLOAT:
         return rds_col_type_real;
