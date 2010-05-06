@@ -33,6 +33,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_http_drizzle_loc_conf_t    *dlcf;
     ngx_str_t                       target;
     ngx_url_t                       url;
+    ngx_connection_t               *c;
 
     if (r->subrequest_in_memory) {
         /* TODO: add support for subrequest in memory by
@@ -149,6 +150,21 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     /* override the read/write event handler to our own */
     u->write_event_handler = ngx_http_drizzle_wev_handler;
     u->read_event_handler  = ngx_http_drizzle_rev_handler;
+
+    /* a bit hack-ish way to return 503 Service Unavailable (clean-up part) */
+    if ((u->peer.connection) && (u->peer.connection->fd == 0)) {
+        c = u->peer.connection;
+        u->peer.connection = NULL;
+
+        if (c->write->timer_set) {
+            ngx_del_timer(c->write);
+        }
+
+        ngx_free_connection(c);
+
+        ngx_http_upstream_drizzle_finalize_request(r, u,
+            NGX_HTTP_SERVICE_UNAVAILABLE);
+    }
 
     return NGX_DONE;
 }
