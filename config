@@ -6,7 +6,7 @@ ngx_feature_test="drizzle_version();"
 
 if [ -n $NGX_LIBDRIZZLE_LIB ]; then
     # explicit set libdrizzle lib path
-    ngx_feature="libdrizzle library in $LIBDRIZZLE_LIB"
+    ngx_feature="libdrizzle library in $NGX_LIBDRIZZLE_LIB (specified by the NGX_LIBDRIZZLE_LIB env)"
     ngx_feature_path="$NGX_LIBDRIZZLE_INC"
     if [ $NGX_RPATH = YES ]; then
         ngx_feature_libs="-R$NGX_LIBDRIZZLE_LIB -L$NGX_LIBDRIZZLE_LIB -ldrizzle"
