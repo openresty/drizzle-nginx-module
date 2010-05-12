@@ -4,7 +4,7 @@ ngx_feature_incs="#include <libdrizzle/drizzle_client.h>"
 ngx_feature_path=
 ngx_feature_test="drizzle_version();"
 
-if [ -n $LIBDRIZZLE_LIB ]; then
+if [ -n "$LIBDRIZZLE_LIB" ]; then
     # explicit set libdrizzle lib path
     ngx_feature="libdrizzle library in $LIBDRIZZLE_LIB (specified by the LIBDRIZZLE_LIB env)"
     ngx_feature_path="$LIBDRIZZLE_INC"
