@@ -4,14 +4,14 @@ ngx_feature_incs="#include <libdrizzle/drizzle_client.h>"
 ngx_feature_path=
 ngx_feature_test="drizzle_version();"
 
-if [ -n $NGX_LIBDRIZZLE_LIB ]; then
+if [ -n $LIBDRIZZLE_LIB ]; then
     # explicit set libdrizzle lib path
-    ngx_feature="libdrizzle library in $NGX_LIBDRIZZLE_LIB (specified by the NGX_LIBDRIZZLE_LIB env)"
-    ngx_feature_path="$NGX_LIBDRIZZLE_INC"
+    ngx_feature="libdrizzle library in $LIBDRIZZLE_LIB (specified by the LIBDRIZZLE_LIB env)"
+    ngx_feature_path="$LIBDRIZZLE_INC"
     if [ $NGX_RPATH = YES ]; then
-        ngx_feature_libs="-R$NGX_LIBDRIZZLE_LIB -L$NGX_LIBDRIZZLE_LIB -ldrizzle"
+        ngx_feature_libs="-R$LIBDRIZZLE_LIB -L$LIBDRIZZLE_LIB -ldrizzle"
     else
-        ngx_feature_libs="-L$NGX_LIBDRIZZLE_LIB -ldrizzle"
+        ngx_feature_libs="-L$LIBDRIZZLE_LIB -ldrizzle"
     fi
     . auto/feature
 fi
