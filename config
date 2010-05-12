@@ -1,3 +1,5 @@
+ngx_feature="libdrizzle library"
+ngx_feature_libs="-ldrizzle"
 ngx_feature_name=
 ngx_feature_run=no
 ngx_feature_incs="#include <libdrizzle/drizzle_client.h>"
