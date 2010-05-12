@@ -1,11 +1,26 @@
-ngx_feature="libdrizzle library"
 ngx_feature_name=
 ngx_feature_run=no
 ngx_feature_incs="#include <libdrizzle/drizzle_client.h>"
 ngx_feature_path=
-ngx_feature_libs="-ldrizzle"
 ngx_feature_test="drizzle_version();"
-. auto/feature
+
+if [ -n $NGX_LIBDRIZZLE_LIB ]; then
+    # explicit set libdrizzle lib path
+    ngx_feature="libdrizzle library in $LIBDRIZZLE_LIB"
+    ngx_feature_path="$NGX_LIBDRIZZLE_INC"
+    if [ $NGX_RPATH = YES ]; then
+        ngx_feature_libs="-R$NGX_LIBDRIZZLE_LIB -L$NGX_LIBDRIZZLE_LIB -ldrizzle"
+    else
+        ngx_feature_libs="-L$NGX_LIBDRIZZLE_LIB -ldrizzle"
+    fi
+    . auto/feature
+fi
+
+if [ $ngx_found = no ]; then
+    ngx_feature="libdrizzle library"
+    ngx_feature_libs="-ldrizzle"
+    . auto/feature
+fi
 
 if [ $ngx_found = no ]; then
     # FreeBSD, OpenBSD
