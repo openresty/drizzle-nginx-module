@@ -78,3 +78,91 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 502
+
+
+
+=== TEST 4: multiple queries
+little-endian systems only
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_query "select * from cats; select * from cats";
+    }
+--- request
+GET /mysql
+--- error_code: 500
+
+
+
+=== TEST 5: missing query
+little-endian systems only
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+    }
+--- request
+GET /mysql
+--- error_code: 500
+
+
+
+=== TEST 6: empty query
+little-endian systems only
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        set $query "";
+        drizzle_query $query;
+    }
+--- request
+GET /mysql
+--- error_code: 500
+
+
+
+=== TEST 7: empty pass
+little-endian systems only
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend "";
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- error_code: 500
