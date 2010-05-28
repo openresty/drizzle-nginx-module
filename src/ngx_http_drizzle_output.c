@@ -74,7 +74,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     b = cl->buf;
 
     b->tag = u->output.tag;
-    b->flush = 1;
+    b->flush = 0;
     b->memory = 1;
     b->temporary = 1;
 
@@ -253,7 +253,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
     b = cl->buf;
 
     b->tag = u->output.tag;
-    b->flush = 1;
+    b->flush = 0;
     b->memory = 1;
     b->temporary = 1;
 
@@ -329,7 +329,7 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
     b = cl->buf;
 
     b->tag = u->output.tag;
-    b->flush = 1;
+    b->flush = 0;
     b->memory = 1;
     b->temporary = 1;
 
@@ -385,7 +385,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     b = cl->buf;
 
     b->tag = u->output.tag;
-    b->flush = 1;
+    b->flush = 0;
     b->memory = 1;
     b->temporary = 1;
 
