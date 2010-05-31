@@ -59,34 +59,6 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     dc = dp->drizzle_con;
 
-#if 0
-    /* libdrizzle uses standard poll() event constants
-     * and depends on drizzle_con_wait() to set them.
-     * we can directly call drizzle_con_wait() here to
-     * set those drizzle internal event states, because
-     * epoll() and other underlying event mechamism used
-     * by the nginx core can play well enough with poll().
-     * */
-
-    dd("before con wait");
-
-    dd("libdrizzle poll() timeout: %d", dc->drizzle->timeout);
-
-    ret = drizzle_con_wait(dc->drizzle);
-
-    if (ret == DRIZZLE_RETURN_TIMEOUT) {
-        /* oh, we may hit a bug in libdrizzle here that
-           libdrizzle's state machine seems to assume
-           certain data section to be in a single packet */
-        ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: it seems I've hit a bug in libdrizzle. "
-                       "its poll returns timeout");
-        return NGX_ERROR;
-    }
-#endif
-
-    dd("after con wait");
-
     switch (dp->state) {
     case state_db_connect:
         rc = ngx_http_upstream_drizzle_connect(r, c, dp, dc);

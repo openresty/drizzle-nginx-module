@@ -198,7 +198,7 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    ngx_http_drizzle_set_libdrizzle_ready(r, 0 /* write */);
+    ngx_http_drizzle_set_libdrizzle_ready(r);
 
     (void) ngx_http_drizzle_process_events(r);
 }
@@ -232,7 +232,7 @@ ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    ngx_http_drizzle_set_libdrizzle_ready(r, 1 /* read */);
+    ngx_http_drizzle_set_libdrizzle_ready(r);
 
     (void) ngx_http_drizzle_process_events(r);
 }
@@ -313,32 +313,23 @@ ngx_http_drizzle_input_filter(void *data, ssize_t bytes)
 
 
 void
-ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r, ngx_flag_t read)
+ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r)
 {
     ngx_http_upstream_drizzle_peer_data_t       *dp;
     drizzle_con_st                              *dc;
-    short                                        revents = 0;
 
     dp = r->upstream->peer.data;
 
     dc = dp->drizzle_con;
 
-    /* libdrizzle use standard poll() event constants, and depends on drizzle_con_wait() to fill them, */
-    /* so we must explicitly set the drizzle connection event flags. */
+    /* libdrizzle uses standard poll() event constants
+     * and depends on drizzle_con_wait() to set them.
+     * we can directly call drizzle_con_wait() here to
+     * set those drizzle internal event states, because
+     * epoll() and other underlying event mechamism used
+     * by the nginx core can play well enough with poll().
+     * */
 
-    if (read) {
-        dd("read event");
-        revents |= POLLIN;
-    } else {
-        dd("write event");
-        revents |= POLLOUT;
-    }
-
-    /* drizzle_con_set_revents() isn't declared external in libdrizzle-0.4.0, */
-    /* so we have to do its job all by ourselves... */
-
-    dc->options |= DRIZZLE_CON_IO_READY;
-    dc->revents = revents;
-    dc->events &= (short) ~revents;
+    (void) drizzle_con_wait(dc->drizzle);
 }
 

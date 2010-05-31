@@ -4,8 +4,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-void ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r,
-        ngx_flag_t read);
+void ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r);
 
 ngx_int_t ngx_http_drizzle_handler(ngx_http_request_t *r);
 

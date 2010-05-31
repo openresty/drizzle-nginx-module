@@ -622,6 +622,12 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     } else if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
         dd("NGX_USE_CLEAR_EVENT");
         rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT);
+        if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_CLEAR_EVENT) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
+                          "postgres: failed to add nginx connection");
+
+            goto invalid;
+        }
     } else {
         dd("use other event...");
         rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT);

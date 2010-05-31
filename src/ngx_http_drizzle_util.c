@@ -721,7 +721,8 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_http_upstream_send_request(r, u);
 #endif
 
-    ngx_http_drizzle_set_libdrizzle_ready(r, 0 /* write */);
+    ngx_http_drizzle_set_libdrizzle_ready(r);
+
     (void) ngx_http_drizzle_process_events(r);
 }
 
