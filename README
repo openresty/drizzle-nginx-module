@@ -3,10 +3,14 @@ Name
         mysql, drizzle, and sqlite3 by libdrizzle
 
 Status
-    This module is at its very early phase of development and
-    considered highly experimental. But you're encouraged to
-    test it out on your side and report any quirks that you
-    experience.
+    This module is almost production ready but it's
+    required to patch libdrizzle-0.8 using the following
+    patch in order to fix a nasty bug in libdrizzle:
+
+      http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug.patch
+
+    This patch is expected to be included in the next
+    official release of libdrizzle.
 
     We need your help! If you find this module useful and/or
     interesting, please consider joining the development!
