@@ -13,6 +13,8 @@ enum {
     ngx_http_drizzle_default_port = 3306
 };
 
+static void ngx_http_upstream_drizzle_cleanup(void *data);
+
 static ngx_int_t ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
         ngx_http_upstream_srv_conf_t *uscf);
 
@@ -32,6 +34,7 @@ static ngx_int_t ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in);
 void *
 ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 {
+    ngx_pool_cleanup_t  *cln;
     ngx_http_upstream_drizzle_srv_conf_t  *conf;
 
     dd("drizzle create srv conf");
@@ -53,8 +56,12 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
 
     conf->pool = cf->pool;
 
-    /* XXX when should we free this global drizzle struct? */
+    cln = ngx_pool_cleanup_add(cf->pool, 0);
+
     (void) drizzle_create(&conf->drizzle);
+
+    cln->handler = ngx_http_upstream_drizzle_cleanup;
+    cln->data = &conf->drizzle;
 
     drizzle_add_options(&conf->drizzle, DRIZZLE_NON_BLOCKING);
 
@@ -843,5 +850,14 @@ ngx_http_upstream_drizzle_add(ngx_http_request_t *r, ngx_url_t *url)
     dd("No upstream found: %.*s", (int) url->host.len, url->host.data);
 
     return NULL;
+}
+
+
+static void
+ngx_http_upstream_drizzle_cleanup(void *data)
+{
+    drizzle_st  *drizzle = data;
+
+    drizzle_free(drizzle);
 }
 
