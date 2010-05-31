@@ -248,10 +248,6 @@ TODO
     *   add support for multiple "drizzle_query" directives
         in a single location.
 
-    *   provide a hash-by-key algorithm for the upstream
-        server clusters.
-        as an alternative approach to the simple round-robin.
-
     *   implement weighted round-robin algorithm for the
         upstream server clusters.
 
@@ -263,50 +259,8 @@ TODO
         so that the connection pool will automatically create
         that number of connections and put them into the pool.
 
-    *   implement the "drizzle_quote" directive so that one
-        can do variable value escaping and quoting as well
-        as simple type checking. For instance:
-
-            drizzle_quote $model table;
-            drizzle_quote $col column;
-            drizzle_quote $val integer;
-            drizzle_query "select * from $model where $col > $val";
-
-    *   add "subrequest in memory" support so that this module
-        can be used with the ngx_eval module. For instance:
-
-            eval $res {
-               drizzle_quote $arg_user;
-               drizzle_quote $arg_pass;
-               drizzle_quote $arg_order keyword;  # asc or desc
-               drizzle_query "select count(1) from users
-                    where user=$arg_user and password=$arg_pass
-                    order by id $arg_order";
-               drizzle_pass backend;
-            };
-            if ($res ~ '...') {
-                return 403;
-            }
-            ....
-
-    *   Completed the "drizzle_dbname" directive's implementation
-        such that we can switch dbname on a per-request basis.
-
     *   Unix domain socket support in the "drizzle_server"
         directive.
-
-    *   Introduce a "drizzle_type" diretive to allow the user to
-        define custom types to be used in the "drizzle_quote"
-        directive. For example:
-
-            drizzle_type email
-                '^[-_A-Za-z0-9.]+\@[-_A-Za-z0-9.]+$' # regex constraint
-                inherit=string;  # parent type
-            drizzle_type $arg_email email;
-            drizzle_query "select * from users where email = $arg_email";
-
-        Of course, regex constraints will require the pcre support in
-        nginx.
 
     *   Make the "drizzle_query" directive reject variables that
         have not been processed by a drizzle_process directive.
@@ -314,13 +268,7 @@ TODO
         also be an option ("strict=no") to disable such checks.
 
 Known Issues
-    *   drizzle_keepalive overflow=xxx is reportedly not working.
     *   This module does not (yet) work with the RTSIG event model.
-    *   When mysql's packets are splitted to 1 ~ 4, 6 and etc.
-        bytes long, the state machine in libdrizzle may go
-        wrong. This is very likely a bug in libdrizzle. When
-        this happens, ngx_drizzle will throw out the 502 error
-        page immediately and put an error message in your error.log.
 
 See Also
     *   the ngx_rds_json module
