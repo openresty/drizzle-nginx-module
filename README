@@ -1,5 +1,5 @@
 Name
-    drizzle-nginx-module - an upstream module that talks to
+    ngx_drizzle - an upstream module that talks to
         mysql, drizzle, and sqlite3 by libdrizzle
 
 Status
