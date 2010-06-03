@@ -28,7 +28,6 @@ static ngx_int_t ngx_http_drizzle_input_filter(void *data, ssize_t bytes);
 ngx_int_t
 ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
-    ngx_int_t                       rc;
     ngx_http_upstream_t            *u;
     ngx_http_drizzle_loc_conf_t    *dlcf;
     ngx_str_t                       target;
@@ -43,23 +42,6 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
                       "ngx_http_drizzle_module does not support "
                       "subrequest in memory");
 
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    /* XXX: we should support POST/PUT methods to set long SQL
-     * queries in the request bodies. */
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
-
-    rc = ngx_http_discard_request_body(r);
-
-    if (rc != NGX_OK) {
-        return rc;
-    }
-
-    if (ngx_http_set_content_type(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
