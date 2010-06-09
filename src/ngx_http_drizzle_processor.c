@@ -182,22 +182,31 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     }
 
     if (ret != DRIZZLE_RETURN_OK) {
+#if 1
+        if (ret == DRIZZLE_RETURN_ERROR_CODE) {
+            if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
+                dd("XXX no such talbe");
+
+                ngx_log_error(NGX_LOG_NOTICE, c->log, 0,
+                               "drizzle: failed to send query: %d (%d): %s"
+                               " in upstream \"%V\"",
+                               (int) ret, drizzle_error_code(dc->drizzle),
+                               drizzle_error(dc->drizzle),
+                               &u->peer.name);
+
+                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_NOT_FOUND);
+
+                return NGX_DONE;
+            }
+        }
+#endif
+
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
                        "drizzle: failed to send query: %d (%d): %s"
                        " in upstream \"%V\"",
                        (int) ret, drizzle_error_code(dc->drizzle),
                        drizzle_error(dc->drizzle),
                        &u->peer.name);
-
-#if 1
-        if (ret == DRIZZLE_RETURN_ERROR_CODE) {
-            if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
-                dd("XXX no such talbe");
-                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_NOT_FOUND);
-                return NGX_DONE;
-            }
-        }
-#endif
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
