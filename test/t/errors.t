@@ -33,7 +33,9 @@ little-endian systems only
     }
 --- request
 GET /mysql
---- error_code: 500
+--- error_code: 404
+--- response_body_like: 404 Not Found
+--- timeout: 3
 
 
 

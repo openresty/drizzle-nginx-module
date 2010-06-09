@@ -147,7 +147,8 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     if (col_count == 0) {
         /* we suppress row terminator here when there's no columns */
 
-        return ngx_http_upstream_drizzle_done(r, u, u->peer.data);
+        ngx_http_upstream_drizzle_done(r, u, u->peer.data, NGX_HTTP_OK);
+        return NGX_DONE;
     }
 
     return rc;

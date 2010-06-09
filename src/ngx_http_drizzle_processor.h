@@ -9,8 +9,9 @@
 
 ngx_int_t ngx_http_drizzle_process_events(ngx_http_request_t *r);
 
-ngx_int_t ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
-        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp);
+void ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
+        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_int_t rc);
 
 #endif /* NGX_HTTP_DRIZZLE_PROCESSOR_H */
 

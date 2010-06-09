@@ -12,6 +12,9 @@
 
 #include <libdrizzle/drizzle_client.h>
 
+
+#define MYSQL_ER_NO_SUCH_TABLE 1146
+
 static ngx_int_t ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc);
@@ -180,11 +183,21 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     if (ret != DRIZZLE_RETURN_OK) {
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: failed to send query: %d: %s"
+                       "drizzle: failed to send query: %d (%d): %s"
                        " in upstream \"%V\"",
-                       (int) ret,
+                       (int) ret, drizzle_error_code(dc->drizzle),
                        drizzle_error(dc->drizzle),
                        &u->peer.name);
+
+#if 1
+        if (ret == DRIZZLE_RETURN_ERROR_CODE) {
+            if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
+                dd("XXX no such talbe");
+                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_NOT_FOUND);
+                return NGX_DONE;
+            }
+        }
+#endif
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -334,7 +347,8 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
                     ngx_del_timer(c->read);
                 }
 
-                return ngx_http_upstream_drizzle_done(r, u, dp);
+                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_OK);
+                return NGX_DONE;
             }
 
             dd("drizzle row: %" PRId64 "\n", dp->drizzle_row);
@@ -406,19 +420,26 @@ io_wait:
 }
 
 
-ngx_int_t
+void
 ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
-        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp)
+        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp,
+        ngx_int_t rc)
 {
     ngx_connection_t            *c;
 
     /* to persuade Maxim Dounin's ngx_http_upstream_keepalive
      * module to cache the current connection */
 
-    u->header_sent = 1;
     u->length = 0;
-    r->headers_out.status = NGX_HTTP_OK;
-    u->headers_in.status_n = NGX_HTTP_OK;
+
+    if (rc == NGX_DONE) {
+        u->header_sent = 1;
+        u->headers_in.status_n = NGX_HTTP_OK;
+        rc = NGX_OK;
+    } else {
+        r->headers_out.status = rc;
+        u->headers_in.status_n = rc;
+    }
 
     c = u->peer.connection;
 
@@ -427,8 +448,6 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     /* reset the state machine */
     dp->state = state_db_idle;
 
-    ngx_http_upstream_drizzle_finalize_request(r, u, NGX_OK);
-
-    return NGX_DONE;
+    ngx_http_upstream_drizzle_finalize_request(r, u, rc);
 }
 
