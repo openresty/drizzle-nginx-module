@@ -347,7 +347,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
                     ngx_del_timer(c->read);
                 }
 
-                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_OK);
+                ngx_http_upstream_drizzle_done(r, u, dp, NGX_DONE);
                 return NGX_DONE;
             }
 
