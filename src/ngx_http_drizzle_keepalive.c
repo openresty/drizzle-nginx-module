@@ -264,6 +264,7 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
     if (!dp->failed
         && pc->connection != NULL
         && (status == NGX_HTTP_NOT_FOUND
+            || status == NGX_HTTP_GONE
             || (status == NGX_HTTP_OK && u->header_sent && u->length == 0)))
     {
         c = pc->connection;

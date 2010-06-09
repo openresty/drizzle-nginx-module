@@ -194,7 +194,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
                                drizzle_error(dc->drizzle),
                                &u->peer.name);
 
-                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_NOT_FOUND);
+                ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_GONE);
 
                 return NGX_DONE;
             }

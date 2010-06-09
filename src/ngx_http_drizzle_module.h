@@ -7,6 +7,11 @@
 
 #include <libdrizzle/drizzle_client.h>
 
+
+#ifndef NGX_HTTP_GONE
+#define NGX_HTTP_GONE 410
+#endif
+
 #define ngx_http_drizzle_module_version 11
 #define ngx_http_drizzle_module_version_string "0.0.11"
 
