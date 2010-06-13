@@ -209,6 +209,18 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
             return NGX_OK;
         }
 
+#if 0
+        {
+            int              n;
+            ngx_chain_t     *cl;
+
+            for (n = 0, cl = u->out_bufs; cl; cl = cl->next, n++) {
+            }
+
+            fprintf(stderr, "XXX chain size: %d\n", n);
+        }
+#endif
+
         rc = ngx_http_output_filter(r, u->out_bufs);
 
         if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
