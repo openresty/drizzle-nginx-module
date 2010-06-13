@@ -25,9 +25,6 @@
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
 
-static ngx_int_t ngx_http_drizzle_output_chain(ngx_http_request_t *r,
-        ngx_chain_t *cl);
-
 static rds_col_type_t ngx_http_drizzle_std_col_type(
         drizzle_column_type_t col_type);
 
@@ -43,7 +40,8 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     ngx_buf_t                       *b;
     ngx_chain_t                     *cl;
     uint16_t                         col_count;
-    ngx_int_t                        rc;
+
+    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
     errstr = drizzle_result_error(res);
 
@@ -65,7 +63,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
          + sizeof(uint16_t)     /* column count */
          ;
 
-    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+    cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs);
 
     if (cl == NULL) {
         return NGX_ERROR;
@@ -138,30 +136,30 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    rc = ngx_http_drizzle_output_chain(r, cl);
-
-    if (rc == NGX_ERROR) {
-        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
+    *dp->last_out = cl;
+    dp->last_out = &cl->next;
 
     if (col_count == 0) {
         /* we suppress row terminator here when there's no columns */
 
-        ngx_http_upstream_drizzle_done(r, u, u->peer.data, NGX_OK);
+        ngx_http_upstream_drizzle_done(r, u, dp, NGX_OK);
         return NGX_DONE;
     }
 
-    return rc;
+    return NGX_OK;
 }
 
 
-static ngx_int_t
-ngx_http_drizzle_output_chain(ngx_http_request_t *r, ngx_chain_t *cl)
+ngx_int_t
+ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp)
 {
     ngx_http_upstream_t                    *u = r->upstream;
     ngx_int_t                               rc;
     ngx_str_t                               key, value;
     ngx_http_drizzle_loc_conf_t            *dlcf;
+
+    dd_dump_chain_size();
 
     if ( ! u->header_sent ) {
         ngx_http_clear_content_length(r);
@@ -206,13 +204,21 @@ ngx_http_drizzle_output_chain(ngx_http_request_t *r, ngx_chain_t *cl)
         u->header_sent = 1;
     }
 
-    rc = ngx_http_output_filter(r, cl);
+    for ( ;; ) {
+        if (u->out_bufs == NULL) {
+            return NGX_OK;
+        }
 
-    if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-        return rc;
+        rc = ngx_http_output_filter(r, u->out_bufs);
+
+        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+            return rc;
+        }
+
+        ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs, u->output.tag);
+
+        dp->last_out = &u->out_bufs;
     }
-
-    ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &cl, u->output.tag);
 
     return rc;
 }
@@ -229,7 +235,8 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
     size_t                               size;
     ngx_buf_t                           *b;
     ngx_chain_t                         *cl;
-    ngx_int_t                            rc;
+
+    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
     if (col == NULL) {
         return NGX_ERROR;
@@ -245,7 +252,9 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
          + col_name_len         /* col name str len */
          ;
 
-    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+    u = r->upstream;
+
+    cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs);
 
     if (cl == NULL) {
         return NGX_ERROR;
@@ -300,13 +309,10 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
         return NGX_ERROR;
     }
 
-    rc = ngx_http_drizzle_output_chain(r, cl);
+    *dp->last_out = cl;
+    dp->last_out = &cl->next;
 
-    if (rc == NGX_ERROR) {
-        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    return rc;
+    return NGX_OK;
 }
 
 
@@ -317,7 +323,8 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
     size_t                               size;
     ngx_buf_t                           *b;
     ngx_chain_t                         *cl;
-    ngx_int_t                            rc;
+
+    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
     size = sizeof(uint8_t);
 
@@ -345,13 +352,10 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
 
     *b->last++ = (row != 0);
 
-    rc = ngx_http_drizzle_output_chain(r, cl);
+    *dp->last_out = cl;
+    dp->last_out = &cl->next;
 
-    if (rc == NGX_ERROR) {
-        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    return rc;
+    return NGX_OK;
 }
 
 
@@ -363,7 +367,10 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     size_t                               size = 0;
     ngx_buf_t                           *b;
     ngx_chain_t                         *cl;
-    ngx_int_t                            rc;
+
+    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+
+    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
 
     if (offset == 0) {
 
@@ -425,13 +432,10 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         return NGX_ERROR;
     }
 
-    rc = ngx_http_drizzle_output_chain(r, cl);
+    *dp->last_out = cl;
+    dp->last_out = &cl->next;
 
-    if (rc == NGX_ERROR) {
-        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    return rc;
+    return NGX_OK;
 }
 
 

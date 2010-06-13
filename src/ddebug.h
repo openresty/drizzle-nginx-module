@@ -5,6 +5,16 @@
 
 #if defined(DDEBUG) && (DDEBUG)
 
+#   define dd_dump_chain_size() { \
+        int              n; \
+        ngx_chain_t     *cl; \
+            \
+        for (n = 0, cl = u->out_bufs; cl; cl = cl->next, n++) { \
+        } \
+            \
+        dd("chain size: %d", n); \
+    }
+
 #   if (NGX_HAVE_VARIADIC_MACROS)
 
 #       define dd(...) fprintf(stderr, "drizzle *** "); \
@@ -24,6 +34,8 @@ static void dd(const char * fmt, ...) {
 #    endif
 
 #else
+
+#   define dd_dump_chain_size()
 
 #   if (NGX_HAVE_VARIADIC_MACROS)
 

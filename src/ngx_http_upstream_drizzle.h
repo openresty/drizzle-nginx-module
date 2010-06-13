@@ -109,6 +109,7 @@ typedef struct {
     ngx_str_t                              *name;
 
     ngx_flag_t                              failed;
+    ngx_chain_t                           **last_out;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 

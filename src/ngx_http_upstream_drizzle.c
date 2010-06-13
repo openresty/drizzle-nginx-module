@@ -361,6 +361,8 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     dp->upstream = u;
     dp->request  = r;
 
+    dp->last_out = &u->out_bufs;
+
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
     dp->srv_conf = dscf;
