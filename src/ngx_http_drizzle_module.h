@@ -17,6 +17,20 @@
 
 extern ngx_module_t ngx_http_drizzle_module;
 
+
+typedef struct {
+    ngx_uint_t                          key;
+    ngx_str_t                           sv;
+    ngx_http_complex_value_t           *cv;
+} ngx_drizzle_mixed_t;
+
+
+typedef struct {
+    u_char                             *name;
+    uint32_t                            key;
+} ngx_drizzle_http_method_t;
+
+
 typedef struct {
     ngx_http_upstream_conf_t             upstream;
 
@@ -24,7 +38,9 @@ typedef struct {
     ngx_http_complex_value_t            *dbname;
 
     /* SQL query to be executed */
-    ngx_http_complex_value_t            *query;
+    ngx_drizzle_mixed_t                 *default_query;
+    ngx_uint_t                           methods_set;
+    ngx_array_t                         *queries;
 
     ngx_msec_t                           recv_cols_timeout;
     ngx_msec_t                           recv_rows_timeout;

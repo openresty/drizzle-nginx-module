@@ -14,6 +14,8 @@
 static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
         ngx_command_t *cmd, void *conf);
 
+static char * ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+
 static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
@@ -41,10 +43,10 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
     {
         ngx_string("drizzle_query"),
         NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
-        ngx_http_drizzle_set_complex_value_slot,
+            |NGX_HTTP_LIF_CONF|NGX_CONF_1MORE,
+        ngx_http_drizzle_query,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, query),
+        0,
         NULL },
     {
         ngx_string("drizzle_dbname"),
@@ -56,8 +58,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
         NULL },
     {
         ngx_string("drizzle_pass"),
-        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+        NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
         ngx_http_drizzle_pass,
         NGX_HTTP_LOC_CONF_OFFSET,
         0,
@@ -135,6 +136,24 @@ ngx_module_t ngx_http_drizzle_module = {
 };
 
 
+ngx_drizzle_http_method_t ngx_drizzle_http_methods[] = {
+   { (u_char *) "GET",       (uint32_t) NGX_HTTP_GET },
+   { (u_char *) "HEAD",      (uint32_t) NGX_HTTP_HEAD },
+   { (u_char *) "POST",      (uint32_t) NGX_HTTP_POST },
+   { (u_char *) "PUT",       (uint32_t) NGX_HTTP_PUT },
+   { (u_char *) "DELETE",    (uint32_t) NGX_HTTP_DELETE },
+   { (u_char *) "MKCOL",     (uint32_t) NGX_HTTP_MKCOL },
+   { (u_char *) "COPY",      (uint32_t) NGX_HTTP_COPY },
+   { (u_char *) "MOVE",      (uint32_t) NGX_HTTP_MOVE },
+   { (u_char *) "OPTIONS",   (uint32_t) NGX_HTTP_OPTIONS },
+   { (u_char *) "PROPFIND" , (uint32_t) NGX_HTTP_PROPFIND },
+   { (u_char *) "PROPPATCH", (uint32_t) NGX_HTTP_PROPPATCH },
+   { (u_char *) "LOCK",      (uint32_t) NGX_HTTP_LOCK },
+   { (u_char *) "UNLOCK",    (uint32_t) NGX_HTTP_UNLOCK },
+   { NULL, 0 }
+};
+
+
 static void *
 ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 {
@@ -203,11 +222,11 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->dbname = prev->dbname;
     }
 
-    if (conf->query == NULL) {
-        conf->query = prev->query;
+    if ((conf->default_query == NULL) && (conf->queries == NULL)) {
+        conf->default_query = prev->default_query;
+        conf->methods_set = prev->methods_set;
+        conf->queries = prev->queries;
     }
-
-    ngx_conf_merge_ptr_value(conf, prev, NULL);
 
     return NGX_CONF_OK;
 }
@@ -248,6 +267,122 @@ ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
         return NGX_CONF_ERROR;
+    }
+
+    return NGX_CONF_OK;
+}
+
+
+char *
+ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_str_t                         *value = cf->args->elts;
+    ngx_str_t                          sql = value[cf->args->nelts - 1];
+    ngx_http_drizzle_loc_conf_t       *dlcf = conf;
+    ngx_http_compile_complex_value_t   ccv;
+    ngx_drizzle_mixed_t               *query;
+    ngx_drizzle_http_method_t         *method;
+    ngx_uint_t                         methods, i;
+
+    if (sql.len == 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "drizzle: empty value in \"%V\" directive",
+                           &cmd->name);
+
+        return NGX_CONF_ERROR;
+    }
+
+    if (cf->args->nelts == 2) {
+        /* default query */
+        dd("default query");
+
+        if (dlcf->default_query != NULL) {
+            return "is duplicate";
+        }
+
+        dlcf->default_query = ngx_pcalloc(cf->pool,
+                                           sizeof(ngx_drizzle_mixed_t));
+        if (dlcf->default_query == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        methods = 0xFFFF;
+        query = dlcf->default_query;
+    } else {
+        /* method-specific query */
+        dd("method-specific query");
+
+        methods = 0;
+
+        for (i = 1; i < cf->args->nelts - 1; i++) {
+            for (method = ngx_drizzle_http_methods; method->name; method++) {
+                if (ngx_strcasecmp(value[i].data, method->name) == 0) {
+                    /* correct method name */
+                    if (dlcf->methods_set & method->key) {
+                        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                           "drizzle: \"%V\" directive"
+                                           " for method \"%V\" is duplicate",
+                                           &cmd->name, &value[i]);
+
+                        return NGX_CONF_ERROR;
+                    }
+
+                    methods |= method->key;
+                    goto next;
+                }
+            }
+
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "drizzle: invalid method \"%V\"", &value[i]);
+
+            return NGX_CONF_ERROR;
+
+next:
+            continue;
+        }
+
+        if (dlcf->queries == NULL) {
+            dlcf->queries = ngx_array_create(cf->pool, 4,
+                                              sizeof(ngx_drizzle_mixed_t));
+            if (dlcf->queries == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        }
+
+        query = ngx_array_push(dlcf->queries);
+        if (query == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        dlcf->methods_set |= methods;
+    }
+
+    if (ngx_http_script_variables_count(&sql)) {
+        /* complex value */
+        dd("complex value");
+
+        query->key = methods;
+
+        query->cv = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t));
+        if (query->cv == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+
+        ccv.cf = cf;
+        ccv.value = &sql;
+        ccv.complex_value = query->cv;
+
+        if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+    } else {
+        /* simple value */
+        dd("simple value");
+
+        query->key = methods;
+        query->sv = sql;
     }
 
     return NGX_CONF_OK;

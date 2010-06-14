@@ -345,9 +345,11 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t   *dp;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_upstream_t                     *u;
+    ngx_http_core_loc_conf_t                *clcf;
     ngx_http_drizzle_loc_conf_t             *dlcf;
-    ngx_str_t                                dbname;
-    ngx_str_t                                query;
+    ngx_drizzle_mixed_t                     *query;
+    ngx_str_t                                dbname, sql;
+    ngx_uint_t                               i;
 
     dd("drizzle init peer");
 
@@ -410,33 +412,58 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     /* prepare SQL query */
 
-    if (dlcf->query == NULL) {
-        ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
-                       "drizzle: empty \"query\" in upstream \"%V\"",
-                       dscf->peers->name);
+    if (dlcf->methods_set & r->method) {
+        /* method-specific query */
+        dd("using method-specific query");
 
-        goto empty_query;
+        query = dlcf->queries->elts;
+        for (i = 0; i < dlcf->queries->nelts; i++) {
+            if (query[i].key & r->method) {
+                query = &query[i];
+                break;
+            }
+        }
+
+        if (i == dlcf->queries->nelts) {
+            return NGX_ERROR;
+        }
+    } else {
+        /* default query */
+        dd("using default query");
+
+        query = dlcf->default_query;
     }
 
-    if (ngx_http_complex_value(r, dlcf->query, &query) != NGX_OK) {
-        return NGX_ERROR;
+    if (query->cv) {
+        /* complex value */
+        dd("using complex value");
+
+        if (ngx_http_complex_value(r, query->cv, &sql) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
+        if (sql.len == 0) {
+            clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                          "drizzle: empty \"drizzle_query\" (was: \"%V\")"
+                          " in location \"%V\"", &query->cv->value,
+                          &clcf->name);
+
+            return NGX_ERROR;
+        }
+
+        dp->query = sql;
+
+        return NGX_OK;
+    } else {
+        /* simple value */
+        dd("using simple value");
+
+        dp->query = query->sv;
+
+        return NGX_OK;
     }
-
-    if (query.len == 0) {
-        goto empty_query;
-    }
-
-    dp->query = query;
-
-    return NGX_OK;
-
-empty_query:
-
-    ngx_log_error(NGX_LOG_EMERG, r->connection->log, 0,
-                   "drizzle: empty \"query\" in upstream \"%V\"",
-                   dscf->peers->name);
-
-    return NGX_ERROR;
 }
 
 
@@ -633,7 +660,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT);
         if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_CLEAR_EVENT) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                          "postgres: failed to add nginx connection");
+                          "drizzle: failed to add nginx connection");
 
             goto invalid;
         }

@@ -30,6 +30,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
     ngx_http_upstream_t            *u;
     ngx_http_drizzle_loc_conf_t    *dlcf;
+    ngx_http_core_loc_conf_t       *clcf;
     ngx_str_t                       target;
     ngx_url_t                       url;
     ngx_connection_t               *c;
@@ -41,6 +42,22 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
                       "ngx_http_drizzle_module does not support "
                       "subrequest in memory");
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+    if ((dlcf->default_query == NULL) && !(dlcf->methods_set & r->method)) {
+        if (dlcf->methods_set != 0) {
+            return NGX_HTTP_NOT_ALLOWED;
+        }
+
+        clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                      "drizzle: missing \"drizzle_query\" in location \"%V\"",
+                      &clcf->name);
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -71,8 +88,6 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     r->upstream = u;
 
 #endif
-
-    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
     if (dlcf->complex_target) {
         /* variables used in the drizzle_pass directive */
