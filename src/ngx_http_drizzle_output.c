@@ -197,7 +197,7 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
 
         rc = ngx_http_send_header(r);
 
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
             return rc;
         }
 
@@ -223,7 +223,7 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
 
         rc = ngx_http_output_filter(r, u->out_bufs);
 
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        if (rc == NGX_ERROR || rc > NGX_OK) {
             return rc;
         }
 

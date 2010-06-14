@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(2);
 
-plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 3;
+plan tests => repeat_each() * 2 * blocks() + 2* repeat_each() * 4;
 
 worker_connections(1024);
 run_tests();
@@ -290,3 +290,32 @@ Content-Type: application/x-resty-dbd-stream
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
 
+
+
+=== TEST 7: HEAD request
+little-endian systems only
+
+db init:
+
+create table cats (id integer, name text);
+insert into cats (id) values (2);
+insert into cats (id, name) values (3, 'bob');
+
+--- http_config
+    upstream backend {
+        drizzle_server 127.0.0.1:3306 dbname=test
+             password=some_pass user=monty protocol=mysql;
+    }
+--- config
+    location /mysql {
+        drizzle_pass backend;
+        drizzle_query 'select * from cats';
+    }
+--- request
+HEAD /mysql
+--- response_headers_like
+X-Resty-DBD-Module: ngx_drizzle \d+\.\d+\.\d+
+Content-Type: application/x-resty-dbd-stream
+--- response_body eval
+""
+--- timeout: 60
