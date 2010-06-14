@@ -481,8 +481,6 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     int                                      fd;
     ngx_event_t                             *rev, *wev;
     ngx_int_t                                rc;
-    ngx_http_upstream_t                     *u;
-    ngx_http_request_t                      *r;
 
     dd("drizzle get peer");
 
@@ -528,9 +526,6 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     if (dscf->overflow == drizzle_keepalive_overflow_reject &&
             dscf->active_conns >= dscf->max_cached)
     {
-        u = dp->upstream;
-        r = dp->request;
-
         ngx_log_error(NGX_LOG_INFO, pc->log, 0,
                        "drizzle: connection pool full, rejecting request "
                        "to upstream \"%V\"",
