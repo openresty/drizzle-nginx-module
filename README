@@ -240,6 +240,9 @@ Compatibility
     work with this module, please consider reporting a bug.
 
 TODO
+    *   apply the fixed-size bufs model for the RDS emitter which is expected
+        to give at least 100% performance boost for huge result set queries.
+
     *   implement the "drizzle_max_output_size" directive.
         When the RDS data is larger then the size specified,
         the module will try to terminate the output as quickly
