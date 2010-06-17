@@ -209,12 +209,12 @@ Installation
         https://launchpad.net/libdrizzle
 
     Grab the nginx source code from nginx.net (<http://nginx.net/>), for
-    example, the version 0.8.30 (see nginx compatibility), and then build
+    example, the version 0.8.41 (see nginx compatibility), and then build
     the source with this module:
 
-        $ wget 'http://sysoev.ru/nginx/nginx-0.8.30.tar.gz'
-        $ tar -xzvf nginx-0.8.30.tar.gz
-        $ cd nginx-0.8.30/
+        $ wget 'http://sysoev.ru/nginx/nginx-0.8.41.tar.gz'
+        $ tar -xzvf nginx-0.8.41.tar.gz
+        $ cd nginx-0.8.41/
 
         # Here we assume you would install you nginx under /opt/nginx/.
         $ ./configure --prefix=/opt/nginx \
