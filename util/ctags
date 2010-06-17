@@ -2,5 +2,5 @@
 
 # this script is intended to be used by the authors themselves
 
-ctags -R src ~/work/nginx-0.8.32/src ~/work/libdrizzle-0.6
+ctags -R src ~/work/nginx-0.8.40/src ~/work/libdrizzle-0.8
 

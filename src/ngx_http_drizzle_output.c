@@ -9,6 +9,7 @@
 #include "ngx_http_drizzle_util.h"
 #include "resty_dbd_stream.h"
 
+
 #define ngx_http_drizzle_module_header_key "X-Resty-DBD-Module"
 
 #define ngx_http_drizzle_module_header_key_len  \
@@ -25,21 +26,35 @@
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
 
+static ngx_int_t ngx_http_drizzle_get_buf(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp);
+
+static u_char * ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
+
 static rds_col_type_t ngx_http_drizzle_std_col_type(
         drizzle_column_type_t col_type);
+
+static u_char * ngx_http_drizzle_request_mem(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
+
+static ngx_int_t ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len,
+        unsigned last_buf);
 
 
 ngx_int_t
 ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         drizzle_result_st *res)
 {
+    u_char                          *pos, *last;
+    ngx_int_t                        rc;
     ngx_http_upstream_t             *u = r->upstream;
     const char                      *errstr;
     size_t                           size;
     uint16_t                         errstr_len;
-    ngx_buf_t                       *b;
-    ngx_chain_t                     *cl;
     uint16_t                         col_count;
+    unsigned                         last_buf;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
@@ -63,90 +78,85 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
          + sizeof(uint16_t)     /* column count */
          ;
 
-    cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs);
-
-    if (cl == NULL) {
+    pos = ngx_http_drizzle_request_mem(r, dp, size);
+    if (pos == NULL) {
         return NGX_ERROR;
     }
 
-    b = cl->buf;
-
-    b->tag = u->output.tag;
-    b->flush = 0;
-    b->memory = 1;
-    b->temporary = 1;
-
-    b->start = ngx_palloc(r->pool, size);
-
-    if (b->start == NULL) {
-        return NGX_ERROR;
-    }
-
-    b->end = b->start + size;
-    b->pos = b->last = b->start;
+    last = pos;
 
 #if NGX_HAVE_LITTLE_ENDIAN
-    *b->last++ = 0;
+    *last++ = 0;
 #else /* big endian */
-    *b->last++ = 1;
+    *last++ = 1;
 #endif
 
     /* RDS format version */
 
-    *(uint32_t *) b->last = (uint32_t) resty_dbd_stream_version;
-    b->last += sizeof(uint32_t);
+    *(uint32_t *) last = (uint32_t) resty_dbd_stream_version;
+    last += sizeof(uint32_t);
 
     /* result type fixed to 0 */
-    *b->last++ = 0;
+    *last++ = 0;
 
     /* standard error code
      * FIXME: define the standard error code set and map
      * libdrizzle's to it. */
-    *(uint16_t *) b->last = drizzle_result_error_code(res);
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = drizzle_result_error_code(res);
+    last += sizeof(uint16_t);
 
      /* driver-specific error code */
-    *(uint16_t *) b->last = drizzle_result_error_code(res);
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = drizzle_result_error_code(res);
+    last += sizeof(uint16_t);
 
     /* driver-specific errstr len */
-    *(uint16_t *) b->last = errstr_len;
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = errstr_len;
+    last += sizeof(uint16_t);
 
     /* driver-specific errstr data */
     if (errstr_len) {
-        b->last = ngx_copy(b->last, (u_char *) errstr, errstr_len);
+        last = ngx_copy(last, (u_char *) errstr, errstr_len);
     }
 
     /* affected rows */
-    *(uint64_t *) b->last = drizzle_result_affected_rows(res);
-    b->last += sizeof(uint64_t);
+    *(uint64_t *) last = drizzle_result_affected_rows(res);
+    last += sizeof(uint64_t);
 
     /* insert id */
-    *(uint64_t *) b->last = drizzle_result_insert_id(res);
-    b->last += sizeof(uint64_t);
+    *(uint64_t *) last = drizzle_result_insert_id(res);
+    last += sizeof(uint64_t);
 
     /* column count */
-    *(uint16_t *) b->last = col_count;
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = col_count;
+    last += sizeof(uint16_t);
 
-    if (b->last != b->end) {
+    if ((size_t) (last - pos) != size) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                "drizzle: FATAL: output result header buffer error");
         return NGX_ERROR;
     }
 
-    *dp->last_out = cl;
-    dp->last_out = &cl->next;
-
     if (col_count == 0) {
         /* we suppress row terminator here when there's no columns */
+        dp->seen_stream_end = 1;
+
+        if (r == r->main) {
+            last_buf = 1;
+        } else {
+            last_buf = 0;
+        }
+
+        rc = ngx_http_drizzle_submit_mem(r, dp, size, last_buf);
+
+        if (rc != NGX_OK) {
+            return NGX_ERROR;
+        }
 
         ngx_http_upstream_drizzle_done(r, u, dp, NGX_OK);
         return NGX_DONE;
     }
 
-    return NGX_OK;
+    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
 }
 
 
@@ -158,10 +168,30 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
     ngx_int_t                               rc;
     ngx_str_t                               key, value;
     ngx_http_drizzle_loc_conf_t            *dlcf;
+    ngx_chain_t                            *cl;
 
+    dd("enter");
     dd_dump_chain_size();
 
-    if ( ! u->header_sent ) {
+    if (dp->seen_stream_end) {
+        dp->seen_stream_end = 0;
+
+        if (dp->avail_out) {
+            cl = ngx_alloc_chain_link(r->pool);
+            if (cl == NULL) {
+                return NGX_ERROR;
+            }
+
+            cl->buf = dp->out_buf;
+            cl->next = NULL;
+            *dp->last_out = cl;
+            dp->last_out = &cl->next;
+
+            dp->avail_out = 0;
+        }
+    }
+
+    if ( ! u->header_sent && u->out_bufs) {
         ngx_http_clear_content_length(r);
 
         r->headers_out.status = NGX_HTTP_OK;
@@ -204,6 +234,7 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         u->header_sent = 1;
     }
 
+
     for ( ;; ) {
         if (u->out_bufs == NULL) {
             return NGX_OK;
@@ -232,21 +263,20 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         dp->last_out = &u->out_bufs;
     }
 
-    return rc;
+    return NGX_ERROR;
 }
 
 
 ngx_int_t
 ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 {
+    u_char                              *pos, *last;
     ngx_http_upstream_t                 *u = r->upstream;
     drizzle_column_type_t                col_type = 0;
     uint16_t                             std_col_type = 0;
     const char                          *col_name = NULL;
     uint16_t                             col_name_len = 0;
     size_t                               size;
-    ngx_buf_t                           *b;
-    ngx_chain_t                         *cl;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
@@ -264,29 +294,12 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
          + col_name_len         /* col name str len */
          ;
 
-    u = r->upstream;
-
-    cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs);
-
-    if (cl == NULL) {
+    pos = ngx_http_drizzle_request_mem(r, dp, size);
+    if (pos == NULL) {
         return NGX_ERROR;
     }
 
-    b = cl->buf;
-
-    b->tag = u->output.tag;
-    b->flush = 0;
-    b->memory = 1;
-    b->temporary = 1;
-
-    b->start = ngx_palloc(r->pool, size);
-
-    if (b->start == NULL) {
-        return NGX_ERROR;
-    }
-
-    b->end = b->start + size;
-    b->pos = b->last = b->start;
+    last = pos;
 
     /* std column type */
 
@@ -301,73 +314,55 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
             );
 #endif
 
-    *(uint16_t *) b->last = std_col_type;
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = std_col_type;
+    last += sizeof(uint16_t);
 
     /* drizzle column type */
-    *(uint16_t *) b->last = col_type;
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = col_type;
+    last += sizeof(uint16_t);
 
     /* column name string length */
-    *(uint16_t *) b->last = col_name_len;
-    b->last += sizeof(uint16_t);
+    *(uint16_t *) last = col_name_len;
+    last += sizeof(uint16_t);
 
     /* column name string data */
-    b->last = ngx_copy(b->last, col_name, col_name_len);
+    last = ngx_copy(last, col_name, col_name_len);
 
-    if (b->last != b->end) {
+    if ((size_t) (last - pos) != size) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                "drizzle: FATAL: output column buffer error");
         return NGX_ERROR;
     }
 
-    *dp->last_out = cl;
-    dp->last_out = &cl->next;
-
-    return NGX_OK;
+    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
 }
 
 
 ngx_int_t
 ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
 {
+    u_char                              *pos, *last;
     ngx_http_upstream_t                 *u = r->upstream;
     size_t                               size;
-    ngx_buf_t                           *b;
-    ngx_chain_t                         *cl;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
     size = sizeof(uint8_t);
 
-    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
-
-    if (cl == NULL) {
+    pos = ngx_http_drizzle_request_mem(r, dp, size);
+    if (pos == NULL) {
         return NGX_ERROR;
     }
 
-    b = cl->buf;
+    last = pos;
 
-    b->tag = u->output.tag;
-    b->flush = 0;
-    b->memory = 1;
-    b->temporary = 1;
+    *last++ = (row != 0);
 
-    b->start = ngx_palloc(r->pool, size);
-
-    if (b->start == NULL) {
-        return NGX_ERROR;
+    if (row == 0) {
+        dp->seen_stream_end = 1;
     }
 
-    b->end = b->start + size;
-    b->pos = b->last = b->start;
-
-    *b->last++ = (row != 0);
-
-    *dp->last_out = cl;
-    dp->last_out = &cl->next;
-
-    return NGX_OK;
+    return ngx_http_drizzle_submit_mem(r, dp, size, row == 0 ? 1 : 0 /* last_buf */);
 }
 
 
@@ -375,14 +370,11 @@ ngx_int_t
 ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         size_t len, size_t total, drizzle_field_t field)
 {
+    u_char                              *pos, *last;
     ngx_http_upstream_t                 *u = r->upstream;
     size_t                               size = 0;
-    ngx_buf_t                           *b;
-    ngx_chain_t                         *cl;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
-
-    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
 
     if (offset == 0) {
 
@@ -396,45 +388,34 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     /* (more) field data */
     size += (uint32_t) len;
 
-    cl = ngx_chain_get_free_buf(r->pool, &r->upstream->free_bufs);
+    /* request memory */
 
-    if (cl == NULL) {
+    pos = ngx_http_drizzle_request_mem(r, dp, size);
+    if (pos == NULL) {
         return NGX_ERROR;
     }
 
-    b = cl->buf;
+    last = pos;
 
-    b->tag = u->output.tag;
-    b->flush = 0;
-    b->memory = 1;
-    b->temporary = 1;
-
-    b->start = ngx_palloc(r->pool, size);
-
-    if (b->start == NULL) {
-        return NGX_ERROR;
-    }
-
-    b->end = b->start + size;
-    b->pos = b->last = b->start;
+    /* fill in the buffer */
 
     if (offset == 0) {
         /* field total length */
         if (field == NULL) {
-            *(uint32_t *) b->last = (uint32_t) -1;
+            *(uint32_t *) last = (uint32_t) -1;
         } else {
-            *(uint32_t *) b->last = (uint32_t) total;
+            *(uint32_t *) last = (uint32_t) total;
         }
 
-        b->last += sizeof(uint32_t);
+        last += sizeof(uint32_t);
     }
 
     /* field data */
     if (len) {
-        b->last = ngx_copy(b->last, field, (uint32_t) len);
+        last = ngx_copy(last, field, (uint32_t) len);
     }
 
-    if (b->last != b->end) {
+    if ((size_t) (last - pos) != size) {
         dd("offset %d, len %d, size %d", (int) offset,
                 (int) len, (int) size);
 
@@ -444,10 +425,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         return NGX_ERROR;
     }
 
-    *dp->last_out = cl;
-    dp->last_out = &cl->next;
-
-    return NGX_OK;
+    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
 }
 
 
@@ -545,4 +523,259 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
     /* impossible to reach here */
     return rds_col_type_unknown;
 }
+
+
+static u_char *
+ngx_http_drizzle_request_mem(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
+{
+    ngx_int_t                rc;
+    u_char                  *p;
+
+    rc = ngx_http_drizzle_get_buf(r, dp);
+
+    if (rc != NGX_OK) {
+        return NULL;
+    }
+
+    if (dp->avail_out < len) {
+        p = ngx_http_drizzle_get_postponed(r, dp, len);
+        if (p == NULL) {
+            return NULL;
+        }
+
+        dp->postponed.pos = p;
+        dp->postponed.last = p + len;
+
+        return p;
+    }
+
+    return dp->out_buf->last;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_get_buf(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp)
+{
+    ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
+    ngx_http_upstream_t                 *u = dp->upstream;
+
+    dd("MEM enter");
+
+    if (dp->avail_out) {
+        return NGX_OK;
+    }
+
+    if (u->free_bufs) {
+        dd("MEM reusing temp buf from free_bufs");
+
+        dp->out_buf = u->free_bufs->buf;
+        u->free_bufs = u->free_bufs->next;
+
+    } else {
+        dd("MEM creating temp buf with size: %d", (int) conf->buf_size);
+        dp->out_buf = ngx_create_temp_buf(r->pool,
+                conf->buf_size);
+
+        if (dp->out_buf == NULL) {
+            return NGX_ERROR;
+        }
+
+        dp->out_buf->tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
+        dp->out_buf->recycled = 1;
+    }
+
+    dp->avail_out = conf->buf_size;
+
+    return NGX_OK;
+}
+
+
+static u_char *
+ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
+{
+    u_char          *p;
+
+    dd("MEM enter");
+
+    if (dp->cached.start == NULL) {
+        goto alloc;
+    }
+
+    if ((size_t) (dp->cached.end - dp->cached.start) < len) {
+        ngx_pfree(r->pool, dp->cached.start);
+        goto alloc;
+    }
+
+    return dp->cached.start;
+
+alloc:
+    p = ngx_palloc(r->pool, len);
+    if (p == NULL) {
+        return NULL;
+    }
+
+    dp->cached.start = p;
+    dp->cached.end = p + len;
+
+    return p;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len, unsigned last_buf)
+{
+    ngx_chain_t             *cl;
+    ngx_int_t                rc;
+
+    ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
+
+    if (dp->postponed.pos != NULL) {
+        dd("MEM copy postponed data over to u->out_bufs for len %d", (int) len);
+
+        len = dp->postponed.last - dp->postponed.pos;
+        if (dp->avail_out < len) {
+            dd("buf size is smaller than postponed size");
+
+            if (dp->out_buf && dp->out_buf->last - dp->out_buf->pos > 0) {
+                /* save the current dp->out_buf */
+                cl = ngx_alloc_chain_link(r->pool);
+                if (cl == NULL) {
+                    return NGX_ERROR;
+                }
+
+                cl->buf = dp->out_buf;
+                cl->next = NULL;
+                *dp->last_out = cl;
+                dp->last_out = &cl->next;
+            }
+
+            /* create a buf of the postponed buf's size */
+            if (len < conf->buf_size) {
+                len = conf->buf_size;
+            }
+
+            dp->out_buf = ngx_create_temp_buf(r->pool,
+                    len);
+
+            if (dp->out_buf == NULL) {
+                return NGX_ERROR;
+            }
+
+            dp->out_buf->tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
+            dp->out_buf->recycled = 1;
+
+            dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
+                    dp->postponed.last - dp->postponed.pos);
+
+            dp->out_buf->last_buf = last_buf;
+
+            dp->postponed.pos = NULL;
+            dp->postponed.last = NULL;
+
+            /* save the new big buf */
+
+            cl = ngx_alloc_chain_link(r->pool);
+            if (cl == NULL) {
+                return NGX_ERROR;
+            }
+
+            cl->buf = dp->out_buf;
+            cl->next = NULL;
+            *dp->last_out = cl;
+            dp->last_out = &cl->next;
+
+            dp->avail_out = 0;
+
+            return NGX_OK;
+        }
+
+        for ( ;; ) {
+            len = dp->postponed.last - dp->postponed.pos;
+            if (len > dp->avail_out) {
+                len = dp->avail_out;
+            }
+
+            dp->out_buf->last = ngx_copy(dp->out_buf->last,
+                    dp->postponed.pos, len);
+
+            dp->avail_out -= len;
+
+            dp->postponed.pos += len;
+
+            if (dp->postponed.pos == dp->postponed.last) {
+                dp->postponed.pos = NULL;
+            }
+
+            if (dp->avail_out > 0) {
+                break;
+            }
+
+            dd("MEM save dp->out_buf");
+
+            cl = ngx_alloc_chain_link(r->pool);
+            if (cl == NULL) {
+                return NGX_ERROR;
+            }
+
+            cl->buf = dp->out_buf;
+            cl->next = NULL;
+            *dp->last_out = cl;
+            dp->last_out = &cl->next;
+
+            if (dp->postponed.pos == NULL) {
+                dp->out_buf->last_buf = last_buf;
+                break;
+            }
+
+            rc = ngx_http_drizzle_get_buf(r, dp);
+            if (rc != NGX_OK) {
+                return NGX_ERROR;
+            }
+        }
+
+        return NGX_OK;
+    }
+
+    dd("MEM consuming out_buf for %d, last buf: %u", (int) len, last_buf);
+
+    dp->out_buf->last += len;
+    dp->avail_out -= len;
+    dp->out_buf->last_buf = last_buf;
+
+    if (dp->avail_out == 0) {
+        dd("MEM save dp->out_buf");
+
+        cl = ngx_alloc_chain_link(r->pool);
+        if (cl == NULL) {
+            return NGX_ERROR;
+        }
+
+        cl->buf = dp->out_buf;
+        cl->next = NULL;
+        *dp->last_out = cl;
+        dp->last_out = &cl->next;
+    }
+
+    return NGX_OK;
+}
+
+
+#if 0
+static size_t
+ngx_get_num_size(uint64_t i)
+{
+    size_t          n = 0;
+
+    do {
+        i = i / 10;
+        n++;
+    } while (i > 0);
+
+    return n;
+}
+#endif
 

@@ -196,6 +196,9 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 
     conf->complex_target = NGX_CONF_UNSET_PTR;
 
+    /* TODO make this configurable */
+    conf->buf_size = ngx_pagesize;
+
     return conf;
 }
 
@@ -356,6 +359,10 @@ next:
         if (query == NULL) {
             return NGX_CONF_ERROR;
         }
+
+#if 0
+        ngx_memzero(query, sizeof(ngx_drizzle_mixed_t));
+#endif
 
         dlcf->methods_set |= methods;
     }

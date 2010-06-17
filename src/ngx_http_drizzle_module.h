@@ -56,6 +56,7 @@ typedef struct {
 
     ngx_http_complex_value_t            *complex_target;
 
+    size_t                               buf_size;
 } ngx_http_drizzle_loc_conf_t;
 
 

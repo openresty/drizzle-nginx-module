@@ -110,6 +110,12 @@ typedef struct {
 
     ngx_flag_t                              failed;
     ngx_chain_t                           **last_out;
+
+    ngx_buf_t                              *out_buf;
+    ngx_buf_t                               cached;
+    ngx_buf_t                               postponed;
+    size_t                                  avail_out;
+    ngx_flag_t                              seen_stream_end;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 

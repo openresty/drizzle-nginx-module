@@ -103,11 +103,9 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     }
 
     if (rc == NGX_AGAIN) {
-        if (u->out_bufs) {
-            rc = ngx_http_drizzle_output_bufs(r, dp);
-            if (rc == NGX_ERROR || rc >= NGX_HTTP_INTERNAL_SERVER_ERROR) {
-                return rc;
-            }
+        rc = ngx_http_drizzle_output_bufs(r, dp);
+        if (rc == NGX_ERROR || rc >= NGX_HTTP_INTERNAL_SERVER_ERROR) {
+            return rc;
         }
     }
 
@@ -445,9 +443,7 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
 {
     ngx_connection_t            *c;
 
-    if (u->out_bufs) {
-        (void) ngx_http_drizzle_output_bufs(r, dp);
-    }
+    (void) ngx_http_drizzle_output_bufs(r, dp);
 
     /* to persuade Maxim Dounin's ngx_http_upstream_keepalive
      * module to cache the current connection */

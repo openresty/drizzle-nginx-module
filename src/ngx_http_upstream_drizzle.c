@@ -434,7 +434,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
         query = dlcf->default_query;
     }
 
-    if (query->cv) {
+        if (query->cv) {
         /* complex value */
         dd("using complex value");
 
