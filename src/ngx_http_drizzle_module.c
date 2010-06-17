@@ -98,6 +98,13 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, enable_module_header),
       NULL },
+    { ngx_string("drizzle_buffer_size"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
+          |NGX_CONF_TAKE1,
+      ngx_conf_set_size_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, buf_size),
+      NULL },
 
     ngx_null_command
 };
@@ -196,8 +203,7 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
 
     conf->complex_target = NGX_CONF_UNSET_PTR;
 
-    /* TODO make this configurable */
-    conf->buf_size = ngx_pagesize;
+    conf->buf_size = NGX_CONF_UNSET_SIZE;
 
     return conf;
 }
@@ -233,6 +239,8 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->methods_set = prev->methods_set;
         conf->queries = prev->queries;
     }
+
+    ngx_conf_merge_size_value(conf->buf_size, prev->buf_size, (size_t) ngx_pagesize);
 
     return NGX_CONF_OK;
 }
