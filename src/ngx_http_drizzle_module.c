@@ -360,9 +360,7 @@ next:
             return NGX_CONF_ERROR;
         }
 
-#if 0
         ngx_memzero(query, sizeof(ngx_drizzle_mixed_t));
-#endif
 
         dlcf->methods_set |= methods;
     }
