@@ -630,17 +630,20 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
 {
     ngx_chain_t             *cl;
     ngx_int_t                rc;
+    size_t                   postponed_len;
 
     ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
 
     if (dp->postponed.pos != NULL) {
         dd("MEM copy postponed data over to u->out_bufs for len %d", (int) len);
 
-        len = dp->postponed.last - dp->postponed.pos;
-        if (dp->avail_out < len) {
-            dd("buf size is smaller than postponed size");
+        postponed_len = dp->postponed.last - dp->postponed.pos;
 
-            if (dp->out_buf && dp->out_buf->last - dp->out_buf->pos > 0) {
+        if (postponed_len > dp->avail_out) {
+            /* we should ensure that rds atoms do not get
+             * splitted into multiple bufs. */
+
+            if (dp->out_buf && dp->out_buf->pos != dp->out_buf->last) {
                 /* save the current dp->out_buf */
                 cl = ngx_alloc_chain_link(r->pool);
                 if (cl == NULL) {
@@ -653,10 +656,10 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
                 dp->last_out = &cl->next;
             }
 
-            /* create a buf of the postponed buf's size */
-            if (len < conf->buf_size) {
-                len = conf->buf_size;
-            }
+            /* create a buf for the postponed buf */
+
+            len = postponed_len > conf->buf_size ?
+                postponed_len : conf->buf_size;
 
             dp->out_buf = ngx_create_temp_buf(r->pool,
                     len);
@@ -669,26 +672,27 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
             dp->out_buf->recycled = 1;
 
             dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
-                    dp->postponed.last - dp->postponed.pos);
+                    postponed_len);
+
+            dp->avail_out = len - postponed_len;
 
             dp->out_buf->last_buf = last_buf;
 
             dp->postponed.pos = NULL;
-            dp->postponed.last = NULL;
 
-            /* save the new big buf */
+            if (dp->avail_out == 0) {
+                /* save the new big buf */
 
-            cl = ngx_alloc_chain_link(r->pool);
-            if (cl == NULL) {
-                return NGX_ERROR;
+                cl = ngx_alloc_chain_link(r->pool);
+                if (cl == NULL) {
+                    return NGX_ERROR;
+                }
+
+                cl->buf = dp->out_buf;
+                cl->next = NULL;
+                *dp->last_out = cl;
+                dp->last_out = &cl->next;
             }
-
-            cl->buf = dp->out_buf;
-            cl->next = NULL;
-            *dp->last_out = cl;
-            dp->last_out = &cl->next;
-
-            dp->avail_out = 0;
 
             return NGX_OK;
         }
@@ -762,20 +766,4 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
 
     return NGX_OK;
 }
-
-
-#if 0
-static size_t
-ngx_get_num_size(uint64_t i)
-{
-    size_t          n = 0;
-
-    do {
-        i = i / 10;
-        n++;
-    } while (i > 0);
-
-    return n;
-}
-#endif
 
