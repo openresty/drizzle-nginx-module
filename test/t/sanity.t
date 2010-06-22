@@ -86,7 +86,7 @@ insert into cats (id, name) values (3, 'bob');
     upstream backend {
         drizzle_server localhost dbname=test
              password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive max=1 mode=single overflow=reject;
+             drizzle_keepalive max=1 mode=single overflow=reject;
     }
 --- config
     location /mysql {

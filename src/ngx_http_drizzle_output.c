@@ -207,6 +207,8 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         r->headers_out.content_type_len =
             rds_content_type_len;
 
+        r->headers_out.content_type_lowcase = NULL;
+
         dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
         if (dlcf->enable_module_header) {
