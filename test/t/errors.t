@@ -80,6 +80,7 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 502
+--- skip_nginx: 1: < 0.8.17
 
 
 
@@ -168,3 +169,26 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 500
+
+
+
+=== TEST 8: no database (for versions older than nginx-0.8.17)
+little-endian systems only
+
+--- http_config
+    upstream foo {
+        drizzle_server 127.0.0.1:1 dbname=test
+             password=some_pass user=monty protocol=mysql;
+        drizzle_keepalive mode=single max=2 overflow=reject;
+    }
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- error_code: 500
+--- skip_nginx: 1: >= 0.8.17
