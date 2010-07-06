@@ -355,7 +355,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
     dp = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_drizzle_peer_data_t));
     if (dp == NULL) {
-        return NGX_ERROR;
+        goto failed;
     }
 
     u = r->upstream;
@@ -394,7 +394,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     if (dlcf->dbname) {
         /* check if dbname requires overriding at request time */
         if (ngx_http_complex_value(r, dlcf->dbname, &dbname) != NGX_OK) {
-            return NGX_ERROR;
+            goto failed;
         }
 
         if (dbname.len) {
@@ -403,7 +403,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
                        "drizzle: \"dbname\" value too large in upstream \"%V\"",
                        dscf->peers->name);
 
-                return NGX_ERROR;
+                goto failed;
             }
 
             dp->dbname = dbname;
@@ -425,7 +425,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
         }
 
         if (i == dlcf->queries->nelts) {
-            return NGX_ERROR;
+            goto failed;
         }
     } else {
         /* default query */
@@ -439,7 +439,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
         dd("using complex value");
 
         if (ngx_http_complex_value(r, query->cv, &sql) != NGX_OK) {
-            return NGX_ERROR;
+            goto failed;
         }
 
         if (sql.len == 0) {
@@ -450,7 +450,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
                           " in location \"%V\"", &query->cv->value,
                           &clcf->name);
 
-            return NGX_ERROR;
+            goto failed;
         }
 
         dp->query = sql;
@@ -464,6 +464,15 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
 
         return NGX_OK;
     }
+
+failed:
+#if defined(nginx_version) && (nginx_version >= 8017)
+    return NGX_ERROR;
+#else
+    r->upstream->peer.data = NULL;
+
+    return NGX_OK;
+#endif
 }
 
 
@@ -483,6 +492,12 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_int_t                                rc;
 
     dd("drizzle get peer");
+
+#if defined(nginx_version) && (nginx_version < 8017)
+    if (data == NULL) {
+        goto failed;
+    }
+#endif
 
     dscf = dp->srv_conf;
 
@@ -531,7 +546,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
                        "to upstream \"%V\"",
                        &peer->name);
 
-        /* a bit hack-ish way to return 503 Service Unavailable (setup part) */
+        /* a bit hack-ish way to return error response (setup part) */
         pc->connection = ngx_get_connection(0, pc->log);
 
         return NGX_AGAIN;
@@ -542,7 +557,11 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     dc = ngx_pcalloc(dscf->pool, sizeof(drizzle_con_st));
 
     if (dc == NULL) {
+#if defined(nginx_version) && (nginx_version >= 8017)
         return NGX_ERROR;
+#else
+        goto failed;
+#endif
     }
 
     dp->drizzle_con = dc;
@@ -609,7 +628,11 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         drizzle_con_free(dc);
         ngx_pfree(dscf->pool, dc);
 
+#if defined(nginx_version) && (nginx_version >= 8017)
         return NGX_DECLINED;
+#else
+        goto failed;
+#endif
     }
 
     dscf->active_conns++;
@@ -706,7 +729,16 @@ invalid:
     ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
             dc, dscf);
 
+#if defined(nginx_version) && (nginx_version >= 8017)
     return NGX_ERROR;
+#else
+
+failed:
+    /* a bit hack-ish way to return error response (setup part) */
+    pc->connection = ngx_get_connection(0, pc->log);
+
+    return NGX_AGAIN;
+#endif
 }
 
 
@@ -715,9 +747,17 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         void *data, ngx_uint_t state)
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
-    ngx_http_upstream_drizzle_srv_conf_t    *dscf = dp->srv_conf;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
 
     dd("drizzle free peer");
+
+#if defined(nginx_version) && (nginx_version < 8017)
+    if (data == NULL) {
+        return;
+    }
+#endif
+
+    dscf = dp->srv_conf;
 
     if (dp->drizzle_con && dp->drizzle_res.con) {
         dd("before drizzle result free");
