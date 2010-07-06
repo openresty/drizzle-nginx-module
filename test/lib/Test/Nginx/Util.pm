@@ -15,6 +15,8 @@ use Cwd qw( cwd );
 use List::Util qw( shuffle );
 use Time::HiRes qw( sleep );
 
+our $LatestNginxVersion = 0.008039;
+
 our $NoNginxManager = 0;
 our $Profiling = 0;
 
@@ -203,6 +205,51 @@ sub setup_server_root () {
         die "Failed to do mkdir $ConfDir\n";
 }
 
+sub write_user_files ($) {
+    my $block = shift;
+
+    my $name = $block->name;
+
+    if ($block->user_files) {
+        my $raw = $block->user_files;
+
+        open my $in, '<', \$raw;
+
+        my @files;
+        my ($fname, $body);
+        while (<$in>) {
+            if (/>>> (\S+)/) {
+                if ($fname) {
+                    push @files, [$fname, $body];
+                }
+
+                $fname = $1;
+                undef $body;
+            } else {
+                $body .= $_;
+            }
+        }
+
+        if ($fname) {
+            push @files, [$fname, $body];
+        }
+
+        for my $file (@files) {
+            my ($fname, $body) = @$file;
+            #warn "write file $fname with content [$body]\n";
+
+            if (!defined $body) {
+                $body = '';
+            }
+
+            open my $out, ">$HtmlDir/$fname" or
+                die "$name - Cannot open $HtmlDir/$fname for writing: $!\n";
+            print $out $body;
+            close $out;
+        }
+    }
+}
+
 sub write_config_file ($$) {
     my ($config, $http_config) = @_;
 
@@ -317,8 +364,14 @@ sub parse_headers ($) {
     open my $in, '<', \$s;
     while (<$in>) {
         s/^\s+|\s+$//g;
-        my ($key, $val) = split /\s*:\s*/, $_, 2;
-        $headers{$key} = $val;
+        my $neg = ($_ =~ s/^!\s*//);
+        #warn "neg: $neg ($_)";
+        if ($neg) {
+            $headers{$_} = undef;
+        } else {
+            my ($key, $val) = split /\s*:\s*/, $_, 2;
+            $headers{$key} = $val;
+        }
     }
     close $in;
     return \%headers;
@@ -336,6 +389,7 @@ sub run_test ($) {
     }
 
     my $skip_nginx = $block->skip_nginx;
+    my $skip_nginx2 = $block->skip_nginx2;
     my ($tests_to_skip, $should_skip, $skip_reason);
     if (defined $skip_nginx) {
         if ($skip_nginx =~ m{
@@ -358,7 +412,37 @@ sub run_test ($) {
                 $skip_nginx);
             die;
         }
+    } elsif (defined $skip_nginx2) {
+        if ($skip_nginx2 =~ m{
+                ^ \s* (\d+) \s* : \s*
+                    ([<>]=?) \s* (\d+)\.(\d+)\.(\d+)
+                    \s* (or|and) \s*
+                    ([<>]=?) \s* (\d+)\.(\d+)\.(\d+)
+                    (?: \s* : \s* (.*) )?
+                \s*$}x) {
+            $tests_to_skip = $1;
+            my ($opa, $ver1a, $ver2a, $ver3a) = ($2, $3, $4, $5);
+            my $opx = $6;
+            my ($opb, $ver1b, $ver2b, $ver3b) = ($7, $8, $9, $10);
+            $skip_reason = $11;
+            my $vera = get_canon_version($ver1a, $ver2a, $ver3a);
+            my $verb = get_canon_version($ver1b, $ver2b, $ver3b);
+
+            if ((!defined $NginxVersion)
+                or (($opx eq "or") and (eval "$NginxVersion $opa $vera"
+                                        or eval "$NginxVersion $opb $verb"))
+                or (($opx eq "and") and (eval "$NginxVersion $opa $vera"
+                                        and eval "$NginxVersion $opb $verb")))
+            {
+                $should_skip = 1;
+            }
+        } else {
+            Test::More::BAIL_OUT("$name - Invalid --- skip_nginx2 spec: " .
+                $skip_nginx2);
+            die;
+        }
     }
+
     if (!defined $skip_reason) {
         $skip_reason = "various reasons";
     }
@@ -428,6 +512,7 @@ start_nginx:
 
             #warn "*** Restarting the nginx server...\n";
             setup_server_root();
+            write_user_files($block);
             write_config_file($config, $block->http_config);
             if ( ! Module::Install::Can->can_run('nginx') ) {
                 Test::More::BAIL_OUT("$name - Cannot find the nginx executable in the PATH environment");
@@ -437,6 +522,10 @@ start_nginx:
         #Test::More::BAIL_OUT("$name - Invalid config file");
         #}
         #my $cmd = "nginx -p $ServRoot -c $ConfFile > /dev/null";
+            if (!defined $NginxVersion) {
+                $NginxVersion = $LatestNginxVersion;
+            }
+
             my $cmd;
             if ($NginxVersion >= 0.007053) {
                 $cmd = "nginx -p $ServRoot/ -c $ConfFile > /dev/null";
