@@ -7,8 +7,6 @@ cd ~/work
 version=$1
 home=~
 opts=$2
-#lwp-mirror "http://sysoev.ru/nginx/nginx-$version.tar.gz" nginx-$version.tar.gz
-#tar -xzvf nginx-$version.tar.gz
 
 if [ ! -s "nginx-$version.tar.gz" ]; then
     wget "http://sysoev.ru/nginx/nginx-$version.tar.gz" -O nginx-$version.tar.gz || exit 1
