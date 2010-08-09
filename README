@@ -7,7 +7,7 @@ Status
     required to patch libdrizzle-0.8 using the following
     patch in order to fix a nasty bug in libdrizzle:
 
-      http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug.patch
+      http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug_and_mac_fixes.patch
 
     This patch is expected to be included in the next
     official release of libdrizzle.
