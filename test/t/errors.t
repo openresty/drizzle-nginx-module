@@ -3,12 +3,18 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-#repeat_each(100);
 repeat_each(2);
 
 plan tests => repeat_each() * blocks() + 2;
 
-worker_connections(1024);
+our $http_config = <<'_EOC_';
+    upstream foo {
+        drizzle_server 127.0.0.1:3306 protocol=mysql
+                       dbname=ngx_test user=ngx_test password=ngx_test;
+    }
+_EOC_
+
+worker_connections(128);
 run_tests();
 
 no_diff();
@@ -18,12 +24,7 @@ __DATA__
 === TEST 1: bad query
 little-endian systems only
 
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         set $backend foo;
@@ -87,12 +88,7 @@ GET /mysql
 === TEST 4: multiple queries
 little-endian systems only
 
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         set $backend foo;
@@ -109,12 +105,7 @@ GET /mysql
 === TEST 5: missing query
 little-endian systems only
 
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         set $backend foo;
@@ -130,12 +121,7 @@ GET /mysql
 === TEST 6: empty query
 little-endian systems only
 
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         set $backend foo;
@@ -153,12 +139,7 @@ GET /mysql
 === TEST 7: empty pass
 little-endian systems only
 
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         set $backend "";

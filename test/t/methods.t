@@ -7,6 +7,13 @@ repeat_each(2);
 
 plan tests => repeat_each() * (blocks() * 3 - 2 * 2);
 
+our $http_config = <<'_EOC_';
+    upstream database {
+        drizzle_server 127.0.0.1:3306 protocol=mysql
+                       dbname=ngx_test user=ngx_test password=ngx_test;
+    }
+_EOC_
+
 worker_connections(128);
 run_tests();
 
@@ -17,10 +24,7 @@ __DATA__
 === TEST 1: default query
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -57,10 +61,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 2: method-specific query
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -97,10 +98,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 3: method-specific complex query (check 1)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -137,10 +135,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 4: method-specific complex query (check 2)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -177,10 +172,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 5: method-specific complex query (using not allowed method)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -196,10 +188,7 @@ HEAD /mysql
 === TEST 6: method-specific query and default query (using defined method)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -237,10 +226,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 7: method-specific query and default query (using other method)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;
@@ -278,10 +264,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 8: inheritance
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     drizzle_query      "select 'default' as echo";
     drizzle_query      LOCK GET UNLOCK "select '$request_method' as echo";
@@ -320,10 +303,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 9: inheritance (mixed, not inherited)
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     drizzle_query      "select 'default' as echo";
 
@@ -341,10 +321,7 @@ HEAD /mysql
 === TEST 10: default query
 little-endian systems only
 
---- http_config
-    upstream database {
-        drizzle_server     127.0.0.1 dbname=test user=monty password=some_pass;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass       database;

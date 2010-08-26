@@ -1,4 +1,4 @@
-# vi:filetype=
+# vi:filetype=perl
 
 use lib 'lib';
 use Test::Nginx::Socket;
@@ -7,7 +7,14 @@ repeat_each(2);
 
 plan tests => repeat_each() * 2 * blocks() + 2 * repeat_each() * 6;
 
-worker_connections(1024);
+our $http_config = <<'_EOC_';
+    upstream backend {
+        drizzle_server 127.0.0.1:3306 protocol=mysql
+                       dbname=ngx_test user=ngx_test password=ngx_test;
+    }
+_EOC_
+
+worker_connections(128);
 run_tests();
 
 no_diff();
@@ -17,17 +24,7 @@ __DATA__
 === TEST 1: sanity
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -76,18 +73,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 2: keep-alive
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server localhost dbname=test
-             password=some_pass user=monty protocol=mysql;
-             drizzle_keepalive max=1 mode=single overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -132,18 +118,7 @@ GET /mysql
 === TEST 3: update
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -169,18 +144,7 @@ GET /mysql
 === TEST 4: select empty result
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=multi max=1;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -214,18 +178,7 @@ GET /mysql
 === TEST 5: update & no module header
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -254,22 +207,11 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 6: variables in drizzle_pass
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_keepalive mode=single max=2 overflow=reject;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
-        set $backend foo;
-        drizzle_pass $backend;
+        set $foo backend;
+        drizzle_pass $foo;
         drizzle_module_header off;
         drizzle_query "update cats set name='bob' where name='bob'";
     }
@@ -295,17 +237,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 7: sanity (using little bufs, size 1)
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -355,17 +287,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 8: sanity (using little bufs, size 2)
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
@@ -415,17 +337,7 @@ Content-Type: application/x-resty-dbd-stream
 === TEST 9: sanity (using little bufs, size 3)
 little-endian systems only
 
-db init:
-
-create table cats (id integer, name text);
-insert into cats (id) values (2);
-insert into cats (id, name) values (3, 'bob');
-
---- http_config
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-    }
+--- http_config eval: $::http_config
 --- config
     location /mysql {
         drizzle_pass backend;
