@@ -40,6 +40,11 @@ Synopsis
                 drizzle_query $my_sql;
 
                 drizzle_pass backend;
+
+                drizzle_connect_timeout 500 ms; # default 60 s
+                drizzle_send_query_timeout 2 s; # default 60 s
+                drizzle_recv_cols 1 s; # default 60 s
+                drizzle_recv_rows 1 s; # default 60 s
             }
             ...
         }
@@ -119,21 +124,25 @@ Caveats
 Directives
 
     drizzle_server <host>:<port> dbname=<dbname> password=<password> user=<user> protocol=<protocol>
-
         protocol can be either "mysql" or "drizzle".
 
     drizzle_query <sql>
 
     drizzle_connect_timeout <time>
-
         <time> can be an integer, with an optional time unit, like "s", "ms", "m".
         The default time unit is "s", ie, "second".
 
+        default setting is "60 s".
+
     drizzle_send_query_timeout <time>
 
+        default setting is "60 s".
+
     drizzle_recv_cols_timeout <time>
+        default setting is "60 s".
 
     drizzle_recv_rows_timeout <time>
+        default setting is "60 s".
 
 Output
     This module generates binary query results in a format
