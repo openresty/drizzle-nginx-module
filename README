@@ -116,6 +116,25 @@ Caveats
       define server entries MUST NOT be used in the
       "drizzle_pass" directive.
 
+Directives
+
+    drizzle_server <host>:<port> dbname=<dbname> password=<password> user=<user> protocol=<protocol>
+
+        protocol can be either "mysql" or "drizzle".
+
+    drizzle_query <sql>
+
+    drizzle_connect_timeout <time>
+
+        <time> can be an integer, with an optional time unit, like "s", "ms", "m".
+        The default time unit is "s", ie, "second".
+
+    drizzle_send_query_timeout <time>
+
+    drizzle_recv_cols_timeout <time>
+
+    drizzle_recv_rows_timeout <time>
+
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
