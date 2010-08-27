@@ -174,4 +174,5 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 500
---- skip_nginx: 1: >= 0.8.17
+--- SKIP
+
