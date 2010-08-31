@@ -30,6 +30,9 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 {
     ngx_http_upstream_t            *u;
     ngx_http_drizzle_loc_conf_t    *dlcf;
+#if defined(nginx_version) && nginx_version < 8017
+    ngx_http_drizzle_ctx_t         *dctx;
+#endif
     ngx_http_core_loc_conf_t       *clcf;
     ngx_str_t                       target;
     ngx_url_t                       url;
@@ -120,6 +123,15 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
         }
     }
 
+#if defined(nginx_version) && nginx_version < 8017
+    dctx = ngx_pcalloc(r->pool, sizeof(ngx_http_drizzle_ctx_t));
+    if (dctx == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    ngx_http_set_ctx(r, dctx, ngx_http_drizzle_module);
+#endif
+
     u->schema.len = sizeof("drizzle://") - 1;
     u->schema.data = (u_char *) "drizzle://";
 
@@ -167,7 +179,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 #if defined(nginx_version) && (nginx_version >= 8017)
             NGX_HTTP_SERVICE_UNAVAILABLE);
 #else
-            NGX_HTTP_INTERNAL_SERVER_ERROR);
+            dctx->status ? dctx->status : NGX_HTTP_INTERNAL_SERVER_ERROR);
 #endif
     }
 

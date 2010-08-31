@@ -60,6 +60,13 @@ typedef struct {
 } ngx_http_drizzle_loc_conf_t;
 
 
+#if defined(nginx_version) && (nginx_version < 8017)
+typedef struct {
+    ngx_int_t                           status;
+} ngx_http_drizzle_ctx_t;
+#endif
+
+
 /* states for the drizzle client state machine */
 typedef enum {
     state_db_connect,

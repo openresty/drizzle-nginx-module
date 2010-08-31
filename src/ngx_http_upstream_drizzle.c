@@ -483,6 +483,9 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_upstream_drizzle_peers_t       *peers;
     ngx_http_upstream_drizzle_peer_t        *peer;
+#if defined(nginx_version) && (nginx_version < 8017)
+    ngx_http_drizzle_ctx_t                  *dctx;
+#endif
     ngx_connection_t                        *c = NULL;
     drizzle_con_st                          *dc = NULL;
     ngx_str_t                                dbname;
@@ -497,6 +500,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     if (data == NULL) {
         goto failed;
     }
+
+    dctx = ngx_http_get_module_ctx(dp->request, ngx_http_drizzle_module);
 #endif
 
     dscf = dp->srv_conf;
@@ -548,6 +553,10 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
         /* a bit hack-ish way to return error response (setup part) */
         pc->connection = ngx_get_connection(0, pc->log);
+
+#if defined(nginx_version) && (nginx_version < 8017)
+        dctx->status = NGX_HTTP_SERVICE_UNAVAILABLE;
+#endif
 
         return NGX_AGAIN;
     }
@@ -631,6 +640,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 #if defined(nginx_version) && (nginx_version >= 8017)
         return NGX_DECLINED;
 #else
+        dctx->status = NGX_HTTP_BAD_GATEWAY;
         goto failed;
 #endif
     }
