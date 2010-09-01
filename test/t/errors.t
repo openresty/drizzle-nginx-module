@@ -47,7 +47,7 @@ little-endian systems only
 
 --- http_config
     upstream foo {
-        drizzle_server 127.0.0.1:3306 dbname=test
+        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT dbname=test
              password=wrong_pass user=monty protocol=mysql;
         drizzle_keepalive mode=single max=2 overflow=reject;
     }
