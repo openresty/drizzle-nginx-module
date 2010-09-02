@@ -38,7 +38,7 @@ GET /upstream
 
 
 
-=== TEST2: http_config connect timeout
+=== TEST 2: http_config connect timeout
 --- http_config eval: $::http_config
 --- config
     drizzle_connect_timeout 3;
@@ -57,7 +57,7 @@ GET /upstream
 
 
 
-=== TEST3: serv_config connect timeout
+=== TEST 3: serv_config connect timeout
 --- http_config eval: $::http_config
 --- config
     drizzle_connect_timeout 10ms;
@@ -72,3 +72,4 @@ GET /upstream
 --- error_code: 504
 --- response_body_like: 504 Gateway Time-out
 --- timeout: 0.5
+
