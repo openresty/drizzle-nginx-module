@@ -35,7 +35,7 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
 
     for (i = 1; i < cf->args->nelts; i++) {
 
-        if (ngx_strncmp(value[i].data, "max=", sizeof("max=") - 1)
+        if (ngx_http_drizzle_strcmp_const(value[i].data, "max=")
                 == 0)
         {
             len = value[i].len - (sizeof("max=") - 1);
@@ -57,21 +57,19 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
             continue;
         }
 
-        if (ngx_strncmp(value[i].data, "mode=", sizeof("mode=") - 1)
-                == 0)
-        {
+        if (ngx_http_drizzle_strcmp_const(value[i].data, "mode=") == 0) {
             len = value[i].len - (sizeof("mode=") - 1);
             data = &value[i].data[sizeof("mode=") - 1];
 
             switch (len) {
             case 6:
-                if (ngx_str6cmp(data, 's', 'i', 'n', 'g', 'l', 'e')) {
+                if (ngx_http_drizzle_strcmp_const(data, "single") == 0) {
                     dscf->single = 1;
                 }
                 break;
 
             case 5:
-                if (ngx_str5cmp(data, 'm', 'u', 'l', 't', 'i')) {
+                if (ngx_http_drizzle_strcmp_const(data, "multi") == 0) {
                     dscf->single = 0;
                 }
                 break;
@@ -88,17 +86,15 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
             continue;
         }
 
-        if (ngx_strncmp(value[i].data, "overflow=", sizeof("overflow=") - 1)
-                == 0)
-        {
+        if (ngx_http_drizzle_strcmp_const(value[i].data, "overflow=") == 0) {
             len = value[i].len - (sizeof("overflow=") - 1);
             data = &value[i].data[sizeof("overflow=") - 1];
 
             switch (len) {
             case 6:
-                if (ngx_str6cmp(data, 'r', 'e', 'j', 'e', 'c', 't')) {
+                if (ngx_http_drizzle_strcmp_const(data, "reject") == 0) {
                     dscf->overflow = drizzle_keepalive_overflow_reject;
-                } else if (ngx_str6cmp(data, 'i', 'g', 'n', 'o', 'r', 'e')) {
+                } else if (ngx_http_drizzle_strcmp_const(data, "ignore") == 0) {
                     dscf->overflow = drizzle_keepalive_overflow_ignore;
                 }
                 break;

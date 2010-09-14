@@ -204,7 +204,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             switch (protocol.len) {
             case 5:
-                if (ngx_str5cmp(protocol.data, 'm', 'y', 's', 'q', 'l')) {
+                if (ngx_http_drizzle_strcmp_const(protocol.data, "mysql") == 0) {
                     ds->protocol = ngx_http_mysql_protocol;
                 } else {
                     continue;
@@ -213,8 +213,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
                 break;
 
             case 7:
-                if ( ! ngx_str7cmp(protocol.data,
-                            'd', 'r', 'i', 'z', 'z', 'l', 'e'))
+                if (ngx_http_drizzle_strcmp_const(protocol.data,
+                            "drizzle") != 0)
                 {
                     continue;
                 }
