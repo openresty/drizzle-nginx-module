@@ -164,6 +164,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     ngx_int_t                    rc;
     char                        *query_data;
     size_t                       query_len;
+    ngx_flag_t                   has_set_names;
 
     if (! dp->has_set_names) {
         query_data = "set names 'utf8'";
@@ -241,6 +242,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     dd("after drizzle restult");
 
+    has_set_names = dp->has_set_names;
     rc = ngx_http_drizzle_output_result_header(r, &dp->drizzle_res);
 
     dd("after output result header YYY");
@@ -252,7 +254,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     }
 
     if (rc == NGX_DONE) {
-        if (! dp->has_set_names) {
+        if (! has_set_names) {
             c->log->action = "connecting to drizzle upstream";
             dp->has_set_names = 1;
 

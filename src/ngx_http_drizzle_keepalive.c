@@ -179,6 +179,7 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
 
         dp->name = &item->name;
         dp->drizzle_con = item->drizzle_con;
+        dp->has_set_names = item->has_set_names;
 
         return NGX_DONE;
     }
@@ -226,6 +227,7 @@ ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
 
             dp->name = &item->name;
             dp->drizzle_con = item->drizzle_con;
+            dp->has_set_names = item->has_set_names;
 
             return NGX_DONE;
         }
@@ -314,6 +316,7 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
         ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
 
         item->drizzle_con = dp->drizzle_con;
+        item->has_set_names = dp->has_set_names;
     }
 }
 
