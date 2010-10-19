@@ -54,9 +54,35 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     size_t                           size;
     uint16_t                         errstr_len;
     uint16_t                         col_count;
+    uint16_t                         errcode;
     unsigned                         last_buf;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+
+    dd("enter output header XXX");
+
+    errcode = drizzle_result_error_code(res);
+    if (! dp->has_set_names) {
+        if (errcode != 0) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                   "drizzle: FATAL: failed to set names 'utf8' (error %d)", (int) errcode);
+            return NGX_ERROR;
+        }
+
+        if (dp->drizzle_con && dp->drizzle_res.con) {
+            dd("before drizzle result free");
+
+            dd("%p vs. %p", dp->drizzle_res.con, dp->drizzle_con);
+
+            drizzle_result_free(&dp->drizzle_res);
+
+            dd("after drizzle result free");
+        }
+
+        /* ngx_http_upstream_drizzle_done(r, u, dp, NGX_OK); */
+        dd("returning DONE when set names");
+        return NGX_DONE;
+    }
 
     errstr = drizzle_result_error(res);
 
@@ -102,7 +128,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     /* standard error code
      * FIXME: define the standard error code set and map
      * libdrizzle's to it. */
-    *(uint16_t *) last = drizzle_result_error_code(res);
+    *(uint16_t *) last = errcode;
     last += sizeof(uint16_t);
 
      /* driver-specific error code */
@@ -137,6 +163,8 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     }
 
     if (col_count == 0) {
+        dd("Col count is ZERO");
+
         /* we suppress row terminator here when there's no columns */
         dp->seen_stream_end = 1;
 
@@ -152,7 +180,9 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
             return NGX_ERROR;
         }
 
+        dd("about to be done...");
         ngx_http_upstream_drizzle_done(r, u, dp, NGX_OK);
+        dd("i am returning DONE");
         return NGX_DONE;
     }
 

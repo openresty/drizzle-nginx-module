@@ -116,6 +116,7 @@ typedef struct {
     ngx_buf_t                               postponed;
     size_t                                  avail_out;
     ngx_flag_t                              seen_stream_end;
+    ngx_flag_t                              has_set_names;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 

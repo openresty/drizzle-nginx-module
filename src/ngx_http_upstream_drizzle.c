@@ -840,7 +840,9 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
     dscf->active_conns--;
 
     if (dc) {
+        dd("before con free");
         drizzle_con_free(dc);
+        dd("after con free");
         ngx_pfree(dscf->pool, dc);
     }
 

@@ -100,6 +100,8 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
 {
     ngx_time_t  *tp;
 
+    dd("enter");
+
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "finalize http upstream request: %i", rc);
 
@@ -127,9 +129,12 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
     }
 
     if (u->peer.free) {
+        dd("before free peer");
         u->peer.free(&u->peer, u->peer.data, 0);
+        dd("after free peer");
     }
 
+    dd("about to free peer 2");
     if (u->peer.connection) {
 
 #if 0 /* libdrizzle doesn't support SSL, was: (NGX_HTTP_SSL) */

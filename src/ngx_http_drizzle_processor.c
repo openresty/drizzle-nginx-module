@@ -162,11 +162,21 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     ngx_http_upstream_t         *u = r->upstream;
     drizzle_return_t             ret;
     ngx_int_t                    rc;
+    char                        *query_data;
+    size_t                       query_len;
 
-    dd("drizzle send query");
+    if (! dp->has_set_names) {
+        query_data = "set names 'utf8'";
+        query_len = sizeof("set names 'utf8'") - 1;
+    } else {
+        query_data = (char *) dp->query.data;
+        query_len = dp->query.len;
+    }
 
-    (void) drizzle_query(dc, &dp->drizzle_res, (const char *) dp->query.data,
-            dp->query.len, &ret);
+    dd("drizzle send query: %.*s", (int) query_len, query_data);
+
+    (void) drizzle_query(dc, &dp->drizzle_res, (const char *) query_data,
+            query_len, &ret);
 
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
 
@@ -201,6 +211,13 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
                                drizzle_error(dc->drizzle),
                                &u->peer.name);
 
+                if (! dp->has_set_names) {
+                    c->log->action = "sending query to drizzle upstream";
+                    dp->has_set_names = 1;
+
+                    return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
+                }
+
                 ngx_http_upstream_drizzle_done(r, u, dp, NGX_HTTP_GONE);
 
                 return NGX_DONE;
@@ -222,13 +239,28 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     dd_drizzle_result(&dp->drizzle_res);
 
+    dd("after drizzle restult");
+
     rc = ngx_http_drizzle_output_result_header(r, &dp->drizzle_res);
+
+    dd("after output result header YYY");
+
+    dd("output result header ret %d", (int) rc);
 
     if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
         return rc;
     }
 
     if (rc == NGX_DONE) {
+        if (! dp->has_set_names) {
+            c->log->action = "connecting to drizzle upstream";
+            dp->has_set_names = 1;
+
+            dp->state = state_db_send_query;
+
+            return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
+        }
+
         /* no data set following the header */
         return rc;
     }
@@ -284,6 +316,7 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
         if (col) {
             rc = ngx_http_drizzle_output_col(r, col);
+
             drizzle_column_free(col);
 
             if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
@@ -361,6 +394,13 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
 
                 if (c->read->timer_set) {
                     ngx_del_timer(c->read);
+                }
+
+                if (! dp->has_set_names) {
+                    c->log->action = "sending query to drizzle upstream";
+                    dp->has_set_names = 1;
+
+                    return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
                 }
 
                 ngx_http_upstream_drizzle_done(r, u, dp, NGX_DONE);
@@ -443,7 +483,11 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
 {
     ngx_connection_t            *c;
 
+    dd("enter");
+
     (void) ngx_http_drizzle_output_bufs(r, dp);
+
+    dd("after output bufs");
 
     /* to persuade Maxim Dounin's ngx_http_upstream_keepalive
      * module to cache the current connection */
@@ -466,6 +510,8 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     /* reset the state machine */
     dp->state = state_db_idle;
 
+    dd("about to finalize request...");
     ngx_http_upstream_drizzle_finalize_request(r, u, rc);
+    dd("after finalize request...");
 }
 
