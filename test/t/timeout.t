@@ -88,9 +88,9 @@ GET /upstream
 
 --- config
     #drizzle_connect_timeout 1;
-    drizzle_send_query_timeout 10ms;
-    #drizzle_recv_cols_timeout 1;
-    #drizzle_recv_rows_timeout 1;
+    #drizzle_send_query_timeout 10ms;
+    drizzle_recv_cols_timeout 10ms;
+    #drizzle_recv_rows_timeout 10ms;
 
     location /upstream {
         drizzle_pass backend;
@@ -102,5 +102,4 @@ GET /upstream
 --- error_code: 504
 --- response_body_like: 504 Gateway Time-out
 --- timeout: 3
---- SKIP
 

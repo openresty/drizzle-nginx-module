@@ -1,7 +1,7 @@
 /* Copyright (C) chaoslawful */
 /* Copyright (C) agentzh */
 
-#define DDEBUG 1
+#define DDEBUG 0
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_processor.h"
@@ -197,6 +197,12 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
     }
+
+    if (c->read->timer_set) {
+        ngx_del_timer(c->read);
+    }
+
+    ngx_add_timer(c->read, dp->loc_conf->recv_cols_timeout);
 
     if (ret != DRIZZLE_RETURN_OK) {
 #if 1
