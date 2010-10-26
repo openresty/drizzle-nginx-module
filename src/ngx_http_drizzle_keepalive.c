@@ -160,6 +160,7 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
     ngx_connection_t                        *c;
 
     if (! ngx_queue_empty(&dscf->cache)) {
+        dd("getting cached mysql connection...");
 
         q = ngx_queue_head(&dscf->cache);
         ngx_queue_remove(q);
@@ -259,6 +260,10 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
     u = dp->upstream;
     status = u->headers_in.status_n;
 
+    dd("dp failed: %d", (int) dp->failed);
+    dd("pc->connection: %p", pc->connection);
+    dd("status = %d", (int) status);
+
     if (!dp->failed
         && pc->connection != NULL
         && (status == NGX_HTTP_NOT_FOUND
@@ -274,6 +279,8 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
         if (ngx_queue_empty(&dscf->free)) {
             /* connection pool is already full */
 
+            dd("caching connection forcibly and the pool is already full");
+
             q = ngx_queue_last(&dscf->cache);
             ngx_queue_remove(q);
 
@@ -284,6 +291,8 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
                     item->drizzle_con, dscf);
 
         } else {
+            dd("caching idle connection to the pool");
+
             q = ngx_queue_head(&dscf->free);
             ngx_queue_remove(q);
 

@@ -13,6 +13,7 @@ our $http_config = <<'_EOC_';
     upstream backend {
         drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
+        #drizzle_keepalive max=10 overflow=ignore mode=single;
     }
 _EOC_
 
@@ -383,4 +384,32 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 60
+
+
+
+=== TEST 10: update
+little-endian systems only
+
+--- http_config eval: $::http_config
+--- config
+    location /mysql {
+        drizzle_pass backend;
+        #drizzle_dbname $dbname;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- response_body eval
+"\x{00}". # endian
+"\x{03}\x{00}\x{00}\x{00}". # format version 0.0.3
+"\x{00}". # result type
+"\x{00}\x{00}".  # std errcode
+"\x{00}\x{00}" . # driver errcode
+"\x{28}\x{00}".  # driver errstr len
+"Rows matched: 1  Changed: 0  Warnings: 0".  # driver errstr data
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
+"\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
+"\x{00}\x{00}"  # col count
+
+
 

@@ -181,7 +181,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         }
 
         dd("about to be done...");
-        ngx_http_upstream_drizzle_done(r, u, dp, NGX_OK);
+        ngx_http_upstream_drizzle_done(r, u, dp, NGX_DONE);
         dd("i am returning DONE");
         return NGX_DONE;
     }

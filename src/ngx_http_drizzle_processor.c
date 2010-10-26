@@ -1,7 +1,7 @@
 /* Copyright (C) chaoslawful */
 /* Copyright (C) agentzh */
 
-#define DDEBUG 0
+#define DDEBUG 1
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_processor.h"
@@ -190,6 +190,11 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
             ngx_add_timer(c->write, u->conf->send_timeout);
 
+            if (c->read->timer_set) {
+                ngx_del_timer(c->read);
+            }
+
+            ngx_add_timer(c->read, u->conf->send_timeout);
         }
 
         return NGX_AGAIN;
@@ -292,6 +297,12 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
             if (dp->state != state_db_recv_cols) {
                 dp->state = state_db_recv_cols;
+
+                if (c->write->timer_set) {
+                    ngx_del_timer(c->write);
+                }
+
+                ngx_add_timer(c->write, dp->loc_conf->recv_cols_timeout);
 
                 if (c->read->timer_set) {
                     ngx_del_timer(c->read);
@@ -472,6 +483,12 @@ io_wait:
         }
 
         ngx_add_timer(c->read, dp->loc_conf->recv_rows_timeout);
+
+        if (c->write->timer_set) {
+            ngx_del_timer(c->write);
+        }
+
+        ngx_add_timer(c->write, dp->loc_conf->recv_rows_timeout);
     }
 
     return NGX_AGAIN;

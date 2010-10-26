@@ -1,9 +1,10 @@
-# vi:filetype=perl
+# vi:ft=
 
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(2);
+#repeat_each(2);
+repeat_each(1);
 
 plan tests => repeat_each() * blocks() * 2;
 
@@ -14,9 +15,12 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
-run_tests();
+
+$ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 
 no_diff();
+
+run_tests();
 
 __DATA__
 
@@ -72,4 +76,30 @@ GET /upstream
 --- error_code: 504
 --- response_body_like: 504 Gateway Time-out
 --- timeout: 0.5
+
+
+
+=== TEST 4: serv_config connect timeout
+--- http_config
+    upstream backend {
+        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+                       dbname=ngx_test user=ngx_test password=ngx_test;
+    }
+
+--- config
+    #drizzle_connect_timeout 1;
+    drizzle_send_query_timeout 10ms;
+    #drizzle_recv_cols_timeout 1;
+    #drizzle_recv_rows_timeout 1;
+
+    location /upstream {
+        drizzle_pass backend;
+        drizzle_module_header off;
+        drizzle_query 'select sleep(1)';
+    }
+--- request
+GET /upstream
+--- error_code: 504
+--- response_body_like: 504 Gateway Time-out
+--- timeout: 3
 
