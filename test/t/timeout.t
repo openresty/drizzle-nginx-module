@@ -3,8 +3,8 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-#repeat_each(2);
-repeat_each(1);
+repeat_each(2);
+#repeat_each(1);
 
 plan tests => repeat_each() * blocks() * 2;
 
@@ -15,6 +15,7 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
+#log_level('error');
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 

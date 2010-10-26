@@ -3,6 +3,7 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
+#repeat_each(2);
 repeat_each(2);
 
 plan tests => repeat_each() * blocks() + 2;
@@ -151,3 +152,4 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 500
+

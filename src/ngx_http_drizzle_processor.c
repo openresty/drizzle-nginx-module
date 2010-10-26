@@ -53,7 +53,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     if ( ! ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: process events: it seems you "
+                       "process events: it seems you "
                        "are using a non-drizzle upstream backend"
         );
 
@@ -84,7 +84,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     default:
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: unknown state: %d", (int) dp->state);
+                       "unknown state: %d", (int) dp->state);
         return NGX_ERROR;
     }
 
@@ -138,10 +138,9 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
 
     if (ret != DRIZZLE_RETURN_OK) {
        ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: failed to connect: %d: %s in upstream \"%V\"",
+                       "failed to connect: %d: %s",
                        (int) ret,
-                       drizzle_error(dc->drizzle),
-                       &u->peer.name);
+                       drizzle_error(dc->drizzle));
 
        return NGX_ERROR;
     }
@@ -205,11 +204,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
                 dd("XXX no such talbe");
 
                 ngx_log_error(NGX_LOG_NOTICE, c->log, 0,
-                               "drizzle: failed to send query: %d (%d): %s"
-                               " in upstream \"%V\"",
+                               "failed to send query: %d (%d): %s",
                                (int) ret, drizzle_error_code(dc->drizzle),
-                               drizzle_error(dc->drizzle),
-                               &u->peer.name);
+                               drizzle_error(dc->drizzle));
 
                 if (! dp->has_set_names) {
                     c->log->action = "sending query to drizzle upstream";
@@ -226,11 +223,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 #endif
 
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "drizzle: failed to send query: %d (%d): %s"
-                       " in upstream \"%V\"",
+                       "failed to send query: %d (%d): %s",
                        (int) ret, drizzle_error_code(dc->drizzle),
-                       drizzle_error(dc->drizzle),
-                       &u->peer.name);
+                       drizzle_error(dc->drizzle));
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -277,7 +272,6 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
-    ngx_http_upstream_t             *u = r->upstream;
     drizzle_column_st               *col;
     ngx_int_t                        rc;
     drizzle_return_t                 ret;
@@ -304,11 +298,9 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
         if (ret != DRIZZLE_RETURN_OK) {
             ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                           "drizzle: failed to recv cols: %d: %s"
-                           " in upstream \"%V\"",
+                           "failed to recv cols: %d: %s",
                            (int) ret,
-                           drizzle_error(dc->drizzle),
-                           &u->peer.name);
+                           drizzle_error(dc->drizzle));
 
             return NGX_ERROR;
         }
@@ -369,11 +361,9 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
 
             if (ret != DRIZZLE_RETURN_OK) {
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                               "drizzle: failed to read row: %d: %s"
-                               " in upstream \"%V\"",
+                               "failed to read row: %d: %s",
                                (int) ret,
-                               drizzle_error(dc->drizzle),
-                               &u->peer.name);
+                               drizzle_error(dc->drizzle));
 
                 return NGX_ERROR;
             }
@@ -432,11 +422,9 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
                 drizzle_result_free(&dp->drizzle_res);
 
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                               "drizzle: failed to read row field: %d: %s"
-                               " in upstream \"%V\"",
+                               "failed to read row field: %d: %s",
                                (int) ret,
-                               drizzle_error(dc->drizzle),
-                               &u->peer.name);
+                               drizzle_error(dc->drizzle));
 
                 return NGX_ERROR;
             }
