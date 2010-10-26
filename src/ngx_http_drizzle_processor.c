@@ -204,6 +204,10 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         ngx_del_timer(c->write);
     }
 
+    if (c->read->timer_set) {
+        ngx_del_timer(c->read);
+    }
+
     if (ret != DRIZZLE_RETURN_OK) {
 #if 1
         if (ret == DRIZZLE_RETURN_ERROR_CODE) {
