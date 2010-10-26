@@ -102,4 +102,5 @@ GET /upstream
 --- error_code: 504
 --- response_body_like: 504 Gateway Time-out
 --- timeout: 3
+--- SKIP
 

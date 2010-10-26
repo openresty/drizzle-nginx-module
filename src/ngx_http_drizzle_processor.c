@@ -189,12 +189,6 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
             }
 
             ngx_add_timer(c->write, u->conf->send_timeout);
-
-            if (c->read->timer_set) {
-                ngx_del_timer(c->read);
-            }
-
-            ngx_add_timer(c->read, u->conf->send_timeout);
         }
 
         return NGX_AGAIN;
@@ -202,10 +196,6 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
-    }
-
-    if (c->read->timer_set) {
-        ngx_del_timer(c->read);
     }
 
     if (ret != DRIZZLE_RETURN_OK) {
