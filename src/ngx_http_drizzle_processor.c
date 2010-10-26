@@ -298,12 +298,6 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
             if (dp->state != state_db_recv_cols) {
                 dp->state = state_db_recv_cols;
 
-                if (c->write->timer_set) {
-                    ngx_del_timer(c->write);
-                }
-
-                ngx_add_timer(c->write, dp->loc_conf->recv_cols_timeout);
-
                 if (c->read->timer_set) {
                     ngx_del_timer(c->read);
                 }
@@ -483,12 +477,6 @@ io_wait:
         }
 
         ngx_add_timer(c->read, dp->loc_conf->recv_rows_timeout);
-
-        if (c->write->timer_set) {
-            ngx_del_timer(c->write);
-        }
-
-        ngx_add_timer(c->write, dp->loc_conf->recv_rows_timeout);
     }
 
     return NGX_AGAIN;
