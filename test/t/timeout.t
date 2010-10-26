@@ -88,18 +88,18 @@ GET /upstream
 
 --- config
     #drizzle_connect_timeout 1;
-    #drizzle_send_query_timeout 10ms;
-    drizzle_recv_cols_timeout 10ms;
+    drizzle_send_query_timeout 10ms;
+    #drizzle_recv_cols_timeout 10ms;
     #drizzle_recv_rows_timeout 10ms;
 
     location /upstream {
         drizzle_pass backend;
         drizzle_module_header off;
-        drizzle_query 'select sleep(1)';
+        drizzle_query 'select sleep(2)';
     }
 --- request
 GET /upstream
 --- error_code: 504
 --- response_body_like: 504 Gateway Time-out
---- timeout: 3
+--- timeout: 1
 

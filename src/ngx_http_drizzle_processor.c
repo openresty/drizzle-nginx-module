@@ -198,12 +198,6 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         ngx_del_timer(c->write);
     }
 
-    if (c->read->timer_set) {
-        ngx_del_timer(c->read);
-    }
-
-    ngx_add_timer(c->read, dp->loc_conf->recv_cols_timeout);
-
     if (ret != DRIZZLE_RETURN_OK) {
 #if 1
         if (ret == DRIZZLE_RETURN_ERROR_CODE) {
@@ -263,7 +257,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
             c->log->action = "connecting to drizzle upstream";
             dp->has_set_names = 1;
 
-            dp->state = state_db_send_query;
+            dp->state = state_db_idle;
 
             return ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
         }
