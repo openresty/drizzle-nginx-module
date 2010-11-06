@@ -6,7 +6,7 @@ root=`pwd`
 cd ~/work
 version=$1
 home=~
-opts=$2
+#opts=$2
 
 if [ ! -s "nginx-$version.tar.gz" ]; then
     wget "http://sysoev.ru/nginx/nginx-$version.tar.gz" -O nginx-$version.tar.gz || exit 1
@@ -21,12 +21,17 @@ fi
 #cp $root/../no-pool-nginx/nginx-0.8.41-no_pool.patch ./
 #patch -p0 < nginx-0.8.41-no_pool.patch
 
-cd nginx-$version/
+if [ -n "$2" ]; then
+    cd nginx-$version-$2/
+else
+    cd nginx-$version/
+fi
 
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=/opt/nginx \
           --add-module=$root/../echo-nginx-module \
           --add-module=$root $opts \
+          --add-module=$root/../ndk-nginx-module \
           --with-debug
           #--with-cc-opt="-g3 -O0"
           #--add-module=$root/../echo-nginx-module \
