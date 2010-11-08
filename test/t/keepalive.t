@@ -27,7 +27,6 @@ __DATA__
 === TEST 1: sanity
 little-endian systems only
 
---- ONLY
 --- http_config eval: $::http_config
 --- config
     location /mysql {
