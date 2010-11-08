@@ -249,7 +249,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     if (rc == NGX_DONE) {
         if (! has_set_names) {
-            c->log->action = "connecting to drizzle upstream";
+            c->log->action = "sending query to drizzle upstream";
             dp->has_set_names = 1;
 
             dp->state = state_db_idle;
