@@ -93,7 +93,15 @@ Description
             right after the mysql connection is established.
             If the default character encoding of the mysql connection
             is already what you want, you needn't set this option
-            because it has extra runtime cost.
+            because it has extra runtime cost. Here is a small
+            example:
+
+                drizzle_server foo.bar.com:3306 user=monty password=some_pass
+                    dbname=test protocol=mysql
+                    charset=utf8;
+
+            Note that for the mysql server, "utf-8" is not a valid
+            encoding name while "utf8" is ;)
 
     The drizzle_keepalive directive has the following options:
 
