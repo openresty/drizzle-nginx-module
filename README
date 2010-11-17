@@ -72,6 +72,29 @@ Description
             drizzle_keepalive max=100 mode=single overflow=reject;
         }
 
+    The drizzle_server directive supports the following options:
+
+        * user
+            mysql user name for login
+
+        * password
+            mysql password for login
+
+        * dbname
+            default mysql database for the connection
+
+        * protocol
+            drizzle or mysql, default to "drizzle"
+
+        * charset
+            explicitly specify the charset for the mysql connection.
+            Setting this option to a non-empty value will
+            cause ngx_drizzle send out a "set names 'user_charset'" query
+            right after the mysql connection is established.
+            If the default character encoding of the mysql connection
+            is already what you want, you needn't set this option
+            because it has extra runtime cost.
+
     The drizzle_keepalive directive has the following options:
 
         * max=<num>
