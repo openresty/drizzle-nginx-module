@@ -78,16 +78,20 @@ Description
             mysql user name for login
 
         * password
-            mysql password for login
+            Specify mysql password for login.
 
         * dbname
-            default mysql database for the connection
+            Specify default mysql database for the connection.
+            Note that mysql does allow referecing tables belonging to different
+            databases by qualifying table names with
+            database names.
 
         * protocol
-            drizzle or mysql, default to "drizzle"
+            Specify which wire protocol to use, "drizzle" or "mysql".
+            Default to "drizzle".
 
         * charset
-            explicitly specify the charset for the mysql connection.
+            Explicitly specify the charset for the mysql connection.
             Setting this option to a non-empty value will
             cause ngx_drizzle send out a "set names 'user_charset'" query
             right after the mysql connection is established.
