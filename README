@@ -93,7 +93,7 @@ Description
         * charset
             Explicitly specify the charset for the mysql connection.
             Setting this option to a non-empty value will
-            cause ngx_drizzle send out a "set names 'user_charset'" query
+            make ngx_drizzle send out a "set names 'user_charset'" query
             right after the mysql connection is established.
             If the default character encoding of the mysql connection
             is already what you want, you needn't set this option
