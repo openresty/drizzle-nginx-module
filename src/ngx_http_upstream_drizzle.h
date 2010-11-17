@@ -33,6 +33,7 @@ typedef struct {
     ngx_str_t                        user;
     ngx_str_t                        password;
     ngx_str_t                        dbname;
+    ngx_str_t                        set_names_query;
 
     ngx_http_upstream_drizzle_protocol_t      protocol;
 
@@ -47,6 +48,7 @@ typedef struct {
     ngx_str_t                       user;
     ngx_str_t                       password;
     ngx_str_t                       dbname;
+    ngx_str_t                      *set_names_query;
     u_char                         *host;
 
     ngx_http_upstream_drizzle_protocol_t      protocol;
@@ -108,15 +110,18 @@ typedef struct {
 
     ngx_str_t                              *name;
 
-    ngx_flag_t                              failed;
     ngx_chain_t                           **last_out;
 
     ngx_buf_t                              *out_buf;
     ngx_buf_t                               cached;
     ngx_buf_t                               postponed;
     size_t                                  avail_out;
-    ngx_flag_t                              seen_stream_end;
-    ngx_flag_t                              has_set_names;
+    ngx_str_t                               charset;
+    ngx_str_t                              *set_names_query;
+    ngx_flag_t                              failed:1;
+    ngx_flag_t                              seen_stream_end:1;
+    ngx_flag_t                              has_set_names:1;
+    ngx_flag_t                              enable_charset:1;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 

@@ -3,8 +3,8 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(2);
-#repeat_each(1);
+#repeat_each(2);
+repeat_each(1);
 
 plan tests => repeat_each() * blocks() * 2;
 
@@ -84,7 +84,8 @@ GET /upstream
 --- http_config
     upstream backend {
         drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
-                       dbname=ngx_test user=ngx_test password=ngx_test;
+                       dbname=ngx_test user=ngx_test password=ngx_test
+                       charset=utf8;
     }
 
 --- config

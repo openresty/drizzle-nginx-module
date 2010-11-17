@@ -62,7 +62,8 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     dd("enter output header XXX");
 
     errcode = drizzle_result_error_code(res);
-    if (! dp->has_set_names) {
+
+    if (dp->enable_charset && ! dp->has_set_names) {
         if (errcode != 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                    "drizzle: FATAL: failed to set names 'utf8' (error %d)", (int) errcode);

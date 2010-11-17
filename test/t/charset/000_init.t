@@ -12,7 +12,8 @@ $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 our $http_config = <<'_EOC_';
     upstream database {
         drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
-                       dbname=ngx_test user=ngx_test password=ngx_test;
+                       dbname=ngx_test user=ngx_test password=ngx_test
+                       charset=utf8;
     }
 _EOC_
 

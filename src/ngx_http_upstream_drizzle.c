@@ -84,9 +84,12 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_http_upstream_drizzle_server_t          *ds;
     ngx_str_t                                   *value;
     ngx_url_t                                    u;
-    ngx_uint_t                                   i;
+    ngx_uint_t                                   i, j;
     ngx_http_upstream_srv_conf_t                *uscf;
     ngx_str_t                                    protocol;
+    ngx_str_t                                    charset;
+    u_char                                      *p;
+    size_t                                       len;
 
     dd("entered drizzle_server directive handler...");
 
@@ -231,8 +234,49 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
             continue;
         }
 
+        if (ngx_strncmp(value[i].data, "charset=", sizeof("charset=") - 1)
+                == 0)
+        {
+            charset.len = value[i].len - (sizeof("charset=") - 1);
+            charset.data = &value[i].data[sizeof("charset=") - 1];
+
+            dd("charset: %.*s", (int) charset.len, charset.data);
+
+            if (charset.len == 0) {
+                continue;
+            }
+
+            for (j = 0; j < charset.len; j++) {
+                if (charset.data[j] == '\'') {
+                    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                       "bad charste value \"%V\" in"
+                                       " drizzle_server", &charset);
+
+                    return NGX_CONF_ERROR;
+                }
+            }
+
+            len = sizeof("set names ''") - 1 + charset.len;
+
+            p = ngx_palloc(cf->pool, len);
+            if (p == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            ds->set_names_query.data = p;
+            ds->set_names_query.len = len;
+
+            dd("charset query len: %d", (int) len);
+
+            p = ngx_copy(p, "set names '", sizeof("set names '") - 1);
+            p = ngx_copy(p, charset.data, charset.len);
+            *p = '\'';
+
+            continue;
+        }
+
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "drizzle: invalid parameter \"%V\" in"
+                           "invalid parameter \"%V\" in"
                            " drizzle_server", &value[i]);
 
         return NGX_CONF_ERROR;
@@ -307,6 +351,7 @@ ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
             peers->peer[n].password = server[i].password;
             peers->peer[n].dbname = server[i].dbname;
             peers->peer[n].protocol = server[i].protocol;
+            peers->peer[n].set_names_query = &server[i].set_names_query;
 
             len = NGX_SOCKADDR_STRLEN + 1 /* for '\0' */;
 
@@ -531,6 +576,12 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     peer = &peers->peer[dscf->current++];
 
     dp->name = &peer->name;
+
+    dp->enable_charset = (peer->set_names_query->len > 0);
+    dp->set_names_query = peer->set_names_query;
+
+    dd("charset query: %s", dp->set_names_query->data);
+    dd("charset query: %d", (int) dp->set_names_query->len);
 
     pc->name = &peer->name;
     pc->sockaddr = peer->sockaddr;

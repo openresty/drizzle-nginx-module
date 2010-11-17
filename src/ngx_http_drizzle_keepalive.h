@@ -17,7 +17,7 @@ typedef struct {
     struct sockaddr_storage              sockaddr;
     drizzle_con_st                      *drizzle_con;
     ngx_str_t                            name;
-    ngx_flag_t                           has_set_names;
+    ngx_flag_t                           has_set_names:1;
 
 } ngx_http_drizzle_keepalive_cache_t;
 
