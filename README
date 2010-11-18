@@ -265,6 +265,17 @@ Output
         * each field in each row (if any) but the field data
           can span multiple bufs
 
+Trouble Shooting
+    When you see the following error message in error.log:
+
+       failed to connect: 15: drizzle_state_handshake_result_read:
+           old insecure authentication mechanism not supported in upstream
+
+    then you may checkout if your mysql is too old (at least 5.x is required)
+    or your mysql config file explicitly forces the use of old authentication
+    method (you should remove the "old-passwords" line from your my.cnf and
+    add the line "secure_auth 1").
+
 Installation
     * You should first install libdrizzle 0.8 which can be
         obtained from here:
@@ -296,6 +307,8 @@ Installation
         $ make install
 
 Compatibility
+    If you're using mysql, then at least mysql 5.x is required.
+
     The following versions of Nginx should work with this module:
 
     *   0.8.x (last tested: 0.8.53)
