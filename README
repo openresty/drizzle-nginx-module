@@ -321,6 +321,8 @@ Compatibility
     work with this module, please consider reporting a bug.
 
 TODO
+    *   add the mysql transaction support.
+    *   add multi-statement mysql query support.
     *   implement the "drizzle_max_output_size" directive.
         When the RDS data is larger then the size specified,
         the module will try to terminate the output as quickly
@@ -333,7 +335,7 @@ TODO
     *   add support for multiple "drizzle_query" directives
         in a single location.
 
-    *   implement weighted round-robin algorithm for the
+    *   implement *weighted* round-robin algorithm for the
         upstream server clusters.
 
     *   add the "max_idle_time" option to the "drizzle_server"
