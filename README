@@ -179,6 +179,10 @@ Directives
     drizzle_recv_rows_timeout <time>
         default setting is "60 s".
 
+    drizzle_buffer_size <size>
+        the buffer size for drizzle outputs. default to the page size (4k/8k).
+        the larger the buffer, the less streammy the outputing process will be.
+
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
