@@ -183,6 +183,13 @@ Directives
         the buffer size for drizzle outputs. default to the page size (4k/8k).
         the larger the buffer, the less streammy the outputing process will be.
 
+    drizzle_module_header on|off
+        controls whether to output the drizzle header in the response.
+        default on.
+        a drizzle header looks like this:
+
+            X-Resty-DBD-Module: ngx_drizzle 0.0.14
+
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database
