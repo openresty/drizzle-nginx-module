@@ -156,3 +156,20 @@ little-endian systems only
 GET /mysql
 --- error_code: 500
 
+
+
+=== TEST 8: empty pass
+little-endian systems only
+
+--- http_config eval: $::http_config
+--- config
+    location /mysql {
+        set $backend "not-exist";
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_query "update cats set name='bob' where name='bob'";
+    }
+--- request
+GET /mysql
+--- error_code: 500
+
