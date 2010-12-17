@@ -118,7 +118,9 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
         dlcf->upstream.upstream = ngx_http_upstream_drizzle_add(r, &url);
 
         if (dlcf->upstream.upstream == NULL) {
-            //dd("upstream \"%.*s\" not found", target.len, target.data);
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                   "drizzle: upstream \"%V\" not found", &target);
+
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
     }
