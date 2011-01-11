@@ -366,6 +366,14 @@ TODO
         also be an option ("strict=no") to disable such checks.
 
 Known Issues
+    *   Calling mysql procedures are currently not supported because
+        the underlying libdrizzle library does not support the
+        CLIENT_MULTI_RESULTS flag yet :( But we'll surely work on it.
+
+    *   Multiple SQL statements in a single query are not supported
+        due to the lack of CLIENT_MULTI_STATEMENTS support in the
+        underlying libdrizzle library.
+
     *   This module does not (yet) work with the RTSIG event model.
 
 See Also
