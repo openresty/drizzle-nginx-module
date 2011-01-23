@@ -31,6 +31,8 @@ static void ngx_http_upstream_dbd_rd_check_broken_connection(
 static void ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
     ngx_event_t *ev);
 
+static size_t ngx_get_num_size(uint64_t i);
+
 
 ngx_int_t
 ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
@@ -250,7 +252,7 @@ ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
         status = 0;
 
     } else {
-        switch(ft_type) {
+        switch (ft_type) {
 
         case NGX_HTTP_UPSTREAM_FT_TIMEOUT:
             status = NGX_HTTP_GATEWAY_TIME_OUT;
@@ -998,5 +1000,75 @@ ngx_http_upstream_dbd_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->buffer.last = u->buffer.pos;
 
     return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
+        ngx_http_upstream_t *u)
+{
+    ngx_http_drizzle_loc_conf_t    *dlcf;
+    size_t                          size;
+    ngx_http_variable_value_t      *vv;
+    uint32_t                        tid;
+    drizzle_con_st                 *dc;
+
+    ngx_http_upstream_drizzle_peer_data_t       *dp;
+
+    dp = r->upstream->peer.data;
+    if (dp == NULL) {
+        return NGX_ERROR;
+    }
+
+    dc = dp->drizzle_con;
+    if (dc == NULL) {
+        return NGX_ERROR;
+    }
+
+    tid = drizzle_con_thread_id(dc);
+
+    if (tid == 0) {
+        /* invalid thread id */
+        return NGX_OK;
+    }
+
+    size = ngx_get_num_size(tid);
+
+    dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
+
+    vv = ngx_http_get_indexed_variable(r, dlcf->tid_var_index);
+
+    if (vv == NULL) {
+        return NGX_ERROR;
+    }
+
+    vv->not_found = 0;
+    vv->valid = 1;
+    vv->no_cacheable = 0;
+
+    vv->data = ngx_palloc(r->pool, size);
+    if (vv->data == NULL) {
+        return NGX_ERROR;
+    }
+
+    vv->len = size;
+
+    ngx_sprintf(vv->data, "%uD", tid);
+
+    return NGX_OK;
+}
+
+
+static size_t
+ngx_get_num_size(uint64_t i)
+{
+    size_t          n = 0;
+
+    do {
+        i = i / 10;
+        n++;
+    } while (i > 0);
+
+    return n;
 }
 

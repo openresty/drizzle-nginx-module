@@ -205,6 +205,8 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
     if (c->write->timedout) {
         dd("drizzle connection write timeout");
 
+        ngx_http_drizzle_set_thread_id_variable(r, u);
+
         ngx_http_upstream_drizzle_next(r, u,
                 NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
@@ -238,6 +240,7 @@ ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     if (c->read->timedout) {
         dd("drizzle connection read timeout");
+        ngx_http_drizzle_set_thread_id_variable(r, u);
 
         ngx_http_upstream_drizzle_next(r, u,
                 NGX_HTTP_UPSTREAM_FT_TIMEOUT);

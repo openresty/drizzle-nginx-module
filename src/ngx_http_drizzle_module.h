@@ -57,6 +57,9 @@ typedef struct {
     ngx_http_complex_value_t            *complex_target;
 
     size_t                               buf_size;
+
+    ngx_int_t                            tid_var_index; /* thread id variable
+                                                           index */
 } ngx_http_drizzle_loc_conf_t;
 
 

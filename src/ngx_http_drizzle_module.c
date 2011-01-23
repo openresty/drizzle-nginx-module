@@ -9,6 +9,11 @@
 #include "ngx_http_upstream_drizzle.h"
 #include "ngx_http_drizzle_keepalive.h"
 
+
+static ngx_str_t  ngx_http_drizzle_tid_var_name =
+        ngx_string("drizzle_thread_id");
+
+
 /* Forward declaration */
 
 static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
@@ -22,6 +27,21 @@ static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
 
 static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
         void *child);
+
+static ngx_int_t ngx_http_drizzle_add_variables(ngx_conf_t *cf);
+
+static ngx_int_t ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
+        ngx_http_variable_value_t *v, uintptr_t data);
+
+
+static ngx_http_variable_t ngx_http_drizzle_variables[] = {
+
+    { ngx_string("drizzle_thread_id"), NULL,
+      ngx_http_drizzle_tid_variable, 0,
+      0, 0 },
+
+    { ngx_null_string, NULL, NULL, 0, 0, 0 }
+};
 
 
 /* config directives for module drizzle */
@@ -204,6 +224,7 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
     conf->complex_target = NGX_CONF_UNSET_PTR;
 
     conf->buf_size = NGX_CONF_UNSET_SIZE;
+    conf->tid_var_index = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -241,6 +262,10 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     ngx_conf_merge_size_value(conf->buf_size, prev->buf_size, (size_t) ngx_pagesize);
+
+    if (conf->tid_var_index == NGX_CONF_UNSET) {
+        conf->tid_var_index = prev->tid_var_index;
+    }
 
     return NGX_CONF_OK;
 }
@@ -463,6 +488,51 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    if (ngx_http_drizzle_add_variables(cf) != NGX_OK) {
+        return NGX_CONF_ERROR;
+    }
+
+    dlcf->tid_var_index = ngx_http_get_variable_index(cf,
+            &ngx_http_drizzle_tid_var_name);
+
+    if (dlcf->tid_var_index == NGX_ERROR) {
+        return NGX_CONF_ERROR;
+    }
+
     return NGX_CONF_OK;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_add_variables(ngx_conf_t *cf)
+{
+    ngx_http_variable_t *var, *v;
+
+    for (v = ngx_http_drizzle_variables; v->name.len; v++) {
+        var = ngx_http_add_variable(cf, &v->name, v->flags);
+        if (var == NULL) {
+            return NGX_ERROR;
+        }
+
+        var->get_handler = v->get_handler;
+        var->data = v->data;
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
+        ngx_http_variable_value_t *v, uintptr_t data)
+{
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    v->len = 0;
+    v->data = (u_char *) "";
+
+    return NGX_OK;
 }
 
