@@ -38,7 +38,7 @@ static ngx_http_variable_t ngx_http_drizzle_variables[] = {
 
     { ngx_string("drizzle_thread_id"), NULL,
       ngx_http_drizzle_tid_variable, 0,
-      0, 0 },
+      NGX_HTTP_VAR_CHANGEABLE, 0 },
 
     { ngx_null_string, NULL, NULL, 0, 0, 0 }
 };
