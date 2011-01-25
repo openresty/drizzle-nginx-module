@@ -51,3 +51,5 @@ src/checker.c
 src/quoting.h
 src/quoting.c
 all.sh
+pack
+t/servroot/
