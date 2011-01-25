@@ -41,6 +41,7 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
             --without-http_auth_basic_module \
             --without-http_userid_module \
           --add-module=$root/../echo-nginx-module \
+          --add-module=$root/../headers-more-nginx-module \
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
           --with-debug

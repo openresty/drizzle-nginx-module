@@ -6,7 +6,7 @@ use Test::Nginx::Socket;
 repeat_each(2);
 #repeat_each(1);
 
-plan tests => repeat_each() * blocks() * 2;
+plan tests => repeat_each() * (blocks() * 2 + 2);
 
 our $http_config = <<'_EOC_';
     upstream foo {
@@ -80,7 +80,7 @@ GET /upstream
 
 
 
-=== TEST 4: serv_config connect timeout
+=== TEST 4: serv_config send query timeout (busy select)
 --- http_config
     upstream backend {
         drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
@@ -104,4 +104,54 @@ GET /upstream
 --- response_body_like: 504 Gateway Time-out
 --- timeout: 1
 --- SKIP
+
+
+
+=== TEST 5: loc_config connect timeout (empty $drizzle_thread_id)
+--- http_config eval: $::http_config
+--- config
+    location /upstream {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_query 'select * from xx';
+        drizzle_connect_timeout 10ms;
+        more_set_headers -s 504 'X-Mysql-Tid: $drizzle_thread_id';
+    }
+--- request
+GET /upstream
+--- response_headers
+X-Mysql-Tid:
+--- error_code: 504
+--- response_body_like: 504 Gateway Time-out
+--- timeout: 0.5
+
+
+
+=== TEST 6: serv_config send query timeout (sleep select)
+--- http_config
+    upstream backend {
+        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+                       dbname=ngx_test user=ngx_test password=ngx_test;
+    }
+
+--- config
+    #drizzle_connect_timeout 1;
+    drizzle_send_query_timeout 80ms;
+    #drizzle_recv_cols_timeout 10ms;
+    #drizzle_recv_rows_timeout 10ms;
+
+    location /upstream {
+        drizzle_pass backend;
+        drizzle_module_header off;
+        drizzle_query 'select sql_no_cache sleep(1);';
+        more_set_headers -s 504 "X-Mysql-Tid: $drizzle_thread_id";
+    }
+--- request
+GET /upstream
+--- error_code: 504
+--- response_body_like: 504 Gateway Time-out
+--- timeout: 1
+--- response_headers_like
+X-Mysql-Tid: \d+
 

@@ -1027,6 +1027,8 @@ ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
 
     tid = drizzle_con_thread_id(dc);
 
+    dd("tid = %d", (int) tid);
+
     if (tid == 0) {
         /* invalid thread id */
         return NGX_OK;
@@ -1054,6 +1056,8 @@ ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
     vv->len = size;
 
     ngx_sprintf(vv->data, "%uD", tid);
+
+    dd("$drizzle_thread_id set");
 
     return NGX_OK;
 }
