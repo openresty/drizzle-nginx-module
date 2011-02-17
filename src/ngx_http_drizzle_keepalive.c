@@ -175,12 +175,15 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
         c->read->log = pc->log;
         c->write->log = pc->log;
 
-        pc->connection = c;
-        pc->cached = 1;
-
         dp->name = &item->name;
         dp->drizzle_con = item->drizzle_con;
         dp->has_set_names = item->has_set_names;
+
+        pc->connection = c;
+        pc->cached = 1;
+        pc->name = dp->name;
+        pc->sockaddr = &item->sockaddr;
+        pc->socklen = item->socklen;
 
         return NGX_DONE;
     }
@@ -321,11 +324,14 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
         c->read->log = ngx_cycle->log;
         c->write->log = ngx_cycle->log;
 
-        item->socklen = pc->socklen;
-        ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
+        if (pc->sockaddr != &item->sockaddr) {
+            item->socklen = pc->socklen;
+            ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
+        }
 
         item->drizzle_con = dp->drizzle_con;
         item->has_set_names = dp->has_set_names;
+        item->name = *dp->name;
     }
 }
 
