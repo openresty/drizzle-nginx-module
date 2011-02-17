@@ -311,6 +311,7 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
         if (c->read->timer_set) {
             ngx_del_timer(c->read);
         }
+
         if (c->write->timer_set) {
             ngx_del_timer(c->write);
         }
