@@ -1,17 +1,20 @@
 #ifndef NGX_HTTP_DRIZZLE_UPSTREAM_H
 #define NGX_HTTP_DRIZZLE_UPSTREAM_H
 
+
 #include "ngx_http_drizzle_module.h"
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
 #include <libdrizzle/drizzle_client.h>
 
+
 typedef enum {
     drizzle_keepalive_overflow_ignore = 0,
     drizzle_keepalive_overflow_reject
 
 } ngx_http_drizzle_keepalive_overflow_t;
+
 
 typedef enum {
     ngx_http_drizzle_protocol = 0,
@@ -127,15 +130,11 @@ typedef struct {
 
 char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
-
 void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);
-
 ngx_flag_t ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t *peer);
-
 void ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
         ngx_connection_t *c, drizzle_con_st *dc,
         ngx_http_upstream_drizzle_srv_conf_t *dscf);
-
 ngx_http_upstream_srv_conf_t * ngx_http_upstream_drizzle_add(ngx_http_request_t *r,
         ngx_url_t *url);
 
