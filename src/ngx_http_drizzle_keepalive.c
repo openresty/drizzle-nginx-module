@@ -175,14 +175,17 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
         c->read->log = pc->log;
         c->write->log = pc->log;
 
-        dp->name = &item->name;
+        dp->name.data = item->name.data;
+        dp->name.len = item->name.len;
+
+        dp->sockaddr = item->sockaddr;
         dp->drizzle_con = item->drizzle_con;
         dp->has_set_names = item->has_set_names;
 
         pc->connection = c;
         pc->cached = 1;
-        pc->name = dp->name;
-        pc->sockaddr = &item->sockaddr;
+        pc->name = &dp->name;
+        pc->sockaddr = &dp->sockaddr;
         pc->socklen = item->socklen;
 
         return NGX_DONE;
@@ -229,7 +232,10 @@ ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
             pc->connection = c;
             pc->cached = 1;
 
-            dp->name = &item->name;
+            /* we do not need to resume dp->name here because
+             * it already takes the right value in the
+             * ngx_http_upstream_drizzle_get_peer function */
+
             dp->drizzle_con = item->drizzle_con;
             dp->has_set_names = item->has_set_names;
 
@@ -325,14 +331,14 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
         c->read->log = ngx_cycle->log;
         c->write->log = ngx_cycle->log;
 
-        if (pc->sockaddr != &item->sockaddr) {
-            item->socklen = pc->socklen;
-            ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
-        }
+        item->socklen = pc->socklen;
+        ngx_memcpy(&item->sockaddr, pc->sockaddr, pc->socklen);
 
         item->drizzle_con = dp->drizzle_con;
         item->has_set_names = dp->has_set_names;
-        item->name = *dp->name;
+
+        item->name.data = dp->name.data;
+        item->name.len = dp->name.len;
     }
 }
 

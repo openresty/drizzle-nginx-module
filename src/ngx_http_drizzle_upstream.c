@@ -575,7 +575,10 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     peer = &peers->peer[dscf->current++];
 
-    dp->name = &peer->name;
+    dp->name.data = peer->name.data;
+    dp->name.len = peer->name.len;
+
+    dp->sockaddr = *peer->sockaddr;
 
     dp->enable_charset = (peer->set_names_query->len > 0);
     dp->set_names_query = peer->set_names_query;
@@ -583,8 +586,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     dd("charset query: %s", dp->set_names_query->data);
     dd("charset query: %d", (int) dp->set_names_query->len);
 
-    pc->name = &peer->name;
-    pc->sockaddr = peer->sockaddr;
+    pc->name = &dp->name;
+    pc->sockaddr = &dp->sockaddr;
     pc->socklen = peer->socklen;
     pc->cached = 0;
 

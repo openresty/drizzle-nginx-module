@@ -111,7 +111,7 @@ typedef struct {
     drizzle_column_st                       drizzle_col;
     uint64_t                                drizzle_row;
 
-    ngx_str_t                              *name;
+    ngx_str_t                               name;
 
     ngx_chain_t                           **last_out;
 
@@ -121,6 +121,8 @@ typedef struct {
     size_t                                  avail_out;
     ngx_str_t                               charset;
     ngx_str_t                              *set_names_query;
+
+    struct sockaddr                         sockaddr;
 
     unsigned                                failed:1;
     unsigned                                seen_stream_end:1;
