@@ -60,7 +60,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_uint_t                          single;
+    unsigned                            single;
     ngx_uint_t                          number;
     ngx_str_t                          *name;
 
@@ -82,7 +82,7 @@ typedef struct {
     ngx_pool_t                          *pool;
 
     /* keepalive related fields */
-    ngx_flag_t                           single;
+    unsigned                             single;
     ngx_queue_t                          free;
     ngx_queue_t                          cache;
 
@@ -121,10 +121,11 @@ typedef struct {
     size_t                                  avail_out;
     ngx_str_t                               charset;
     ngx_str_t                              *set_names_query;
-    ngx_flag_t                              failed:1;
-    ngx_flag_t                              seen_stream_end:1;
-    ngx_flag_t                              has_set_names:1;
-    ngx_flag_t                              enable_charset:1;
+
+    unsigned                                failed:1;
+    unsigned                                seen_stream_end:1;
+    unsigned                                has_set_names:1;
+    unsigned                                enable_charset:1;
 } ngx_http_upstream_drizzle_peer_data_t;
 
 
