@@ -1,7 +1,7 @@
 #ifndef NGX_HTTP_DRIZZLE_KEEPALIVE_H
 #define NGX_HTTP_DRIZZLE_KEEPALIVE_H
 
-#include "ngx_http_upstream_drizzle.h"
+#include "ngx_http_drizzle_upstream.h"
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>

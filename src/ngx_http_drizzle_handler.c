@@ -7,7 +7,7 @@
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
-#include "ngx_http_upstream_drizzle.h"
+#include "ngx_http_drizzle_upstream.h"
 
 /* for read/write event handlers */
 

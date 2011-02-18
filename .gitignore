@@ -50,6 +50,7 @@ src/checker.h
 src/checker.c
 src/quoting.h
 src/quoting.c
+src/upstream.[ch]
 all.sh
 pack
 t/servroot/

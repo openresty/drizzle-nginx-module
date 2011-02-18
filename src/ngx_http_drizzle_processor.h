@@ -5,7 +5,7 @@
 #include <ngx_core.h>
 
 #include "ngx_http_drizzle_module.h"
-#include "ngx_http_upstream_drizzle.h"
+#include "ngx_http_drizzle_upstream.h"
 
 ngx_int_t ngx_http_drizzle_process_events(ngx_http_request_t *r);
 

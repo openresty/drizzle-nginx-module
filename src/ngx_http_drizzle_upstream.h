@@ -1,5 +1,5 @@
-#ifndef NGX_HTTP_UPSTREAM_DRIZZLE_H
-#define NGX_HTTP_UPSTREAM_DRIZZLE_H
+#ifndef NGX_HTTP_DRIZZLE_UPSTREAM_H
+#define NGX_HTTP_DRIZZLE_UPSTREAM_H
 
 #include "ngx_http_drizzle_module.h"
 #include <ngx_core.h>
@@ -140,5 +140,4 @@ ngx_http_upstream_srv_conf_t * ngx_http_upstream_drizzle_add(ngx_http_request_t 
         ngx_url_t *url);
 
 
-#endif /* NGX_HTTP_UPSTREAM_DRIZZLE_H */
-
+#endif /* NGX_HTTP_DRIZZLE_UPSTREAM_H */

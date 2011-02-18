@@ -8,7 +8,7 @@
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_util.h"
 #include "ngx_http_drizzle_output.h"
-#include "ngx_http_upstream_drizzle.h"
+#include "ngx_http_drizzle_upstream.h"
 
 #include <libdrizzle/drizzle_client.h>
 
