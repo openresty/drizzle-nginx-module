@@ -1080,3 +1080,20 @@ ngx_get_num_size(uint64_t i)
     return n;
 }
 
+
+ngx_uint_t
+ngx_http_drizzle_queue_size(ngx_queue_t *queue)
+{
+    ngx_queue_t     *q;
+    ngx_uint_t       n = 0;
+
+   for (q = ngx_queue_head(queue);
+         q != ngx_queue_sentinel(queue);
+         q = ngx_queue_next(q))
+    {
+        n++;
+    }
+
+    return n;
+}
+

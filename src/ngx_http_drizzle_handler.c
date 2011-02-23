@@ -395,6 +395,15 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
 
         b->last = ngx_sprintf(b->last, "  active connections: %uD\n",
                 dscf->active_conns);
+
+        if (dscf->max_cached) {
+            b->last = ngx_sprintf(b->last, "  free connections queue: %uD\n",
+                    ngx_http_drizzle_queue_size(&dscf->free));
+
+            b->last = ngx_sprintf(b->last, "  cached connections queue: %uD\n",
+                    ngx_http_drizzle_queue_size(&dscf->cache));
+        }
+
         b->last = ngx_sprintf(b->last, "  max connections allowed: %uD\n",
                 dscf->max_cached);
 

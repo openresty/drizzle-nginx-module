@@ -16,22 +16,17 @@
 
 
 void ngx_http_upstream_dbd_init(ngx_http_request_t *r);
-
 void ngx_http_upstream_dbd_init_request(ngx_http_request_t *r);
-
 ngx_int_t ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
         ngx_str_t *value);
-
 void ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc);
-
 void ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc);
-
 ngx_int_t ngx_http_upstream_drizzle_test_connect(ngx_connection_t *c);
-
 ngx_int_t ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
+ngx_uint_t ngx_http_drizzle_queue_size(ngx_queue_t *queue);
 
 
 #define ngx_http_drizzle_nelems(x) (sizeof(x) / sizeof(x[0]))

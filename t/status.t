@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 #repeat_each(2);
 
-plan tests => repeat_each() * 2 * blocks() + 2 * repeat_each() * 6;
+plan tests => repeat_each() * 2 * blocks();
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 
@@ -43,6 +43,8 @@ __DATA__
 --- response_body
 upstream backend
   active connections: 0
+  free connections queue: 10
+  cached connections queue: 0
   max connections allowed: 10
   overflow: reject
   servers: 1
@@ -54,5 +56,4 @@ upstream backend2
   overflow: ignore
   servers: 1
   peers: 1
---- ONLY
 
