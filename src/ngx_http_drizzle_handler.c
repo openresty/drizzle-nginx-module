@@ -371,6 +371,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
 
     uscfp = umcf->upstreams.elts;
 
+    /* FIXME: this is a hack */
     len = 1024;
 
     b = ngx_create_temp_buf(r->pool, len);
@@ -410,6 +411,11 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
                 b->last = ngx_copy_const_str(b->last, "  overflow: N/A\n");
                 break;
         }
+
+        b->last = ngx_sprintf(b->last, "  servers: %uD\n",
+                dscf->servers->nelts);
+
+        b->last = ngx_sprintf(b->last, "  peers: %uD\n", dscf->peers->number);
     }
 
     b->last_buf = 1;

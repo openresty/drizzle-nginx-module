@@ -45,10 +45,14 @@ upstream backend
   active connections: 0
   max connections allowed: 10
   overflow: reject
+  servers: 1
+  peers: 1
 
 upstream backend2
   active connections: 0
   max connections allowed: 0
   overflow: ignore
+  servers: 1
+  peers: 1
 --- ONLY
 
