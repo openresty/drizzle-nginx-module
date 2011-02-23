@@ -416,7 +416,8 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
             field = drizzle_field_read(&dp->drizzle_res, &offset, &len,
                                       &total, &ret);
 
-            dd("drizzle field: %p (offset %d, len %d)", field, (int) offset, (int) len);
+            dd("drizzle field: %p (offset %d, len %d)", field, (int) offset,
+                    (int) len);
 
             if (ret == DRIZZLE_RETURN_IO_WAIT) {
                 goto io_wait;

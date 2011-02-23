@@ -97,7 +97,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
     if (dscf->servers == NULL) {
         dscf->servers = ngx_array_create(cf->pool, 4,
-                                         sizeof(ngx_http_upstream_drizzle_server_t));
+                                 sizeof(ngx_http_upstream_drizzle_server_t));
+
         if (dscf->servers == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -186,8 +187,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             if (ds->password.len >= DRIZZLE_MAX_PASSWORD_SIZE) {
                 ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                       "drizzle: \"password\" value too large in upstream \"%V\""
-                       " (at most %d bytes)",
+                       "drizzle: \"password\" value too large in upstream "
+                       "\"%V\" (at most %d bytes)",
                        dscf->peers->name,
                        (int) DRIZZLE_MAX_PASSWORD_SIZE);
 
@@ -207,7 +208,8 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
             switch (protocol.len) {
             case 5:
-                if (ngx_http_drizzle_strcmp_const(protocol.data, "mysql") == 0) {
+                if (ngx_http_drizzle_strcmp_const(protocol.data, "mysql") == 0)
+                {
                     ds->protocol = ngx_http_mysql_protocol;
                 } else {
                     continue;
@@ -955,8 +957,8 @@ ngx_http_upstream_drizzle_add(ngx_http_request_t *r, ngx_url_t *url)
     for (i = 0; i < umcf->upstreams.nelts; i++) {
 
         if (uscfp[i]->host.len != url->host.len
-            || ngx_strncasecmp(uscfp[i]->host.data, url->host.data, url->host.len)
-               != 0)
+                || ngx_strncasecmp(uscfp[i]->host.data, url->host.data,
+                    url->host.len) != 0)
         {
             dd("upstream_add: host not match");
             continue;

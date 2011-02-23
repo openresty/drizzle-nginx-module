@@ -447,8 +447,10 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
     u->store = (u->conf->store || u->conf->store_lengths);
 
     if (!u->store && !r->post_action && !u->conf->ignore_client_abort) {
-        r->read_event_handler = ngx_http_upstream_dbd_rd_check_broken_connection;
-        r->write_event_handler = ngx_http_upstream_dbd_wr_check_broken_connection;
+        r->read_event_handler =
+            ngx_http_upstream_dbd_rd_check_broken_connection;
+        r->write_event_handler =
+            ngx_http_upstream_dbd_wr_check_broken_connection;
     }
 
     if (r->request_body) {
@@ -562,7 +564,9 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "no resolver defined to resolve %V", host);
 
-            ngx_http_upstream_drizzle_finalize_request(r, u, NGX_HTTP_BAD_GATEWAY);
+            ngx_http_upstream_drizzle_finalize_request(r, u,
+                    NGX_HTTP_BAD_GATEWAY);
+
             return;
         }
 

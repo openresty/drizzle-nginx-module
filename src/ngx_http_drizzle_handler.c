@@ -17,11 +17,8 @@ static ngx_int_t ngx_http_drizzle_reinit_request(ngx_http_request_t *r);
 static void ngx_http_drizzle_abort_request(ngx_http_request_t *r);
 static void ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
         ngx_int_t rc);
-
 static ngx_int_t ngx_http_drizzle_process_header(ngx_http_request_t *r);
-
 static ngx_int_t ngx_http_drizzle_input_filter_init(void *data);
-
 static ngx_int_t ngx_http_drizzle_input_filter(void *data, ssize_t bytes);
 
 
@@ -353,5 +350,86 @@ ngx_http_drizzle_set_libdrizzle_ready(ngx_http_request_t *r)
      * */
 
     (void) drizzle_con_wait(dc->drizzle);
+}
+
+
+ngx_int_t
+ngx_http_drizzle_status_handler(ngx_http_request_t *r)
+{
+    ngx_http_upstream_main_conf_t  *umcf;
+    ngx_http_upstream_srv_conf_t  **uscfp;
+    ngx_http_upstream_srv_conf_t   *uscf;
+    ngx_uint_t                      i;
+    ngx_chain_t                    *cl;
+    ngx_buf_t                      *b;
+    size_t                          len;
+    ngx_int_t                       rc;
+
+    ngx_http_upstream_drizzle_srv_conf_t *dscf;
+
+    umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
+
+    uscfp = umcf->upstreams.elts;
+
+    len = 1024;
+
+    b = ngx_create_temp_buf(r->pool, len);
+    if (b == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    for (i = 0; i < umcf->upstreams.nelts; i++) {
+        uscf = uscfp[i];
+
+        if (i != 0) {
+            *b->last++ = '\n';
+        }
+
+        dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+
+        b->last = ngx_copy_const_str(b->last, "upstream ");
+        b->last = ngx_copy(b->last, uscf->host.data, uscf->host.len);
+
+        *b->last++ = '\n';
+
+        b->last = ngx_sprintf(b->last, "  active connections: %uD\n",
+                dscf->active_conns);
+        b->last = ngx_sprintf(b->last, "  max connections allowed: %uD\n",
+                dscf->max_cached);
+
+        switch (dscf->overflow) {
+            case drizzle_keepalive_overflow_ignore:
+                b->last = ngx_copy_const_str(b->last, "  overflow: ignore\n");
+                break;
+
+            case drizzle_keepalive_overflow_reject:
+                b->last = ngx_copy_const_str(b->last, "  overflow: reject\n");
+                break;
+
+            default:
+                b->last = ngx_copy_const_str(b->last, "  overflow: N/A\n");
+                break;
+        }
+    }
+
+    b->last_buf = 1;
+
+    cl = ngx_alloc_chain_link(r->pool);
+    if (cl == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    cl->buf = b;
+    cl->next = NULL;
+
+    r->headers_out.status = NGX_HTTP_OK;
+
+    rc = ngx_http_send_header(r);
+
+    if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
+    }
+
+    return ngx_http_output_filter(r, cl);
 }
 

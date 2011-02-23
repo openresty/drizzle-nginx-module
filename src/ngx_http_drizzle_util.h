@@ -10,6 +10,11 @@
 #define ngx_http_drizzle_strcmp_const(a, b) \
         ngx_strncmp(a, b, sizeof(b) - 1)
 
+#ifndef ngx_copy_const_str
+#define ngx_copy_const_str(p, s)  ngx_copy(p, s, sizeof(s) - 1)
+#endif
+
+
 void ngx_http_upstream_dbd_init(ngx_http_request_t *r);
 
 void ngx_http_upstream_dbd_init_request(ngx_http_request_t *r);

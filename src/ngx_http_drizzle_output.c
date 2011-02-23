@@ -66,7 +66,9 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     if (dp->enable_charset && ! dp->has_set_names) {
         if (errcode != 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                   "drizzle: FATAL: failed to set names 'utf8' (error %d)", (int) errcode);
+                   "drizzle: FATAL: failed to set names 'utf8' (error %d)",
+                   (int) errcode);
+
             return NGX_ERROR;
         }
 
@@ -291,7 +293,8 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
             return rc;
         }
 
-        ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs, u->output.tag);
+        ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs,
+                u->output.tag);
 
         dp->last_out = &u->out_bufs;
     }
@@ -395,7 +398,8 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
         dp->seen_stream_end = 1;
     }
 
-    return ngx_http_drizzle_submit_mem(r, dp, size, row == 0 ? 1 : 0 /* last_buf */);
+    return ngx_http_drizzle_submit_mem(r, dp, size,
+            row == 0 ? 1 : 0 /* last_buf */);
 }
 
 
@@ -659,7 +663,8 @@ alloc:
 
 static ngx_int_t
 ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len, unsigned last_buf)
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len,
+        unsigned last_buf)
 {
     ngx_chain_t             *cl;
     ngx_int_t                rc;

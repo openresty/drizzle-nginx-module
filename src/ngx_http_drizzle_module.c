@@ -18,20 +18,18 @@ static ngx_str_t  ngx_http_drizzle_tid_var_name =
 
 static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
         ngx_command_t *cmd, void *conf);
-
-static char * ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-
-static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-
+static char * ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
+static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
 static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
-
 static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
         void *child);
-
 static ngx_int_t ngx_http_drizzle_add_variables(ngx_conf_t *cf);
-
 static ngx_int_t ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
         ngx_http_variable_value_t *v, uintptr_t data);
+static char * ngx_http_drizzle_enable_status(ngx_conf_t *cf,
+        ngx_command_t *cmd, void *conf);
 
 
 static ngx_http_variable_t ngx_http_drizzle_variables[] = {
@@ -46,43 +44,43 @@ static ngx_http_variable_t ngx_http_drizzle_variables[] = {
 
 /* config directives for module drizzle */
 static ngx_command_t ngx_http_drizzle_cmds[] = {
-    {
-        ngx_string("drizzle_server"),
-        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
-        ngx_http_upstream_drizzle_server,
-        NGX_HTTP_SRV_CONF_OFFSET,
-        0,
-        NULL },
-    {
-        ngx_string("drizzle_keepalive"),
-        NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
-        ngx_http_upstream_drizzle_keepalive,
-        NGX_HTTP_SRV_CONF_OFFSET,
-        0,
-        NULL },
-    {
-        ngx_string("drizzle_query"),
-        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            |NGX_HTTP_LIF_CONF|NGX_CONF_1MORE,
-        ngx_http_drizzle_query,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        0,
-        NULL },
-    {
-        ngx_string("drizzle_dbname"),
-        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
-            |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
-        ngx_http_drizzle_set_complex_value_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_drizzle_loc_conf_t, dbname),
-        NULL },
-    {
-        ngx_string("drizzle_pass"),
-        NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
-        ngx_http_drizzle_pass,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("drizzle_server"),
+      NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
+      ngx_http_upstream_drizzle_server,
+      NGX_HTTP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("drizzle_keepalive"),
+      NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
+      ngx_http_upstream_drizzle_keepalive,
+      NGX_HTTP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("drizzle_query"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_1MORE,
+      ngx_http_drizzle_query,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("drizzle_dbname"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+      ngx_http_drizzle_set_complex_value_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, dbname),
+      NULL },
+
+    { ngx_string("drizzle_pass"),
+      NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
+      ngx_http_drizzle_pass,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
     { ngx_string("drizzle_connect_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
           |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
@@ -90,6 +88,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.connect_timeout),
       NULL },
+
     { ngx_string("drizzle_send_query_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
           |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
@@ -97,6 +96,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, upstream.send_timeout),
       NULL },
+
     { ngx_string("drizzle_recv_cols_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
           |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
@@ -104,6 +104,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, recv_cols_timeout),
       NULL },
+
     { ngx_string("drizzle_recv_rows_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
           |NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
@@ -111,6 +112,7 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, recv_rows_timeout),
       NULL },
+
     { ngx_string("drizzle_module_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
           |NGX_HTTP_LIF_CONF|NGX_CONF_FLAG,
@@ -118,12 +120,20 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, enable_module_header),
       NULL },
+
     { ngx_string("drizzle_buffer_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
           |NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_drizzle_loc_conf_t, buf_size),
+      NULL },
+
+    { ngx_string("drizzle_status"),
+      NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_NOARGS,
+      ngx_http_drizzle_enable_status,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
       NULL },
 
     ngx_null_command
@@ -261,7 +271,8 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->queries = prev->queries;
     }
 
-    ngx_conf_merge_size_value(conf->buf_size, prev->buf_size, (size_t) ngx_pagesize);
+    ngx_conf_merge_size_value(conf->buf_size, prev->buf_size,
+            (size_t) ngx_pagesize);
 
     if (conf->tid_var_index == NGX_CONF_UNSET) {
         conf->tid_var_index = prev->tid_var_index;
@@ -534,5 +545,18 @@ ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
     v->data = (u_char *) "";
 
     return NGX_OK;
+}
+
+
+static char *
+ngx_http_drizzle_enable_status(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_core_loc_conf_t                *clcf;
+
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
+    clcf->handler = ngx_http_drizzle_status_handler;
+
+    return NGX_CONF_OK;
 }
 
