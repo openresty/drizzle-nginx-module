@@ -43,8 +43,8 @@ __DATA__
 --- response_body
 upstream backend
   active connections: 0
-  free connections queue: 10
-  cached connections queue: 0
+  free connection queue: 10
+  cached connection queue: 0
   max connections allowed: 10
   overflow: reject
   servers: 1

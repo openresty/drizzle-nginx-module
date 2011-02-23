@@ -8,6 +8,7 @@
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
 #include "ngx_http_drizzle_upstream.h"
+#include "ngx_http_drizzle_keepalive.h"
 
 /* for read/write event handlers */
 
@@ -364,6 +365,9 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
     ngx_buf_t                      *b;
     size_t                          len;
     ngx_int_t                       rc;
+    ngx_queue_t                    *q;
+
+    ngx_http_drizzle_keepalive_cache_t      *item;
 
     ngx_http_upstream_drizzle_srv_conf_t *dscf;
 
@@ -397,11 +401,20 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
                 dscf->active_conns);
 
         if (dscf->max_cached) {
-            b->last = ngx_sprintf(b->last, "  free connections queue: %uD\n",
+            b->last = ngx_sprintf(b->last, "  free connection queue: %uD\n",
                     ngx_http_drizzle_queue_size(&dscf->free));
 
-            b->last = ngx_sprintf(b->last, "  cached connections queue: %uD\n",
+            b->last = ngx_sprintf(b->last, "  cached connection queue: %uD\n",
                     ngx_http_drizzle_queue_size(&dscf->cache));
+
+            for (q = ngx_queue_head(&dscf->cache);
+                 q != ngx_queue_sentinel(&dscf->cache);
+                 q = ngx_queue_next(q))
+            {
+                item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                        queue);
+                /* TODO: print out how times the connection has been used */
+            }
         }
 
         b->last = ngx_sprintf(b->last, "  max connections allowed: %uD\n",
