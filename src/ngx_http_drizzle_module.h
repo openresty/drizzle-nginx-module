@@ -13,7 +13,8 @@
 #endif
 
 #define ngx_http_drizzle_module_version 15
-#define ngx_http_drizzle_module_version_string "0.0.15"
+#define ngx_http_drizzle_module_version_string \
+    "0.0.15"
 
 extern ngx_module_t ngx_http_drizzle_module;
 

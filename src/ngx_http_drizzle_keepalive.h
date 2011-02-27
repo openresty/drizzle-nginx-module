@@ -1,10 +1,12 @@
 #ifndef NGX_HTTP_DRIZZLE_KEEPALIVE_H
 #define NGX_HTTP_DRIZZLE_KEEPALIVE_H
 
+
 #include "ngx_http_drizzle_upstream.h"
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
+
 
 typedef struct {
     ngx_http_upstream_drizzle_srv_conf_t  *srv_conf;
@@ -17,7 +19,11 @@ typedef struct {
     struct sockaddr                      sockaddr;
     drizzle_con_st                      *drizzle_con;
     ngx_str_t                            name;
-    ngx_flag_t                           has_set_names:1;
+
+    /* how many times this connection has been successfully used */
+    ngx_uint_t                           used;
+
+    unsigned                             has_set_names:1;
 
 } ngx_http_drizzle_keepalive_cache_t;
 

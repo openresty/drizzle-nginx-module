@@ -124,6 +124,9 @@ typedef struct {
 
     struct sockaddr                         sockaddr;
 
+    /* how many times this connection has been successfully used */
+    ngx_uint_t                              used;
+
     unsigned                                failed:1;
     unsigned                                seen_stream_end:1;
     unsigned                                has_set_names:1;

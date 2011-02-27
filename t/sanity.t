@@ -18,9 +18,10 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
-run_tests();
 
 no_diff();
+
+run_tests();
 
 __DATA__
 

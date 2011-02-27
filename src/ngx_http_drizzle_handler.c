@@ -368,8 +368,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
     ngx_queue_t                    *q;
 
     ngx_http_drizzle_keepalive_cache_t      *item;
-
-    ngx_http_upstream_drizzle_srv_conf_t *dscf;
+    ngx_http_upstream_drizzle_srv_conf_t    *dscf;
 
     umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
 
@@ -400,12 +399,41 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         b->last = ngx_sprintf(b->last, "  active connections: %uD\n",
                 dscf->active_conns);
 
+        b->last = ngx_sprintf(b->last, "  connection pool capacity: %uD\n",
+                dscf->max_cached);
+
         if (dscf->max_cached) {
-            b->last = ngx_sprintf(b->last, "  free connection queue: %uD\n",
-                    ngx_http_drizzle_queue_size(&dscf->free));
+            /* dump overflow flag for the connection pool */
+
+            switch (dscf->overflow) {
+                case drizzle_keepalive_overflow_ignore:
+                    b->last = ngx_copy_const_str(b->last,
+                            "  overflow: ignore\n");
+                    break;
+
+                case drizzle_keepalive_overflow_reject:
+                    b->last = ngx_copy_const_str(b->last,
+                            "  overflow: reject\n");
+                    break;
+
+                default:
+                    b->last = ngx_copy_const_str(b->last, "  overflow: N/A\n");
+                    break;
+            }
+
+            /* dump the lengths of the "cache" and "free" queues in the pool */
 
             b->last = ngx_sprintf(b->last, "  cached connection queue: %uD\n",
                     ngx_http_drizzle_queue_size(&dscf->cache));
+
+            b->last = ngx_sprintf(b->last, "  free'd connection queue: %uD\n",
+                    ngx_http_drizzle_queue_size(&dscf->free));
+
+            /* dump how many times that each individual connection in the
+             * pool has been successfully used in the "cache" queue */
+
+            b->last = ngx_copy_const_str(b->last,
+                    "  cached connection successfully used count:");
 
             for (q = ngx_queue_head(&dscf->cache);
                  q != ngx_queue_sentinel(&dscf->cache);
@@ -413,25 +441,27 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
             {
                 item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
                         queue);
-                /* TODO: print out how times the connection has been used */
+                b->last = ngx_sprintf(b->last, " %uD", item->used);
             }
-        }
 
-        b->last = ngx_sprintf(b->last, "  max connections allowed: %uD\n",
-                dscf->max_cached);
+            *b->last++ = '\n';
 
-        switch (dscf->overflow) {
-            case drizzle_keepalive_overflow_ignore:
-                b->last = ngx_copy_const_str(b->last, "  overflow: ignore\n");
-                break;
+            /* dump how many times that each individual connection in the
+             * pool has been successfully used in the "free" queue */
 
-            case drizzle_keepalive_overflow_reject:
-                b->last = ngx_copy_const_str(b->last, "  overflow: reject\n");
-                break;
+            b->last = ngx_copy_const_str(b->last,
+                    "  free'd connection successfully used count:");
 
-            default:
-                b->last = ngx_copy_const_str(b->last, "  overflow: N/A\n");
-                break;
+            for (q = ngx_queue_head(&dscf->free);
+                 q != ngx_queue_sentinel(&dscf->free);
+                 q = ngx_queue_next(q))
+            {
+                item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                        queue);
+                b->last = ngx_sprintf(b->last, " %uD", item->used);
+            }
+
+            *b->last++ = '\n';
         }
 
         b->last = ngx_sprintf(b->last, "  servers: %uD\n",
@@ -440,7 +470,9 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         b->last = ngx_sprintf(b->last, "  peers: %uD\n", dscf->peers->number);
     }
 
-    b->last_buf = 1;
+    if (r == r->main) {
+        b->last_buf = 1;
+    }
 
     cl = ngx_alloc_chain_link(r->pool);
     if (cl == NULL) {
