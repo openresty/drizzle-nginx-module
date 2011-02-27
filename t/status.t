@@ -22,6 +22,9 @@ our $http_config = <<'_EOC_';
                        dbname=ngx_test user=ngx_test password=ngx_test;
         #drizzle_keepalive max=10 overflow=ignore mode=single;
     }
+    upstream foo {
+        server 127.0.0.1:80;
+    }
 _EOC_
 
 our $http_config2 = <<'_EOC_';

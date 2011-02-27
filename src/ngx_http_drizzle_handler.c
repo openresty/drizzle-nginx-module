@@ -360,7 +360,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
     ngx_http_upstream_main_conf_t  *umcf;
     ngx_http_upstream_srv_conf_t  **uscfp;
     ngx_http_upstream_srv_conf_t   *uscf;
-    ngx_uint_t                      i;
+    ngx_uint_t                      i, n;
     ngx_chain_t                    *cl;
     ngx_buf_t                      *b;
     size_t                          len;
@@ -386,14 +386,22 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         b->last = ngx_sprintf(b->last, "worker process: %P\n\n", ngx_pid);
     }
 
+    n = 0;
+
     for (i = 0; i < umcf->upstreams.nelts; i++) {
         uscf = uscfp[i];
 
-        if (i != 0) {
+        dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+
+        if (dscf == NULL || dscf->servers == NULL) {
+            continue;
+        }
+
+        if (n != 0) {
             *b->last++ = '\n';
         }
 
-        dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+        n++;
 
         b->last = ngx_copy_const_str(b->last, "upstream ");
         b->last = ngx_copy(b->last, uscf->host.data, uscf->host.len);
