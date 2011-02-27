@@ -14,24 +14,16 @@
 
 static ngx_int_t ngx_http_upstream_dbd_reinit(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
-
 static void ngx_http_upstream_dbd_handler(ngx_event_t *ev);
-
 static void ngx_http_upstream_dbd_connect(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
-
 static void ngx_http_upstream_dbd_cleanup(void *data);
-
 static void ngx_http_upstream_dbd_wr_check_broken_connection(
         ngx_http_request_t *r);
-
 static void ngx_http_upstream_dbd_rd_check_broken_connection(
         ngx_http_request_t *r);
-
 static void ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
     ngx_event_t *ev);
-
-static size_t ngx_get_num_size(uint64_t i);
 
 
 ngx_int_t
@@ -1038,7 +1030,7 @@ ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
         return NGX_OK;
     }
 
-    size = ngx_get_num_size(tid);
+    size = ngx_http_drizzle_get_num_size(tid);
 
     dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
@@ -1067,8 +1059,8 @@ ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
 }
 
 
-static size_t
-ngx_get_num_size(uint64_t i)
+size_t
+ngx_http_drizzle_get_num_size(uint64_t i)
 {
     size_t          n = 0;
 

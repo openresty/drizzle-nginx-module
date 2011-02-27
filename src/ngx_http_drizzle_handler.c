@@ -374,13 +374,114 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
 
     uscfp = umcf->upstreams.elts;
 
-    /* FIXME: this is a hack */
-    len = 1024;
+    /* calculate the output buffer length */
+
+    len = 0;
+
+    if (ngx_process == NGX_PROCESS_WORKER) {
+        len += sizeof("worker process: \n\n") - 1
+             + ngx_http_drizzle_get_num_size(ngx_pid);
+    }
+
+    n = 0;
+
+    for (i = 0; i < umcf->upstreams.nelts; i++) {
+        uscf = uscfp[i];
+
+        dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
+
+        if (dscf == NULL || dscf->servers == NULL) {
+            continue;
+        }
+
+        if (n != 0) {
+            len += sizeof("\n") - 1;
+        }
+
+        n++;
+
+        len += sizeof("upstream \n") - 1
+             + uscf->host.len
+             + sizeof("  active connections: \n") - 1
+             + ngx_http_drizzle_get_num_size(dscf->active_conns)
+             + sizeof("  connection pool capacity: \n") - 1
+             + ngx_http_drizzle_get_num_size(dscf->max_cached);
+
+        if (dscf->max_cached) {
+            /* dump overflow flag for the connection pool */
+
+            switch (dscf->overflow) {
+                case drizzle_keepalive_overflow_ignore:
+                    len += sizeof("  overflow: ignore\n") - 1;
+                    break;
+
+                case drizzle_keepalive_overflow_reject:
+                    len += sizeof("  overflow: reject\n") - 1;
+                    break;
+
+                default:
+                    len += sizeof("  overflow: N/A\n") - 1;
+                    break;
+            }
+
+            /* dump the lengths of the "cache" and "free" queues in the pool */
+
+            len += sizeof("  cached connection queue: \n") - 1
+                 + ngx_http_drizzle_get_num_size(
+                         ngx_http_drizzle_queue_size(&dscf->cache)
+                   )
+                 + sizeof("  free'd connection queue: \n") - 1
+                 + ngx_http_drizzle_get_num_size(
+                         ngx_http_drizzle_queue_size(&dscf->free)
+                   )
+
+            /* dump how many times that each individual connection in the
+             * pool has been successfully used in the "cache" queue */
+
+                 + sizeof("  cached connection successfully used count:\n") - 1;
+
+            for (q = ngx_queue_head(&dscf->cache);
+                 q != ngx_queue_sentinel(&dscf->cache);
+                 q = ngx_queue_next(q))
+            {
+                item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                        queue);
+
+                len += sizeof(" ") - 1
+                     + ngx_http_drizzle_get_num_size(item->used);
+            }
+
+            /* dump how many times that each individual connection in the
+             * pool has been successfully used in the "free" queue */
+
+            len += sizeof("  free'd connection successfully used count:\n") - 1;
+
+            for (q = ngx_queue_head(&dscf->free);
+                 q != ngx_queue_sentinel(&dscf->free);
+                 q = ngx_queue_next(q))
+            {
+                item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
+                        queue);
+
+                len += sizeof(" ") - 1
+                     + ngx_http_drizzle_get_num_size(item->used);
+            }
+        }
+
+        len += sizeof("  servers: \n") - 1
+             + ngx_http_drizzle_get_num_size(dscf->servers->nelts)
+             + sizeof("  peers: \n") - 1
+             + ngx_http_drizzle_get_num_size(dscf->peers->number);
+    }
+
+    /* allocate the output buffer */
 
     b = ngx_create_temp_buf(r->pool, len);
     if (b == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
+
+    /* fill in the output buffer with the actual data */
 
     if (ngx_process == NGX_PROCESS_WORKER) {
         b->last = ngx_sprintf(b->last, "worker process: %P\n\n", ngx_pid);
@@ -480,6 +581,15 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
                 dscf->servers->nelts);
 
         b->last = ngx_sprintf(b->last, "  peers: %uD\n", dscf->peers->number);
+    }
+
+    if (b->last != b->end) {
+        ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+                      "drizzle_status output buffer error: %O != %O",
+                      (off_t) (b->last - b->pos),
+                      (off_t) (b->end - b->pos));
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
     if (r == r->main) {

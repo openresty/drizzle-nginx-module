@@ -27,6 +27,7 @@ ngx_int_t ngx_http_upstream_drizzle_test_connect(ngx_connection_t *c);
 ngx_int_t ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
         ngx_http_upstream_t *u);
 ngx_uint_t ngx_http_drizzle_queue_size(ngx_queue_t *queue);
+size_t ngx_http_drizzle_get_num_size(uint64_t i);
 
 
 #define ngx_http_drizzle_nelems(x) (sizeof(x) / sizeof(x[0]))
