@@ -9,6 +9,8 @@ plan tests => repeat_each() * 2 * blocks();
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 
+#master_on();
+
 our $http_config = <<'_EOC_';
     upstream backend {
         drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql

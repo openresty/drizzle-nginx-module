@@ -382,6 +382,10 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+    if (ngx_process == NGX_PROCESS_WORKER) {
+        b->last = ngx_sprintf(b->last, "worker process: %P\n\n", ngx_pid);
+    }
+
     for (i = 0; i < umcf->upstreams.nelts; i++) {
         uscf = uscfp[i];
 
