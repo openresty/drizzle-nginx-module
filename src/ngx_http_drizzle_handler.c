@@ -388,6 +388,13 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
     for (i = 0; i < umcf->upstreams.nelts; i++) {
         uscf = uscfp[i];
 
+        if (uscf->srv_conf == NULL) {
+            /* skip implicit upstream specified directly by the fastcgi_pass,
+             * proxy_pass, and similar directives */
+
+            continue;
+        }
+
         dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
         if (dscf == NULL || dscf->servers == NULL) {
@@ -491,6 +498,13 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
 
     for (i = 0; i < umcf->upstreams.nelts; i++) {
         uscf = uscfp[i];
+
+        if (uscf->srv_conf == NULL) {
+            /* skip implicit upstream specified directly by the fastcgi_pass,
+             * proxy_pass, and similar directives */
+
+            continue;
+        }
 
         dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
