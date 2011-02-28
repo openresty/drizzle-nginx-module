@@ -77,7 +77,7 @@ upstream backend2
 
 
 
-=== TEST 2: single and no pools
+=== TEST 2: single mode and no pools
 --- http_config eval: $::http_config
 --- config
     location @my_err {
@@ -220,6 +220,77 @@ upstream backend2
   free'd connection queue: 4
   cached connection successfully used count: 2
   free'd connection successfully used count: 0 0 0 0
+  servers: 1
+  peers: 1
+
+
+
+=== TEST 4: single mode and bad request
+--- http_config eval: $::http_config
+--- config
+    location @my_err {
+        echo "500 Internal Server Error";
+    }
+    location ~ ^/mysql(2?)$ {
+        drizzle_query "select sum(1) from $args";
+        drizzle_pass backend$1;
+        error_page 500 = @my_err;
+        rds_json on;
+    }
+    location /status {
+        drizzle_status;
+    }
+    location /main {
+        echo_location /mysql cats;
+        echo_location /mysql cats;
+        echo_location /mysql cats;
+        echo_location /mysql select;
+        echo;
+
+        echo_location /status;
+
+        echo_location /mysql cats;
+        echo_location /mysql cats;
+        echo;
+
+        echo_location /status;
+    }
+--- request
+    GET /main
+--- response_body
+[{"sum(1)":2}][{"sum(1)":2}][{"sum(1)":2}]500 Internal Server Error
+
+upstream backend
+  active connections: 0
+  connection pool capacity: 10
+  overflow: reject
+  cached connection queue: 0
+  free'd connection queue: 10
+  cached connection successfully used count:
+  free'd connection successfully used count: 3 0 0 0 0 0 0 0 0 0
+  servers: 1
+  peers: 1
+
+upstream backend2
+  active connections: 0
+  connection pool capacity: 0
+  servers: 1
+  peers: 1
+[{"sum(1)":2}][{"sum(1)":2}]
+upstream backend
+  active connections: 1
+  connection pool capacity: 10
+  overflow: reject
+  cached connection queue: 1
+  free'd connection queue: 9
+  cached connection successfully used count: 2
+  free'd connection successfully used count: 0 0 0 0 0 0 0 0 0
+  servers: 1
+  peers: 1
+
+upstream backend2
+  active connections: 0
+  connection pool capacity: 0
   servers: 1
   peers: 1
 
