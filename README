@@ -46,7 +46,16 @@ Synopsis
                 drizzle_recv_cols 1 s; # default 60 s
                 drizzle_recv_rows 1 s; # default 60 s
             }
+
             ...
+
+            # for connection pool monitoring
+            location /mysql-pool-status {
+                allow 127.0.0.1;
+                deny all;
+
+                drizzle_status;
+            }
         }
     }
 
@@ -189,6 +198,29 @@ Directives
         a drizzle header looks like this:
 
             X-Resty-DBD-Module: ngx_drizzle 0.0.14
+
+    drizzle_status
+        Emit a status report for all the drizzle upstream servers
+        in the current location. The output looks like this:
+
+            worker process: 15231
+
+            upstream backend
+              active connections: 0
+              connection pool capacity: 10
+              overflow: reject
+              cached connection queue: 0
+              free'd connection queue: 10
+              cached connection successfully used count:
+              free'd connection successfully used count: 3 0 0 0 0 0 0 0 0 0
+              servers: 1
+              peers: 1
+
+            upstream backend2
+              active connections: 0
+              connection pool capacity: 0
+              servers: 1
+              peers: 1
 
 Output
     This module generates binary query results in a format
