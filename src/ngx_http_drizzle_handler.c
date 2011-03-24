@@ -158,6 +158,8 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     r->main->count++;
 #endif
 
+    dd("XXX connect timeout: %d", (int) dlcf->upstream.connect_timeout);
+
     ngx_http_upstream_dbd_init(r);
 
     /* override the read/write event handler to our own */
