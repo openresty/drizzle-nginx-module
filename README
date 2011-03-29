@@ -1,6 +1,6 @@
 Name
     ngx_drizzle - an upstream module that talks to
-        mysql, drizzle, and sqlite3 by libdrizzle
+        mysql and drizzle by libdrizzle
 
 Status
     This module is already considered production-ready but it's
@@ -65,7 +65,7 @@ Description
     non-blocking and streamming way.
 
     Essentially it provides a very efficient and flexible way
-    for nginx internals to access mysql, drizzle, sqlite3,
+    for nginx internals to access mysql, drizzle,
     as well as other RDBMS's that support the drizzle protocol
     or mysql protocol. Also it can serve as a direct REST
     interface to those RDBMS backends.
