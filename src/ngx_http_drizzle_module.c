@@ -618,14 +618,14 @@ ngx_http_drizzle_error_codes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         *c = ngx_atoi (value->data, value->len);
         if (*c == NGX_ERROR) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                "\"%V\" is not a valid drizzle error code", value);
+                "\"%V\" is not a valid drizzle error code (it must be an integer)", value);
                 
             return  NGX_CONF_ERROR;
         }
         
-        if (*c < 0 || *c > 0xffff) {
+        if (*c <= 0 || *c > 0xffff) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                "\"%V\" is not a valid drizzle error code", value);
+                "\"%V\" is not a valid drizzle error code (it must be an integer between 1 and 65536)", value);
                 
             return  NGX_CONF_ERROR;
         }
