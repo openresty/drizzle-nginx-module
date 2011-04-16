@@ -55,6 +55,9 @@ typedef struct {
     ngx_array_t                         *user_types;
                 /* of ngx_http_drizzle_var_type_t */
 
+    ngx_flag_t                           return_error_code;
+    ngx_array_t                         *no_log_error_codes;
+                
     ngx_http_complex_value_t            *complex_target;
 
     size_t                               buf_size;

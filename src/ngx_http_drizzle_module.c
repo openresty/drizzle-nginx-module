@@ -30,7 +30,9 @@ static ngx_int_t ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
         ngx_http_variable_value_t *v, uintptr_t data);
 static char * ngx_http_drizzle_enable_status(ngx_conf_t *cf,
         ngx_command_t *cmd, void *conf);
-
+static char * ngx_http_drizzle_error_codes(ngx_conf_t *cf, 
+        ngx_command_t *cmd, void *conf);
+        
 
 static ngx_http_variable_t ngx_http_drizzle_variables[] = {
 
@@ -136,6 +138,22 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       0,
       NULL },
 
+    { ngx_string("drizzle_return_error_code"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, return_error_code),
+      NULL },
+
+    { ngx_string("drizzle_no_log_error_codes"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_1MORE,
+      ngx_http_drizzle_error_codes,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, no_log_error_codes),
+      NULL },
+
     ngx_null_command
 };
 
@@ -229,13 +247,15 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
     /* set by ngx_pcalloc:
      *      conf->dbname = NULL
      *      conf->query  = NULL
+     *      conf->no_log_error_codes = NULL
      */
 
+    conf->return_error_code = NGX_CONF_UNSET;
     conf->complex_target = NGX_CONF_UNSET_PTR;
 
     conf->buf_size = NGX_CONF_UNSET_SIZE;
     conf->tid_var_index = NGX_CONF_UNSET;
-
+    
     return conf;
 }
 
@@ -271,6 +291,11 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->queries = prev->queries;
     }
 
+    ngx_conf_merge_value(conf->return_error_code, prev->return_error_code, 0);
+
+    if (conf->no_log_error_codes == NULL)
+        conf->no_log_error_codes = prev->no_log_error_codes;
+    
     ngx_conf_merge_size_value(conf->buf_size, prev->buf_size,
             (size_t) ngx_pagesize);
 
@@ -557,6 +582,57 @@ ngx_http_drizzle_enable_status(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     clcf->handler = ngx_http_drizzle_status_handler;
 
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_http_drizzle_error_codes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    char  *p = conf;
+    
+    ngx_array_t     **ap;
+    ngx_str_t        *value, *e;
+    ngx_int_t         i, *c;
+    
+    ap = (ngx_array_t **) (p + cmd->offset);
+    if (*ap) {
+        return  "is duplicate";
+    }
+    
+    *ap = ngx_array_create (cf->pool, cf->args->nelts - 1, sizeof (ngx_int_t));
+    if (*ap == NULL)
+        return  NGX_CONF_ERROR;
+    
+    value = cf->args->elts;
+    value++;
+    
+    e = value + cf->args->nelts - 1;
+    
+    for ( ;value<e; value++) {
+        
+        c = ngx_array_push (*ap);
+        if (c == NULL)
+            return  NGX_CONF_ERROR;
+        
+        *c = ngx_atoi (value->data, value->len);
+        if (*c == NGX_ERROR) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                "\"%V\" is not a valid drizzle error code", value);
+                
+            return  NGX_CONF_ERROR;
+        }
+        
+        if (*c < 0 || *c > 0xffff) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                "\"%V\" is not a valid drizzle error code", value);
+                
+            return  NGX_CONF_ERROR;
+        }
+        
+        /* TODO: further check that numbers are valid error codes? */
+    }
+    
     return NGX_CONF_OK;
 }
 

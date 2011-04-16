@@ -222,6 +222,22 @@ Directives
               servers: 1
               peers: 1
 
+    drizzle_return_error_code on|off
+        Returns the drizzle / mysql error code when an error occurs, rather
+        than 500 (internal server error).
+
+        This can be useful for example if you are using ngx_lua to process the
+        returned data, and wish to handle specific error situations, such as
+        when there is a duplicate entry on INSERT queries (see example below).
+
+    drizzle_no_log_error_codes <num> [<num> ...]
+        Do not log error information for the error codes listed
+
+        e.g.
+
+        drizzle_return_error_code   on;
+        drizzle_no_log_error_codes  1062;   # doesn't log duplicate entries
+
 Output
     This module generates binary query results in a format
     that will be shared among the various nginx database

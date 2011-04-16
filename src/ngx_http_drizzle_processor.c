@@ -158,6 +158,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
+    ngx_http_drizzle_loc_conf_t *dlcf;
     ngx_http_upstream_t         *u = r->upstream;
     drizzle_return_t             ret;
     ngx_int_t                    rc;
@@ -165,7 +166,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     size_t                       query_len;
     ngx_flag_t                   has_set_names = 0;
     ngx_flag_t                   enable_charset = 0;
-
+    ngx_flag_t                   log_error;
+    ngx_int_t                    error_code, *codep, *codepe;
+    
     dd("enable charset: %d", (int) dp->enable_charset);
 
     if (dp->enable_charset && ! dp->has_set_names) {
@@ -202,16 +205,37 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     }
 
     if (ret != DRIZZLE_RETURN_OK) {
+        
+        error_code = drizzle_error_code(dc->drizzle);
+        
+        dlcf = ngx_http_get_module_loc_conf (r, ngx_http_drizzle_module);
+        
+        log_error = 1;
+        
+        if (dlcf->no_log_error_codes) {
+            codep = dlcf->no_log_error_codes->elts;
+            codepe = codep + dlcf->no_log_error_codes->nelts;
+            
+            for ( ; codep < codepe; codep++) {
+                if (*codep == error_code) {
+                    log_error = 0;
+                    break;
+                }
+            }
+        }
 #if 1
         if (ret == DRIZZLE_RETURN_ERROR_CODE) {
-            if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
-                dd("XXX no such talbe");
+            if (error_code == MYSQL_ER_NO_SUCH_TABLE) {
+                dd("XXX no such table");
 
-                ngx_log_error(NGX_LOG_NOTICE, c->log, 0,
-                               "failed to send query: %d (%d): %s",
-                               (int) ret, drizzle_error_code(dc->drizzle),
-                               drizzle_error(dc->drizzle));
-
+                if (log_error) {
+                
+                    ngx_log_error(NGX_LOG_NOTICE, c->log, 0,
+                                "failed to send query: %d (%ui): %s",
+                                (int) ret, error_code,
+                                drizzle_error(dc->drizzle));
+                }
+                
                 if (dp->enable_charset && ! dp->has_set_names) {
                     c->log->action = "sending query to drizzle upstream";
                     dp->has_set_names = 1;
@@ -226,11 +250,17 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         }
 #endif
 
-        ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "failed to send query: %d (%d): %s",
-                       (int) ret, drizzle_error_code(dc->drizzle),
-                       drizzle_error(dc->drizzle));
+        if (log_error) {
 
+            ngx_log_error(NGX_LOG_ERR, c->log, 0,
+                        "failed to send query: %d (%ui): %s",
+                        (int) ret, error_code,
+                        drizzle_error(dc->drizzle));
+        }
+        
+        if (dlcf->return_error_code)
+            return  error_code;
+        
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
