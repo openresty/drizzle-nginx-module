@@ -152,6 +152,38 @@ Description
     will always replace the oldest idle connections in the
     pool even if the pool is already full.
 
+Last Insert ID
+    If you want to get LAST_INSERT_ID, then ngx_drizzle already
+    returns that automatically for you when you're doing a SQL insert
+    query. Consider the following sample nginx.conf snippet:
+
+       location /test {
+           echo_location /mysql "drop table if exists foo";
+           echo;
+           echo_location /mysql "create table foo (id serial not null,
+    primary key (id), val real);";
+           echo;
+           echo_location /mysql "insert into foo (val) values (3.1415926);";
+           echo;
+           echo_location /mysql "select * from foo;";
+           echo;
+       }
+       location /mysql {
+           drizzle_pass backend;
+           drizzle_module_header off;
+           drizzle_query $query_string;
+           rds_json on;
+       }
+
+    Then GET /test gives the following outputs:
+
+       {"errcode":0}
+       {"errcode":0}
+       {"errcode":0,"insert_id":1,"affected_rows":1}
+       [{"id":1,"val":3.1415926}]
+
+    You can see the "insert_id" field in the 3rd JSON response.
+
 Caveats
 
     * Other usptream modules like "upstream_hash" and
