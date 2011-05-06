@@ -341,6 +341,16 @@ Output
           can span multiple bufs
 
 Trouble Shooting
+    * When you see the following error message in error.log
+
+        failed to connect: 10: drizzle_state_handshake_server_read:bad packet size:52:74
+            while connecting to drizzle upstream
+
+      then you're probably trying to connect to a mysql 5.5+ server,
+      which is not supported in the current version of libdrizzle.
+      You can try urging libdrizzle's developers to add support for mysql 5.5+ or consider
+      downgrading your mysql server to version 5.1.x or 5.0.x in order to use this module.
+
     * When you see the following error message in error.log:
 
          failed to connect: 15: drizzle_state_handshake_result_read:
@@ -396,7 +406,17 @@ Installation
         $ make install
 
 Compatibility
-    If you're using mysql, then at least mysql 5.x is required.
+    If you're using mysql, then mysql 5.0 ~ 5.1 is required. Please note that
+    due to a bug in libdrizzle, mysql 5.5+ will not work; see the following
+    ticket for details:
+
+        https://bugs.launchpad.net/drizzle/+bug/677522
+
+    If you try to connect to a mysql 5.5+ server, an error message will be
+    printed to the nginx error.log file like this:
+
+        failed to connect: 10: drizzle_state_handshake_server_read:bad packet size:52:74
+            while connecting to drizzle upstream
 
     The following versions of Nginx should work with this module:
 
