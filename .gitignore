@@ -51,6 +51,9 @@ src/checker.c
 src/quoting.h
 src/quoting.c
 src/upstream.[ch]
-all.sh
+all
+go
+buildroot/
 pack
 t/servroot/
+build10
