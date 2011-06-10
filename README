@@ -5,7 +5,7 @@ Name
 Status
     This module is already considered production-ready but it's
     required to patch libdrizzle-0.8 using the following
-    patch in order to fix two serious bug in it:
+    patch in order to fix two serious bug in it (it's NOT Mac specific!):
 
       http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug_and_mac_fixes.patch
 
