@@ -39,8 +39,7 @@ static u_char * ngx_http_drizzle_request_mem(ngx_http_request_t *r,
         ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 
 static ngx_int_t ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len,
-        unsigned last_buf);
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 
 
 ngx_int_t
@@ -55,7 +54,6 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     uint16_t                         errstr_len;
     uint16_t                         col_count;
     uint16_t                         errcode;
-    unsigned                         last_buf;
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
@@ -171,13 +169,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         /* we suppress row terminator here when there's no columns */
         dp->seen_stream_end = 1;
 
-        if (r == r->main) {
-            last_buf = 1;
-        } else {
-            last_buf = 0;
-        }
-
-        rc = ngx_http_drizzle_submit_mem(r, dp, size, last_buf);
+        rc = ngx_http_drizzle_submit_mem(r, dp, size);
 
         if (rc != NGX_OK) {
             return NGX_ERROR;
@@ -189,7 +181,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         return NGX_DONE;
     }
 
-    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
+    return ngx_http_drizzle_submit_mem(r, dp, size);
 }
 
 
@@ -370,7 +362,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
         return NGX_ERROR;
     }
 
-    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
+    return ngx_http_drizzle_submit_mem(r, dp, size);
 }
 
 
@@ -398,8 +390,7 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
         dp->seen_stream_end = 1;
     }
 
-    return ngx_http_drizzle_submit_mem(r, dp, size,
-            row == 0 ? 1 : 0 /* last_buf */);
+    return ngx_http_drizzle_submit_mem(r, dp, size);
 }
 
 
@@ -462,7 +453,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         return NGX_ERROR;
     }
 
-    return ngx_http_drizzle_submit_mem(r, dp, size, 0 /* last_buf */);
+    return ngx_http_drizzle_submit_mem(r, dp, size);
 }
 
 
@@ -663,8 +654,7 @@ alloc:
 
 static ngx_int_t
 ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len,
-        unsigned last_buf)
+        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
     ngx_chain_t             *cl;
     ngx_int_t                rc;
@@ -713,8 +703,6 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
                     postponed_len);
 
             dp->avail_out = len - postponed_len;
-
-            dp->out_buf->last_buf = last_buf;
 
             dp->postponed.pos = NULL;
 
@@ -769,7 +757,6 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
             dp->last_out = &cl->next;
 
             if (dp->postponed.pos == NULL) {
-                dp->out_buf->last_buf = last_buf;
                 break;
             }
 
@@ -782,11 +769,10 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
         return NGX_OK;
     }
 
-    dd("MEM consuming out_buf for %d, last buf: %u", (int) len, last_buf);
+    dd("MEM consuming out_buf for %d", (int) len);
 
     dp->out_buf->last += len;
     dp->avail_out -= len;
-    dp->out_buf->last_buf = last_buf;
 
     if (dp->avail_out == 0) {
         dd("MEM save dp->out_buf");
