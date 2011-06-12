@@ -29,6 +29,10 @@ little-endian systems only
 
 --- http_config eval: $::http_config
 --- config
+    location /status {
+        drizzle_status;
+    }
+
     location /mysql {
         drizzle_pass backend;
         #drizzle_dbname $dbname;

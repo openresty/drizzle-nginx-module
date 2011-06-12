@@ -360,12 +360,34 @@ ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev)
 {
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
     ngx_http_drizzle_keepalive_cache_t      *item;
-    ngx_connection_t                        *c;
+
+    int                n;
+    char               buf[1];
+    ngx_connection_t  *c;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ev->log, 0,
                    "drizzle: keepalive close handler");
 
     c = ev->data;
+
+    if (c->close) {
+        goto close;
+    }
+
+    n = recv(c->fd, buf, 1, MSG_PEEK);
+
+    if (n == -1 && ngx_socket_errno == NGX_EAGAIN) {
+        /* stale event */
+
+        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+            goto close;
+        }
+
+        return;
+    }
+
+close:
+
     item = c->data;
     dscf = item->srv_conf;
 
