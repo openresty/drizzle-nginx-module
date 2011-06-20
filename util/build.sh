@@ -23,7 +23,7 @@ if [ ! -s "nginx-$version.tar.gz" ]; then
 
     tar -xzvf nginx-$version.tar.gz || exit 1
     cp $root/../no-pool-nginx/nginx-$version-no_pool.patch ./ || exit 1
-    patch -p0 < nginx-$version-no_pool.patch || exit 1
+    #patch -p0 < nginx-$version-no_pool.patch || exit 1
 fi
 
 #tar -xzvf nginx-$version.tar.gz || exit 1
@@ -34,6 +34,7 @@ cd nginx-$version/ || exit 1
 
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=$target \
+            --with-ld-opt="-Wl,-rpath,/opt/drizzle/lib" \
             --without-mail_pop3_module \
             --without-mail_imap_module \
             --without-mail_smtp_module \
