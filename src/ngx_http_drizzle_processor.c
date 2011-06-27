@@ -118,12 +118,9 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
         ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
         drizzle_con_st *dc)
 {
-    ngx_http_upstream_t         *u;
     drizzle_return_t             ret;
 
     dd("drizzle connect");
-
-    u = r->upstream;
 
     ret = drizzle_con_connect(dc);
 
