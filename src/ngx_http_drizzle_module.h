@@ -1,11 +1,10 @@
 #ifndef NGX_HTTP_DRIZZLE_MODULE_H
 #define NGX_HTTP_DRIZZLE_MODULE_H
 
+#include <libdrizzle/drizzle_client.h>
 #include <ngx_config.h>
 #include <nginx.h>
 #include <ngx_http.h>
-
-#include <libdrizzle/drizzle_client.h>
 
 
 #ifndef NGX_HTTP_GONE

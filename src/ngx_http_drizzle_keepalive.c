@@ -1,10 +1,11 @@
 /* Copyright (C) Maxim Dounin */
 /* Copyright (C) agentzh */
 
+#include "ngx_http_drizzle_keepalive.h"
+
 #define DDEBUG 0
 #include "ddebug.h"
 
-#include "ngx_http_drizzle_keepalive.h"
 #include "ngx_http_drizzle_util.h"
 
 #include <ngx_core.h>
