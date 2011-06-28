@@ -3,14 +3,7 @@ Name
         mysql and drizzle by libdrizzle
 
 Status
-    This module is already considered production-ready but it's
-    required to patch libdrizzle-0.8 using the following
-    patch in order to fix two serious bug in it (it's NOT Mac specific!):
-
-      http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug_and_mac_fixes.patch
-
-    This patch is expected to be included in the next
-    official release of libdrizzle.
+    This module is already considered production-ready.
 
     We need your help! If you find this module useful and/or
     interesting, please consider joining the development!
@@ -61,7 +54,7 @@ Synopsis
 
 Description
     This is an nginx upstream module integrating libdrizzle
-    ( https://launchpad.net/libdrizzle ) into nginx in an
+    ( https://launchpad.net/drizzle ) into nginx in an
     non-blocking and streamming way.
 
     Essentially it provides a very efficient and flexible way
@@ -341,16 +334,6 @@ Output
           can span multiple bufs
 
 Trouble Shooting
-    * When you see the following error message in error.log
-
-        failed to connect: 10: drizzle_state_handshake_server_read:bad packet size:52:74
-            while connecting to drizzle upstream
-
-      then you're probably trying to connect to a mysql 5.5+ server,
-      which is not supported in the current version of libdrizzle.
-      You can try urging libdrizzle's developers to add support for mysql 5.5+ or consider
-      downgrading your mysql server to version 5.1.x or 5.0.x in order to use this module.
-
     * When you see the following error message in error.log:
 
          failed to connect: 15: drizzle_state_handshake_result_read:
@@ -376,15 +359,18 @@ Trouble Shooting
       use unix domain socket to connect to your mysql server.
 
 Installation
-    * You should first install libdrizzle 0.8 which can be
-        obtained from here:
+    * You should first install libdrizzle 1.0 which is now distributed with the drizzle
+      project and can be obtained from here:
 
-        https://launchpad.net/libdrizzle
+        https://launchpad.net/drizzle
 
-    * Use the following patch in order to fix two serious bugs in
-        libdrizzle:
+      Installation of libdrizzle 1.0 is usually as simple as
 
-        http://agentzh.org/misc/nginx/libdrizzle-0.8-parsebug_and_mac_fixes.patch
+        tar xzvf drizzle7-VERSION.tar.gz
+        cd drizzle7-VERSION/
+        ./configure --without-server
+        make libdrizzle-1.0
+        make install-libdrizzle-1.0
 
     * Download the latest version of the release tarball of this module from
     drizzle-nginx-module file list
@@ -398,6 +384,11 @@ Installation
         $ tar -xzvf nginx-0.8.41.tar.gz
         $ cd nginx-0.8.41/
 
+        # if you have installed libdrizzle to the prefix /opt/drizzle, then
+        # specify the following environments:
+        # export LIBDRIZZLE_INC=/opt/drizzle/include/libdrizzle-1.0
+        # export LIBDRIZZLE_LIB=/opt/drizzle/lib
+
         # Here we assume you would install you nginx under /opt/nginx/.
         $ ./configure --prefix=/opt/nginx \
             --add-module=/path/to/drizzle-nginx-module
@@ -406,23 +397,18 @@ Installation
         $ make install
 
 Compatibility
-    If you're using mysql, then mysql 5.0 ~ 5.1 is required. Please note that
-    due to a bug in libdrizzle, mysql 5.5+ will not work; see the following
-    ticket for details:
+    If you're using mysql, then mysql 5.0 ~ 5.5 is required.
 
-        https://bugs.launchpad.net/drizzle/+bug/677522
+    We're not sure if mysql 5.6+ work; reports welcome!
 
-    If you try to connect to a mysql 5.5+ server, an error message will be
-    printed to the nginx error.log file like this:
-
-        failed to connect: 10: drizzle_state_handshake_server_read:bad packet size:52:74
-            while connecting to drizzle upstream
+    This module has been tested on Linux and Mac OS X. Reports on
+    other UNIX-like systems will be highly appreciated.
 
     The following versions of Nginx should work with this module:
 
-    *   1.0.x (last tested: 1.0.2)
+    *   1.0.x (last tested: 1.0.4)
 
-    *   0.8.x (last tested: 0.8.53)
+    *   0.8.x (last tested: 0.8.54)
 
     *   0.7.x >= 0.7.44 (last tested version is 0.7.67)
 
@@ -496,11 +482,11 @@ Copyright & License
 
     This module is licenced under the BSD license.
 
-    Copyright (c) 2009-2010, Taobao Inc., Alibaba Group ( http://www.taobao.com ).
+    Copyright (c) 2009-2011, Taobao Inc., Alibaba Group ( http://www.taobao.com ).
 
-    Copyright (c) 2009-2010, Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
+    Copyright (c) 2009-2011, Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-    Copyright (C) 2009-2010, Yichun Zhang (agentzh) <agentzh@gmail.com>.
+    Copyright (C) 2009-2011, Yichun Zhang (agentzh) <agentzh@gmail.com>.
 
     Copyright (C) 2010, FRiCKLE Piotr Sikora <info@frickle.com>.
 
