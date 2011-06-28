@@ -377,12 +377,12 @@ Installation
     (<http://github.com/agentzh/drizzle-nginx-module/downloads>).
 
     * Grab the nginx source code from nginx.net (<http://nginx.net/>), for
-        example, the version 0.8.41 (see nginx compatibility), and then build
+        example, the version 0.8.54 (see nginx compatibility), and then build
         the source with this module:
 
-        $ wget 'http://sysoev.ru/nginx/nginx-0.8.41.tar.gz'
-        $ tar -xzvf nginx-0.8.41.tar.gz
-        $ cd nginx-0.8.41/
+        $ wget 'http://sysoev.ru/nginx/nginx-0.8.54.tar.gz'
+        $ tar -xzvf nginx-0.8.54.tar.gz
+        $ cd nginx-0.8.54/
 
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
