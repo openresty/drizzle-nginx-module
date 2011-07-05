@@ -864,7 +864,7 @@ ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in)
      * upstream_next */
     r->upstream->request_sent = 1;
 
-    dd("process events returns %d", (int) ngx_http_drizzle_process_events(r));
+    ngx_http_drizzle_process_events(r);
 
     /* discard the ret val from process events because
      * we can only return NGX_AGAIN here to prevent
