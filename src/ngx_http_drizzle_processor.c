@@ -121,7 +121,7 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
 {
     drizzle_return_t             ret;
 
-    dd("drizzle connect");
+    dd("drizzle connect: user %s, password %s", dc->user, dc->password);
 
     ret = drizzle_con_connect(dc);
 

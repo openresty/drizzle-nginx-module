@@ -666,6 +666,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_memcpy(dc->password, peer->password.data, peer->password.len);
     dc->password[peer->password.len] = '\0';
 
+    dd("user %s, password %s", dc->user, dc->password);
+
     /* TODO add support for uds (unix domain socket) */
 
     /* set host and port for the drizzle connection */
@@ -864,7 +866,7 @@ ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in)
      * upstream_next */
     r->upstream->request_sent = 1;
 
-    dd("process events returns %d", (int) ngx_http_drizzle_process_events(r));
+    ngx_http_drizzle_process_events(r);
 
     /* discard the ret val from process events because
      * we can only return NGX_AGAIN here to prevent

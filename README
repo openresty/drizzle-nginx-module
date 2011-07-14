@@ -372,9 +372,21 @@ Installation
         make libdrizzle-1.0
         make install-libdrizzle-1.0
 
+     Ensure that you have the "python" command point to a python2 interpreter.
+     It's known that on recent Arch Linux distribution, "python" is linked to "python3"
+     by default, and while running "make libdrizzle-1.0" will yield
+
+          File "config/pandora-plugin", line 185
+            print "Dependency loop detected with %s" % plugin['name']
+                                                   ^
+        SyntaxError: invalid syntax
+        make: *** [.plugin.scan] Error 1
+
+     You can fix this by pointing "python" to "python2".
+
     * Download the latest version of the release tarball of this module from
-    drizzle-nginx-module file list
-    (<http://github.com/agentzh/drizzle-nginx-module/downloads>).
+      drizzle-nginx-module file list
+      (<http://github.com/agentzh/drizzle-nginx-module/downloads>).
 
     * Grab the nginx source code from nginx.net (<http://nginx.net/>), for
         example, the version 1.0.4 (see nginx compatibility), and then build

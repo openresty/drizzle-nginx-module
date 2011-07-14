@@ -36,7 +36,6 @@ cd nginx-$version/ || exit 1
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
             #--with-cc-opt='-fast' \
     ./configure --prefix=$target \
-            --with-ld-opt="-Wl,-rpath,/opt/drizzle/lib" \
             --without-mail_pop3_module \
             --without-mail_imap_module \
             --without-mail_smtp_module \
@@ -53,6 +52,7 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
           --add-module=$root/../set-misc-nginx-module \
+          --add-module=$home/work/nginx_eval_module-1.0.1 \
           --with-debug
           #--with-cc-opt="-g3 -O0"
           #--add-module=$root/../echo-nginx-module \
