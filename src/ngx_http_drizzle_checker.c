@@ -1,9 +1,10 @@
-#define DDEBUG 2
-
-#include "ngx_http_drizzle_quoting.h"
+#define DDEBUG 0
+#include "ddebug.h"
 
 #include <ngx_core.h>
 #include <ngx_http.h>
+#include "ngx_http_drizzle_quoting.h"
+
 
 ngx_int_t
 ngx_http_drizzle_check_int(ngx_str_t *value, void *data)

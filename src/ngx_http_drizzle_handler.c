@@ -1,10 +1,9 @@
 /* Copyright (C) agentzh */
 
-#include "ngx_http_drizzle_module.h"
-
 #define DDEBUG 0
 #include "ddebug.h"
 
+#include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_handler.h"
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
@@ -36,6 +35,11 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     ngx_str_t                       target;
     ngx_url_t                       url;
     ngx_connection_t               *c;
+
+    dd("request: %p", r);
+    dd("subrequest in memory: %d", (int) r->subrequest_in_memory);
+    dd("connection: %p", r->connection);
+    dd("connection log: %p", r->connection->log);
 
     if (r->subrequest_in_memory) {
         /* TODO: add support for subrequest in memory by

@@ -1,10 +1,9 @@
 /* Copyright (C) agentzh */
 
-#include "ngx_http_drizzle_module.h"
-
 #define DDEBUG 0
 #include "ddebug.h"
 
+#include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_upstream.h"
 #include "ngx_http_drizzle_keepalive.h"
 #include "ngx_http_drizzle_processor.h"
