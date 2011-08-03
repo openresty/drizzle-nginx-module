@@ -10,8 +10,6 @@
 #include "ngx_http_drizzle_output.h"
 #include "ngx_http_drizzle_upstream.h"
 
-#include <libdrizzle/drizzle_client.h>
-
 
 #define MYSQL_ER_NO_SUCH_TABLE 1146
 

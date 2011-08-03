@@ -2,11 +2,10 @@
 #define NGX_HTTP_DRIZZLE_UPSTREAM_H
 
 
-#include "ngx_http_drizzle_module.h"
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
-#include <libdrizzle/drizzle_client.h>
+#include "ngx_http_drizzle_module.h"
 
 
 typedef enum {

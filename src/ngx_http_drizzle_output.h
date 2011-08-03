@@ -1,7 +1,6 @@
 #ifndef NGX_HTTP_DRIZZLE_OUTPUT_H
 #define NGX_HTTP_DRIZZLE_OUTPUT_H
 
-#include <libdrizzle/drizzle_client.h>
 #include "ngx_http_drizzle_upstream.h"
 
 ngx_int_t ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
