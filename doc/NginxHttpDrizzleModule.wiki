@@ -126,19 +126,19 @@ Directive assigns the name and the parameters of server. For the name it is poss
 
 The following options are supported:
 
-'''user=<user>'''
+'''user='''<code><user></code>
 : MySQL/Drizzle user name <code><user></code> for login.
 
-'''password=<pass>'''
+'''password='''<code><pass></code>
 : Specify mysql password <code><pass></code>for login.
 
-'''dbname=<database>'''
+'''dbname='''<code><database></code>
 : Specify default MySQL database <code><database></code> for the connection. Note that MySQL does allow referencing tables belonging to different databases by qualifying table names with database names in SQL queries.
 
-'''protocol=<protocol>'''
+'''protocol='''<code><protocol></code>
 : Specify which wire protocol to use, <code>drizzle</code> or <code>mysql</code>. Default to <code>drizzle</code>.
 
-'''charset=<charset>'''
+'''charset='''<code><charset></code>
 : Explicitly specify the character set for the MySQL connections. Setting this option to a non-empty value will make this module send out a <code>set names '<charset>'</code> query right after the mysql connection is established.
 : If the default character encoding of the MySQL connection is already what you want, you needn't set this option because it has extra runtime cost.
 : Here is a small example:
@@ -147,7 +147,7 @@ The following options are supported:
                                     dbname=test protocol=mysql
                                     charset=utf8;
 </geshi>
-Please note that for the mysql server, "utf-8" is not a valid encoding name while <code>utf8</code> is.
+: Please note that for the mysql server, "utf-8" is not a valid encoding name while <code>utf8</code> is.
 
 == drizzle_keepalive ==
 '''syntax:''' ''drizzle_keepalive max=<size> mode=<mode>''
@@ -161,15 +161,12 @@ Configures the keep-alive connection pool for MySQL/Drizzle connections.
 The following options are supported:
 
 '''max='''<code><num></code>
-
 : Specify the capacity of the connection pool for the current upstream block. The <num> value ''must'' be non-zero. If set to <code>0</code>, it effectively disables the connection pool. This option is default to <code>0</code>.
 
 '''mode='''<code><mode></code>
-
 : This supports two values, <code>single</code> and <code>multi</code>. The <code>single</code> mode means the pool does not distinguish various drizzle servers in the current upstream block while <code>multi</code> means the pool will merely reuse connections which have identical server host names and ports. Note that even under <code>multi</code>, differences between <code>dbname</code> or <code>user</code> parameters will be silently ignored. Default to <code>single</code>.
 
 '''overflow='''<code><action></code>
-
 : This option specifies what to do when the connection pool is already full while new database connection is required. Either <code>reject</code> or <code>ignore</code> can be specified. In case of <code>reject</code>, it will reject the current request, and returns the <code>503 Service Unavailable</code> error page. For <code>ignore</code>, this module will go on creating a new database connection.
 
 == drizzle_query ==

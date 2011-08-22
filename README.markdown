@@ -135,19 +135,19 @@ Directive assigns the name and the parameters of server. For the name it is poss
 
 The following options are supported:
 
-**user=<user>**
+**user=**`<user>`
 	MySQL/Drizzle user name `<user>` for login.
 
-**password=<pass>**
+**password=**`<pass>`
 	Specify mysql password `<pass>`for login.
 
-**dbname=<database>**
+**dbname=**`<database>`
 	Specify default MySQL database `<database>` for the connection. Note that MySQL does allow referencing tables belonging to different databases by qualifying table names with database names in SQL queries.
 
-**protocol=<protocol>**
+**protocol=**`<protocol>`
 	Specify which wire protocol to use, `drizzle` or `mysql`. Default to `drizzle`.
 
-**charset=<charset>**
+**charset=**`<charset>`
 	Explicitly specify the character set for the MySQL connections. Setting this option to a non-empty value will make this module send out a `set names '<charset>'` query right after the mysql connection is established.
 	If the default character encoding of the MySQL connection is already what you want, you needn't set this option because it has extra runtime cost.
 	Here is a small example:
@@ -156,7 +156,7 @@ The following options are supported:
                                     dbname=test protocol=mysql
                                     charset=utf8;
 
-Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
+	Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
 drizzle_keepalive
 -----------------
@@ -171,15 +171,12 @@ Configures the keep-alive connection pool for MySQL/Drizzle connections.
 The following options are supported:
 
 **max=**`<num>`
-
 	Specify the capacity of the connection pool for the current upstream block. The <num> value *must* be non-zero. If set to `0`, it effectively disables the connection pool. This option is default to `0`.
 
 **mode=**`<mode>`
-
 	This supports two values, `single` and `multi`. The `single` mode means the pool does not distinguish various drizzle servers in the current upstream block while `multi` means the pool will merely reuse connections which have identical server host names and ports. Note that even under `multi`, differences between `dbname` or `user` parameters will be silently ignored. Default to `single`.
 
 **overflow=**`<action>`
-
 	This option specifies what to do when the connection pool is already full while new database connection is required. Either `reject` or `ignore` can be specified. In case of `reject`, it will reject the current request, and returns the `503 Service Unavailable` error page. For `ignore`, this module will go on creating a new database connection.
 
 drizzle_query
