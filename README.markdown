@@ -510,16 +510,16 @@ Alternatively, you can compile this module with nginx core's source by hand:
     wget 'http://sysoev.ru/nginx/nginx-1.0.5.tar.gz'
     tar -xzvf nginx-1.0.5.tar.gz
     cd nginx-1.0.4/
-
+  
     # if you have installed libdrizzle to the prefix /opt/drizzle, then
     # specify the following environments:
     # export LIBDRIZZLE_INC=/opt/drizzle/include/libdrizzle-1.0
     # export LIBDRIZZLE_LIB=/opt/drizzle/lib
-
+  
     # Here we assume you would install you nginx under /opt/nginx/.
     ./configure --prefix=/opt/nginx \
                 --add-module=/path/to/drizzle-nginx-module
-
+  
     make -j2
     make install
 
