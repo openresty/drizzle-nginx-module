@@ -358,6 +358,7 @@ ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         methods = 0xFFFF;
         query = dlcf->default_query;
+
     } else {
         /* method-specific query */
         dd("method-specific query");

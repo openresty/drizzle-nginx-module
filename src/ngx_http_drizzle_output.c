@@ -1,6 +1,8 @@
 /* Copyright (C) agentzh */
 
+#ifndef DDEBUG
 #define DDEBUG 0
+#endif
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
@@ -57,8 +59,6 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
 
-    dd("enter output header XXX");
-
     errcode = drizzle_result_error_code(res);
 
     if (dp->enable_charset && ! dp->has_set_names) {
@@ -87,7 +87,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     errstr = drizzle_result_error(res);
 
-    errstr_len = (uint16_t) strlen(errstr);
+    errstr_len = (uint16_t) ngx_strlen(errstr);
 
     col_count = drizzle_result_column_count(res);
 
@@ -178,6 +178,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
         dd("about to be done...");
         ngx_http_upstream_drizzle_done(r, u, dp, NGX_DONE);
         dd("i am returning DONE");
+
         return NGX_DONE;
     }
 
