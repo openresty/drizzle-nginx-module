@@ -6,7 +6,7 @@ drizzle-nginx-module - Upstream module for talking to MySQL and Drizzle directly
 
 = Status =
 
-This module is already production ready.
+This module is already production ready and is powering [http://lz.taobao.com the Taobao LineZing site].
 
 = Version =
 
@@ -160,13 +160,16 @@ Configures the keep-alive connection pool for MySQL/Drizzle connections.
 
 The following options are supported:
 
-'''max=<num>'''
+'''max='''<code><num></code>
+
 : Specify the capacity of the connection pool for the current upstream block. The <num> value ''must'' be non-zero. If set to <code>0</code>, it effectively disables the connection pool. This option is default to <code>0</code>.
 
-'''mode=<mode>'''
+'''mode='''<code><mode></code>
+
 : This supports two values, <code>single</code> and <code>multi</code>. The <code>single</code> mode means the pool does not distinguish various drizzle servers in the current upstream block while <code>multi</code> means the pool will merely reuse connections which have identical server host names and ports. Note that even under <code>multi</code>, differences between <code>dbname</code> or <code>user</code> parameters will be silently ignored. Default to <code>single</code>.
 
-'''overflow=<action>'''
+'''overflow='''<code><action></code>
+
 : This option specifies what to do when the connection pool is already full while new database connection is required. Either <code>reject</code> or <code>ignore</code> can be specified. In case of <code>reject</code>, it will reject the current request, and returns the <code>503 Service Unavailable</code> error page. For <code>ignore</code>, this module will go on creating a new database connection.
 
 == drizzle_query ==
