@@ -401,6 +401,7 @@ Each row data consists of a [[#Row Flag|Row Flag]] and an optional [[#Fields Dat
 : valid row (1 means valid, and 0 means the row list terminator)
 
 ==== Fields Data ====
+
 The Fields Data consists zero or more fields of data. The field count is predetermined by the <code>column number</code) specified in [[#RDS Header Part|RDS Header Part]].
 
 '''uint32_t'''
