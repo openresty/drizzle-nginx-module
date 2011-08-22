@@ -336,6 +336,59 @@ The output looks like this:
 
 Note that, this is *not* the global statistics if you do have multiple Nginx worker processes configured in your `nginx.conf`.
 
+Variables
+=========
+
+This module creates the following Nginx variables:
+
+$drizzle_thread_id
+------------------
+
+This variable will be assigned a textual number of the underlying MySQL or Drizzle query thread ID when the current SQL query times out. This thread ID can be further used in a SQL kill command to cancel the timed-out query.
+
+Here's an example:
+
+    drizzle_connect_timeout 1s;
+    drizzle_send_query_timeout 2s;
+    drizzle_recv_cols_timeout 1s;
+    drizzle_recv_rowss_timeout 1s;
+
+    location /query {
+        drizzle_query 'select sleep(10)';
+        drizzle_pass my_backend;
+        rds_json on;
+
+        more_set_headers -s 504 'X-Mysql-Tid: $drizzle_thread_id';                                   
+    }
+
+    location /kill {
+        drizzle_query "kill query $arg_tid";
+        drizzle_pass my_backend;
+        rds_json on;
+    }
+
+    location /main {
+        content_by_lua '
+            local res = ngx.location.catpure("/query")
+            if res.status ~= ngx.HTTP_OK then
+                local tid = res.header["X-Mysql-Tid"]
+                if tid and tid ~= "" then
+                    ngx.location.capture("/kill", { args = {tid = tid} })
+                end
+                return ngx.HTTP_INTERNAL_SERVER_ERROR;
+            end
+            ngx.print(res.body)
+        '
+    }
+
+where we make use of [NginxHttpHeadersMoreModule](http://wiki.nginx.org/NginxHttpHeadersMoreModule), [NginxHttpLuaModule](http://wiki.nginx.org/NginxHttpLuaModule), and [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
+
+* [NginxHttpLuaModule](http://wiki.nginx.org/NginxHttpLuaModule)
+* [NginxHttpHeadersMoreModule](http://wiki.nginx.org/NginxHttpHeadersMoreModule)
+* [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule)
+
+Such that, their output filters will work in the *reversed* order, i.e., first convert RDS to JSON, and then add our `X-Mysql-Tid` custom header, and finally capture the whole (subrequest) response with the Lua module. You're recommended to use the [OpenResty bundle](http://openresty.org/) though, it ensures the module building order automatically for you.
+
 Output Format
 =============
 
