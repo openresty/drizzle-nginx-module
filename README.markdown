@@ -393,7 +393,8 @@ When the `column count` field in the [RDS Header Part](http://wiki.nginx.org/Ngi
 
 The RDS Body Part consists of two sections, [Columns](http://wiki.nginx.org/NginxHttpDrizzleModule#Columns) and [Rows](http://wiki.nginx.org/NginxHttpDrizzleModule#Rows).
 
-=== Columns ===
+### Columns
+
 
 The columns part consists of zero or more column data. The number of columns is determined by `column count` field in [RDS Header Part](http://wiki.nginx.org/NginxHttpDrizzleModule#RDS_Header_Part).
 
@@ -411,7 +412,8 @@ Each column consists of the following fields
 **u_char ***
 	column name data
 
-=== Rows ===
+### Rows
+
 
 The rows part consists of zero or more row data, terminated by a 8-bit zero.
 
