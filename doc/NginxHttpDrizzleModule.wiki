@@ -147,7 +147,7 @@ The following options are supported:
                                     dbname=test protocol=mysql
                                     charset=utf8;
 </geshi>
-: Please note that for the mysql server, "utf-8" is not a valid encoding name while <code>utf8</code> is.
+Please note that for the mysql server, "utf-8" is not a valid encoding name while <code>utf8</code> is.
 
 == drizzle_keepalive ==
 '''syntax:''' ''drizzle_keepalive max=<size> mode=<mode>''

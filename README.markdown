@@ -156,7 +156,7 @@ The following options are supported:
                                     dbname=test protocol=mysql
                                     charset=utf8;
 
-	Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
+Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
 drizzle_keepalive
 -----------------
