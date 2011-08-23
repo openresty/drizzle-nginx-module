@@ -52,8 +52,8 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
           --add-module=$root/../headers-more-nginx-module \
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
-          --add-module=$root/../set-misc-nginx-module #\
-          #--with-debug
+          --add-module=$root/../set-misc-nginx-module \
+          --with-debug
           #--with-cc-opt="-g3 -O0"
           #--add-module=$home/work/nginx_eval_module-1.0.1 \
           #--add-module=$root/../echo-nginx-module \
