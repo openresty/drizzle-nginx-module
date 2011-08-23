@@ -13,7 +13,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes drizzle-nginx-module [v0.1.1rc3](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 4 August 2011.
+This document describes drizzle-nginx-module [v0.1.1rc4](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 23 August 2011.
 
 Synopsis
 ========
@@ -42,10 +42,10 @@ Synopsis
 
                 drizzle_pass backend;
 
-                drizzle_connect_timeout 500 ms; # default 60 s
-                drizzle_send_query_timeout 2 s; # default 60 s
-                drizzle_recv_cols 1 s; # default 60 s
-                drizzle_recv_rows 1 s; # default 60 s
+                drizzle_connect_timeout    500ms; # default 60s
+                drizzle_send_query_timeout 2s;    # default 60s
+                drizzle_recv_cols_timeout  1s;    # default 60s
+                drizzle_recv_rows_timeout  1s;    # default 60s
             }
 
             ...
@@ -237,7 +237,7 @@ drizzle_connect_timeout
 
 Specify the (total) timeout for connecting to a remote Drizzle or MySQL server.
 
-The `<time>` can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
 drizzle_send_query_timeout
 --------------------------
@@ -249,7 +249,7 @@ drizzle_send_query_timeout
 
 Specify the (total) timeout for sending a SQL query to a remote Drizzle or MySQL server.
 
-The `<time>` can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
 drizzle_recv_cols_timeout
 -------------------------
@@ -261,7 +261,7 @@ drizzle_recv_cols_timeout
 
 Specify the (total) timeout for receiving the columns metadata of the result-set to a remote Drizzle or MySQL server.
 
-The `<time>` can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
 drizzle_recv_rows_timeout
 -------------------------
@@ -273,7 +273,7 @@ drizzle_recv_rows_timeout
 
 Specify the (total) timeout for receiving the rows data of the result-set (if any) to a remote Drizzle or MySQL server.
 
-The `<time>` can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
 drizzle_buffer_size
 -------------------

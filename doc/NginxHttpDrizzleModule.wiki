@@ -10,7 +10,7 @@ This module is already production ready and is powering [http://lz.taobao.com th
 
 = Version =
 
-This document describes drizzle-nginx-module [https://github.com/chaoslawful/drizzle-nginx-module/downloads v0.1.1rc3] released on 4 August 2011.
+This document describes drizzle-nginx-module [https://github.com/chaoslawful/drizzle-nginx-module/downloads v0.1.1rc4] released on 23 August 2011.
 
 = Synopsis =
 
@@ -38,10 +38,10 @@ This document describes drizzle-nginx-module [https://github.com/chaoslawful/dri
 
                 drizzle_pass backend;
 
-                drizzle_connect_timeout 500 ms; # default 60 s
-                drizzle_send_query_timeout 2 s; # default 60 s
-                drizzle_recv_cols 1 s; # default 60 s
-                drizzle_recv_rows 1 s; # default 60 s
+                drizzle_connect_timeout    500ms; # default 60s
+                drizzle_send_query_timeout 2s;    # default 60s
+                drizzle_recv_cols_timeout  1s;    # default 60s
+                drizzle_recv_rows_timeout  1s;    # default 60s
             }
 
             ...
@@ -224,7 +224,7 @@ Nginx variables can also be interpolated into the <code><remote></code> argument
 
 Specify the (total) timeout for connecting to a remote Drizzle or MySQL server.
 
-The <code><time></code> can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, ie, "second". The default setting is <code>60s</code>.
 
 == drizzle_send_query_timeout ==
 '''syntax:''' ''drizzle_send_query_timeout <time>''
@@ -235,7 +235,7 @@ The <code><time></code> can be an integer, with an optional time unit, like "s",
 
 Specify the (total) timeout for sending a SQL query to a remote Drizzle or MySQL server.
 
-The <code><time></code> can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, ie, "second". The default setting is <code>60s</code>.
 
 == drizzle_recv_cols_timeout ==
 '''syntax:''' ''drizzle_recv_cols_timeout <time>''
@@ -246,7 +246,7 @@ The <code><time></code> can be an integer, with an optional time unit, like "s",
 
 Specify the (total) timeout for receiving the columns metadata of the result-set to a remote Drizzle or MySQL server.
 
-The <code><time></code> can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, ie, "second". The default setting is <code>60s</code>.
 
 == drizzle_recv_rows_timeout ==
 '''syntax:''' ''drizzle_recv_rows_timeout <time>''
@@ -257,7 +257,7 @@ The <code><time></code> can be an integer, with an optional time unit, like "s",
 
 Specify the (total) timeout for receiving the rows data of the result-set (if any) to a remote Drizzle or MySQL server.
 
-The <code><time></code> can be an integer, with an optional time unit, like "s", "ms", "m". The default time unit is "s", ie, "second". The default setting is "60 s".
+The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, ie, "second". The default setting is <code>60s</code>.
 
 == drizzle_buffer_size ==
 '''syntax:''' ''drizzle_buffer_size <size>''
