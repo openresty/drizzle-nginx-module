@@ -330,7 +330,7 @@ Here's an example:
     drizzle_connect_timeout 1s;
     drizzle_send_query_timeout 2s;
     drizzle_recv_cols_timeout 1s;
-    drizzle_recv_rowss_timeout 1s;
+    drizzle_recv_rows_timeout 1s;
 
     location /query {
         drizzle_query 'select sleep(10)';
