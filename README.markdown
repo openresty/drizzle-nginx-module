@@ -123,9 +123,9 @@ Directives
 
 drizzle_server
 --------------
-**syntax:** *drizzle_server <host> user=<user> password=<pass> dbname=<database>*
+**syntax:** *drizzle_server &lt;host&gt; user=&lt;user&gt; password=&lt;pass&gt; dbname=&lt;database&gt;*
 
-**syntax:** *drizzle_server <host>:<port> user=<user> password=<pass> dbname=<database> protocol=<protocol> charset=<charset>*
+**syntax:** *drizzle_server &lt;host&gt;:&lt;port&gt; user=&lt;user&gt; password=&lt;pass&gt; dbname=&lt;database&gt; protocol=&lt;protocol&gt; charset=&lt;charset&gt;*
 
 **default:** *no*
 
@@ -160,7 +160,7 @@ Please note that for the mysql server, "utf-8" is not a valid encoding name whil
 
 drizzle_keepalive
 -----------------
-**syntax:** *drizzle_keepalive max=<size> mode=<mode>*
+**syntax:** *drizzle_keepalive max=&lt;size&gt; mode=&lt;mode&gt;*
 
 **default:** *drizzle_keepalive max=0 mode=single*
 
@@ -181,7 +181,7 @@ The following options are supported:
 
 drizzle_query
 -------------
-**syntax:** *drizzle_query <sql>*
+**syntax:** *drizzle_query &lt;sql&gt;*
 
 **default:** *no*
 
@@ -203,7 +203,7 @@ Nginx variable interpolation is supported, but you must be careful with SQL inje
 
 drizzle_pass
 ------------
-**syntax:** *drizzle_pass <remote>*
+**syntax:** *drizzle_pass &lt;remote&gt;*
 
 **default:** *no*
 
@@ -229,7 +229,7 @@ Nginx variables can also be interpolated into the `<remote>` argument, so as to 
 
 drizzle_connect_timeout
 -----------------------
-**syntax:** *drizzle_connect_time <time>*
+**syntax:** *drizzle_connect_time &lt;time&gt;*
 
 **default:** *drizzle_connect_time 60s*
 
@@ -241,7 +241,7 @@ The `<time>` argument can be an integer, with an optional time unit, like `s` (s
 
 drizzle_send_query_timeout
 --------------------------
-**syntax:** *drizzle_send_query_timeout <time>*
+**syntax:** *drizzle_send_query_timeout &lt;time&gt;*
 
 **default:** *drizzle_send_query_timeout 60s*
 
@@ -253,7 +253,7 @@ The `<time>` argument can be an integer, with an optional time unit, like `s` (s
 
 drizzle_recv_cols_timeout
 -------------------------
-**syntax:** *drizzle_recv_cols_timeout <time>*
+**syntax:** *drizzle_recv_cols_timeout &lt;time&gt;*
 
 **default:** *drizzle_recv_cols_timeout 60s*
 
@@ -265,7 +265,7 @@ The `<time>` argument can be an integer, with an optional time unit, like `s` (s
 
 drizzle_recv_rows_timeout
 -------------------------
-**syntax:** *drizzle_recv_rows_timeout <time>*
+**syntax:** *drizzle_recv_rows_timeout &lt;time&gt;*
 
 **default:** *drizzle_recv_rows_timeout 60s*
 
@@ -277,7 +277,7 @@ The `<time>` argument can be an integer, with an optional time unit, like `s` (s
 
 drizzle_buffer_size
 -------------------
-**syntax:** *drizzle_buffer_size <size>*
+**syntax:** *drizzle_buffer_size &lt;size&gt;*
 
 **default:** *drizzle_buffer_size 4k/8k*
 
