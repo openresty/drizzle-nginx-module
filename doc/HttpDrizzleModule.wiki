@@ -482,16 +482,18 @@ On the nginx output chain link level, the following components should be put int
 = Trouble Shooting =
 * When you see the following error message in <code>error.log</code>:
 <geshi lang="text">
-    failed to connect: 15: drizzle_state_handshake_result_read: old insecure authentication mechanism not supported in upstream, ...
+     failed to connect: 15: drizzle_state_handshake_result_read:
+          old insecure authentication mechanism not supported in upstream, ...
 </geshi>
 : then you may checkout if your MySQL is too old (at least 5.x is required) or your mysql config file explicitly forces the use of old authentication method (you should remove the <code>old-passwords</code> line from your <code>my.cnf</code> and add the line <code>secure_auth 1</code>).
 * When you see the following error message in <code>error.log</code>:
 <geshi lang="text">
-    failed to connect: 23: Access denied for user 'root'@'ubuntu' (using password: YES) while connecting to drizzle upstream, ...
+     failed to connect: 23: Access denied for user 'root'@'ubuntu'
+         (using password: YES) while connecting to drizzle upstream, ...
 </geshi>
 : You should check if your MySQL account does have got TCP login access on your MySQL server side. A quick check is to use MySQL's official client to connect to your server:
 <geshi lang="bash">
-    mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
+     mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
 </geshi>
 : Note that the <code>--protocol=tcp</code> option is required here, or your MySQL client may use Unix Domain Socket to connect to your MySQL server.
 
