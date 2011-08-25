@@ -477,15 +477,15 @@ Caveats
 Trouble Shooting
     *   When you see the following error message in "error.log":
 
-         failed to connect: 15: drizzle_state_handshake_result_read:
+            failed to connect: 15: drizzle_state_handshake_result_read:
               old insecure authentication mechanism not supported in upstream, ...
     then you may checkout if your MySQL is too old (at least 5.x is required) or your mysql config file explicitly forces the use of old authentication method (you should remove the C<old-passwords> line from your C<my.cnf> and add the line C<secure_auth 1>).
 
     *   When you see the following error message in "error.log":
 
-         failed to connect: 23: Access denied for user 'root'@'ubuntu'
-             (using password: YES) while connecting to drizzle upstream, ...
-    You should check if your MySQL account does have got TCP login access on your MySQL server side. A quick check is to use MySQL's official client to connect to your server:     mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
+            failed to connect: 23: Access denied for user 'root'@'ubuntu'
+              (using password: YES) while connecting to drizzle upstream, ...
+    You should check if your MySQL account does have got TCP login access on your MySQL server side. A quick check is to use MySQL's official client to connect to your server:        mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
     Note that the C<--protocol=tcp> option is required here, or your MySQL client may use Unix Domain Socket to connect to your MySQL server.
 
 Known Issues
