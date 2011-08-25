@@ -3,7 +3,7 @@ Name
 
 drizzle-nginx-module - Upstream module for talking to MySQL and Drizzle directly
 
-*This module is not distributed with the Nginx source.* See [the installation instructions](http://wiki.nginx.org/NginxHttpDrizzleModule#Installation).
+*This module is not distributed with the Nginx source.* See [the installation instructions](http://wiki.nginx.org/HttpDrizzleModule#Installation).
 
 Status
 ======
@@ -85,7 +85,7 @@ Here's a sample configuration:
 
 For now, the connection pool uses a simple LIFO algorithm to assign idle connections in the pool. That is, most recently (successfully) used connections will be reused first the next time. And new idle connections will always replace the oldest idle connections in the pool even if the pool is already full.
 
-See the [drizzle_keepalive](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_keepalive) directive for more details.
+See the [drizzle_keepalive](http://wiki.nginx.org/HttpDrizzleModule#drizzle_keepalive) directive for more details.
 
 Last Insert ID
 --------------
@@ -189,7 +189,7 @@ drizzle_query
 
 Specify the SQL queries sent to the Drizzle/MySQL backend.
 
-Nginx variable interpolation is supported, but you must be careful with SQL injection attacks. You can use the [set_quote_sql_str](http://wiki.nginx.org/NginxHttpSetMiscModule#set_quote_sql_str) directive, for example, to quote values for SQL interpolation:
+Nginx variable interpolation is supported, but you must be careful with SQL injection attacks. You can use the [set_quote_sql_str](http://wiki.nginx.org/HttpSetMiscModule#set_quote_sql_str) directive, for example, to quote values for SQL interpolation:
 
 
     location /cat {
@@ -211,7 +211,7 @@ drizzle_pass
 
 **phase:** *content*
 
-This directive specifies the Drizzle or MySQL upstream name to be queried in the current location. The `<remote>` argument can be any upstream name defined with the [drizzle_server](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_server) directive.
+This directive specifies the Drizzle or MySQL upstream name to be queried in the current location. The `<remote>` argument can be any upstream name defined with the [drizzle_server](http://wiki.nginx.org/HttpDrizzleModule#drizzle_server) directive.
 
 Nginx variables can also be interpolated into the `<remote>` argument, so as to do dynamic backend routing, for example:
 
@@ -381,11 +381,11 @@ Here's an example:
         '
     }
 
-where we make use of [NginxHttpHeadersMoreModule](http://wiki.nginx.org/NginxHttpHeadersMoreModule), [NginxHttpLuaModule](http://wiki.nginx.org/NginxHttpLuaModule), and [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
+where we make use of [HttpHeadersMoreModule](http://wiki.nginx.org/HttpHeadersMoreModule), [HttpLuaModule](http://wiki.nginx.org/HttpLuaModule), and [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
 
-* [NginxHttpLuaModule](http://wiki.nginx.org/NginxHttpLuaModule)
-* [NginxHttpHeadersMoreModule](http://wiki.nginx.org/NginxHttpHeadersMoreModule)
-* [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule)
+* [HttpLuaModule](http://wiki.nginx.org/HttpLuaModule)
+* [HttpHeadersMoreModule](http://wiki.nginx.org/HttpHeadersMoreModule)
+* [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule)
 
 Such that, their output filters will work in the *reversed* order, i.e., first convert RDS to JSON, and then add our `X-Mysql-Tid` custom header, and finally capture the whole (subrequest) response with the Lua module. You're recommended to use the [OpenResty bundle](http://openresty.org/) though, it ensures the module building order automatically for you.
 
@@ -394,7 +394,7 @@ Output Format
 
 This module generates binary query results in a format that is shared among the various Nginx database driver modules like [ngx_postgres](http://github.com/FRiCKLE/ngx_postgres/). This data format is named `Resty DBD Stream` (RDS).
 
-If you're a web app developer, you may be more interested in using a source filter module like [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule) to obtain JSON output.
+If you're a web app developer, you may be more interested in using a source filter module like [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) to obtain JSON output.
 
 For the HTTP response header part, the `200 OK` status code should always be returned. The `Content-Type` header *must* be set to `application/x-resty-dbd-stream`. And the driver generating this response also sets a `X-Resty-DBD` header. For instance, this module adds the following output header:
 
@@ -442,14 +442,14 @@ The RDS Header Part consists of the following fields:
 RDS Body Part
 -------------
 
-When the `column count` field in the [RDS Header Part](http://wiki.nginx.org/NginxHttpDrizzleModule#RDS_Header_Part) is zero, then the whole RDS Body Part is omitted.
+When the `column count` field in the [RDS Header Part](http://wiki.nginx.org/HttpDrizzleModule#RDS_Header_Part) is zero, then the whole RDS Body Part is omitted.
 
-The RDS Body Part consists of two sections, [Columns](http://wiki.nginx.org/NginxHttpDrizzleModule#Columns) and [Rows](http://wiki.nginx.org/NginxHttpDrizzleModule#Rows).
+The RDS Body Part consists of two sections, [Columns](http://wiki.nginx.org/HttpDrizzleModule#Columns) and [Rows](http://wiki.nginx.org/HttpDrizzleModule#Rows).
 
 ### Columns
 
 
-The columns part consists of zero or more column data. The number of columns is determined by `column count` field in [RDS Header Part](http://wiki.nginx.org/NginxHttpDrizzleModule#RDS_Header_Part).
+The columns part consists of zero or more column data. The number of columns is determined by `column count` field in [RDS Header Part](http://wiki.nginx.org/HttpDrizzleModule#RDS_Header_Part).
 
 Each column consists of the following fields
 
@@ -470,7 +470,7 @@ Each column consists of the following fields
 
 The rows part consists of zero or more row data, terminated by a 8-bit zero.
 
-Each row data consists of a [Row Flag](http://wiki.nginx.org/NginxHttpDrizzleModule#Row_Flag) and an optional [Fields Data](http://wiki.nginx.org/NginxHttpDrizzleModule#Fields_Data) part.
+Each row data consists of a [Row Flag](http://wiki.nginx.org/HttpDrizzleModule#Row_Flag) and an optional [Fields Data](http://wiki.nginx.org/HttpDrizzleModule#Fields_Data) part.
 
 #### Row Flag
 
@@ -481,7 +481,7 @@ Each row data consists of a [Row Flag](http://wiki.nginx.org/NginxHttpDrizzleMod
 #### Fields Data
 
 
-The Fields Data consists zero or more fields of data. The field count is predetermined by the <code>column number</code) specified in [RDS Header Part](http://wiki.nginx.org/NginxHttpDrizzleModule#RDS_Header_Part).
+The Fields Data consists zero or more fields of data. The field count is predetermined by the <code>column number</code) specified in [RDS Header Part](http://wiki.nginx.org/HttpDrizzleModule#RDS_Header_Part).
 
 **uint32_t**
 	field length ((uint32_t) -1 represents NULL)
@@ -506,8 +506,8 @@ Caveats
 =======
 
 * Other usptream modules like `upstream_hash` and [HttpUpstreamKeepaliveModule](http://wiki.nginx.org/HttpUpstreamKeepaliveModule) *must not* be used with this module in a single upstream block.
-* Directives like [server](http://wiki.nginx.org/NginxHttpUpstreamModule#server) *must not* be mixed with [drizzle_server](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_server) either.
-* Upstream backends that don't use [drizzle_server](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_server) to define server entries *must not* be used in the [drizzle_pass](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_pass) directive.
+* Directives like [server](http://wiki.nginx.org/HttpUpstreamModule#server) *must not* be mixed with [drizzle_server](http://wiki.nginx.org/HttpDrizzleModule#drizzle_server) either.
+* Upstream backends that don't use [drizzle_server](http://wiki.nginx.org/HttpDrizzleModule#drizzle_server) to define server entries *must not* be used in the [drizzle_pass](http://wiki.nginx.org/HttpDrizzleModule#drizzle_pass) directive.
 
 Trouble Shooting
 ================
@@ -535,7 +535,7 @@ Known Issues
 
 Installation
 ============
-You're recommended to install this module as well as [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule) via the ngx_openresty bundle:
+You're recommended to install this module as well as [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) via the ngx_openresty bundle:
 
 <http://openresty.org> 
 
@@ -582,7 +582,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
         make install
 
 
-You usually also need [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule) to obtain JSON output from the binary RDS output generated by this upstream module.
+You usually also need [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) to obtain JSON output from the binary RDS output generated by this upstream module.
 
 Compatibility
 =============
@@ -636,10 +636,10 @@ TODO
 * implement the `drizzle_upstream_next` mechanism for failover support.
 * add support for multiple "drizzle_query" directives in a single location.
 * implement *weighted* round-robin algorithm for the upstream server clusters.
-* add the `max_idle_time` option to the [drizzle_server](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_server) directive, so that the connection pool will automatically release idle connections for the timeout you specify.
+* add the `max_idle_time` option to the [drizzle_server](http://wiki.nginx.org/HttpDrizzleModule#drizzle_server) directive, so that the connection pool will automatically release idle connections for the timeout you specify.
 * add the `min` option to the "drizzle_server" directive so that the connection pool will automatically create that number of connections and put them into the pool.
 * add Unix domain socket support in the `drizzle_server` directive.
-* make the [drizzle_query](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_query) directive reject variables that have not been processed by a [drizzle_process](http://wiki.nginx.org/NginxHttpDrizzleModule#drizzle_process) directive. This will pretect us from SQL injections. There will also be an option ("strict=no") to disable such checks.
+* make the [drizzle_query](http://wiki.nginx.org/HttpDrizzleModule#drizzle_query) directive reject variables that have not been processed by a [drizzle_process](http://wiki.nginx.org/HttpDrizzleModule#drizzle_process) directive. This will pretect us from SQL injections. There will also be an option ("strict=no") to disable such checks.
 
 Authors
 =======
@@ -674,9 +674,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 See Also
 ========
 
-* [NginxHttpRdsJsonModule](http://wiki.nginx.org/NginxHttpRdsJsonModule)
+* [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule)
 * [The ngx_openresty bundle](http://openresty.org)
 * [DrizzleNginxModule bundled by ngx_openresty](http://openresty.org/#DrizzleNginxModule)
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
-* [NginxHttpLuaModule](http://wiki.nginx.org/NginxHttpLuaModule)
+* [HttpLuaModule](http://wiki.nginx.org/HttpLuaModule)
 
