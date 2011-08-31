@@ -68,6 +68,8 @@ This is an nginx upstream module integrating [libdrizzle](https://launchpad.net/
 
 Essentially it provides a very efficient and flexible way for nginx internals to access MySQL, Drizzle, as well as other RDBMS's that support the Drizzle or MySQL wired protocol. Also it can serve as a direct REST interface to those RDBMS backends.
 
+This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components to work with this module. See [Output Format](http://wiki.nginx.org/HttpDrizzleModule#Output_Format) for details.
+
 Keepalive connection pool
 -------------------------
 
@@ -394,7 +396,11 @@ Output Format
 
 This module generates binary query results in a format that is shared among the various Nginx database driver modules like [ngx_postgres](http://github.com/FRiCKLE/ngx_postgres/). This data format is named `Resty DBD Stream` (RDS).
 
-If you're a web app developer, you may be more interested in using a source filter module like [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) to obtain JSON output.
+If you're a web app developer, you may be more interested in
+
+* using [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) to obtain JSON output,
+* using [HttpRdsCsvModule](http://wiki.nginx.org/HttpRdsCsvModule) to obain Comma-Separated-Value (CSV) output,
+* or using [LuaRdsParser](http://wiki.nginx.org/LuaRdsParser) to parse the RDS data into Lua data structures.
 
 For the HTTP response header part, the `200 OK` status code should always be returned. The `Content-Type` header *must* be set to `application/x-resty-dbd-stream`. And the driver generating this response also sets a `X-Resty-DBD` header. For instance, this module adds the following output header:
 
@@ -567,7 +573,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/downloads).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.0.5 (see nginx compatibility), and then build the source with this module:
 
-        wget 'http://sysoev.ru/nginx/nginx-1.0.5.tar.gz'
+        wget 'http://nginx.org/download/nginx-1.0.5.tar.gz'
         tar -xzvf nginx-1.0.5.tar.gz
         cd nginx-1.0.4/
       
@@ -677,6 +683,8 @@ See Also
 ========
 
 * [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule)
+* [HttpRdsCsvModule](http://wiki.nginx.org/HttpRdsCsvModule)
+* [LuaRdsParser](http://wiki.nginx.org/LuaRdsParser)
 * [The ngx_openresty bundle](http://openresty.org)
 * [DrizzleNginxModule bundled by ngx_openresty](http://openresty.org/#DrizzleNginxModule)
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
