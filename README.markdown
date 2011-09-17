@@ -13,7 +13,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes drizzle-nginx-module [v0.1.1rc4](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 23 August 2011.
+This document describes ngx_drizzle [v0.1.1](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 17 September 2011.
 
 Synopsis
 ========
@@ -648,6 +648,18 @@ TODO
 * add the `min` option to the "drizzle_server" directive so that the connection pool will automatically create that number of connections and put them into the pool.
 * add Unix domain socket support in the `drizzle_server` directive.
 * make the [drizzle_query](http://wiki.nginx.org/HttpDrizzleModule#drizzle_query) directive reject variables that have not been processed by a [drizzle_process](http://wiki.nginx.org/HttpDrizzleModule#drizzle_process) directive. This will pretect us from SQL injections. There will also be an option ("strict=no") to disable such checks.
+
+Changes
+=======
+
+v0.1.1
+------
+* fixed segmentation faults on 32-bit systems. thanks @魏世江 and @stefanli for reporting this issue.
+* documented the [$drizzle_thread_id](http://wiki.nginx.org/HttpDrizzleModule#.24drizzle_thread_id) variable.
+* added lots of debug outputs (enabled by the `--with-debug` option while building Nginx or OpenResty), inspired by github issue #10.
+* fixed issues regarding defining global variables in C header files: we should have defined `rds_rough_col_type_t` as a type rather than a global variable. thanks @姜大炮.
+* documented the python -> python3 pitfall while building libdrizzle 1.0 on at least ArchLinux.
+* fixed the automatic libdrizzle searching algorithm in the config file: now we should look under `libdrizzle-1.0/` instead. thanks 支家乐 (Calio) for reporting this issue.
 
 Authors
 =======
