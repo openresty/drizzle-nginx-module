@@ -922,6 +922,7 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
     }
 
     if (c) {
+        /* dd("c pool: %p", c->pool); */
         rev = c->read;
         wev = c->write;
 

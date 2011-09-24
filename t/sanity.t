@@ -18,6 +18,8 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
+#master_on();
+#log_level('warn');
 
 no_diff();
 

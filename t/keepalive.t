@@ -18,9 +18,12 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
-run_tests();
+#master_on();
+#log_level('warn');
 
 no_diff();
+
+run_tests();
 
 __DATA__
 
@@ -414,6 +417,4 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
-
-
 

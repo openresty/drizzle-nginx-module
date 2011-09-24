@@ -1,6 +1,8 @@
 /* Copyright (C) Igor Sysoev */
 
+#ifndef DDEBUG
 #define DDEBUG 0
+#endif
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_module.h"
@@ -128,7 +130,8 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
         dd("after free peer");
     }
 
-    dd("about to free peer 2");
+    dd("about to free peer 2, c: %p, r pool: %p", u->peer.connection, r->pool);
+
     if (u->peer.connection) {
 
 #if 0 /* libdrizzle doesn't support SSL, was: (NGX_HTTP_SSL) */
@@ -150,8 +153,10 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
 #endif
 
         ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                       "close http upstream connection: %d",
+                       "drizzle close http upstream connection: %d",
                        u->peer.connection->fd);
+
+        dd("r pool: %p, c pool: %p", r->pool, u->peer.connection->pool);
 
         ngx_close_connection(u->peer.connection);
     }
@@ -296,6 +301,8 @@ ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
             (void) ngx_ssl_shutdown(u->peer.connection);
         }
 #endif
+
+        dd("r pool: %p, c pool: %p", r->pool, u->peer.connection->pool);
 
         ngx_close_connection(u->peer.connection);
     }
