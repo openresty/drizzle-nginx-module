@@ -10,6 +10,7 @@
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
 #include "resty_dbd_stream.h"
+#include <nginx.h>
 
 
 #define ngx_http_drizzle_module_header_key "X-Resty-DBD-Module"
@@ -286,8 +287,13 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
             return rc;
         }
 
+#if defined(nginx_version) && nginx_version >= 1001004
+        ngx_chain_update_chains(r->pool, &u->free_bufs, &u->busy_bufs, &u->out_bufs,
+                u->output.tag);
+#else
         ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs,
                 u->output.tag);
+#endif
 
         dp->last_out = &u->out_bufs;
     }
