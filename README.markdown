@@ -13,7 +13,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.1](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 17 September 2011.
+This document describes ngx_drizzle [v0.1.2rc1](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 8 October 2011.
 
 Synopsis
 ========
@@ -68,7 +68,7 @@ This is an nginx upstream module integrating [libdrizzle](https://launchpad.net/
 
 Essentially it provides a very efficient and flexible way for nginx internals to access MySQL, Drizzle, as well as other RDBMS's that support the Drizzle or MySQL wired protocol. Also it can serve as a direct REST interface to those RDBMS backends.
 
-This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components to work with this module. See [Output Format](http://wiki.nginx.org/HttpDrizzleModule#Output_Format) for details.
+This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components, like [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule), [HttpRdsCsvModule](http://wiki.nginx.org/HttpRdsCsvModule), or [LuaRdsParser](http://wiki.nginx.org/LuaRdsParser), to work with this module. See [Output Format](http://wiki.nginx.org/HttpDrizzleModule#Output_Format) for details.
 
 Keepalive connection pool
 -------------------------
@@ -571,11 +571,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/downloads).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.0.5 (see nginx compatibility), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.0.8 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
-        wget 'http://nginx.org/download/nginx-1.0.5.tar.gz'
-        tar -xzvf nginx-1.0.5.tar.gz
-        cd nginx-1.0.4/
+        wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
+        tar -xzvf nginx-1.0.8.tar.gz
+        cd nginx-1.0.8/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
@@ -601,7 +601,8 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.0.x (last tested: 1.0.5)
+* 1.1.x (last tested: 1.1.5)
+* 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
 * 0.7.x >= 0.7.44 (last tested version is 0.7.67)
 

@@ -10,9 +10,9 @@ Status
     LineZing site (<http://lz.taobao.com>).
 
 Version
-    This document describes ngx_drizzle v0.1.1
+    This document describes ngx_drizzle v0.1.2rc1
     (<https://github.com/chaoslawful/drizzle-nginx-module/downloads>)
-    released on 17 September 2011.
+    released on 8 October 2011.
 
 Synopsis
         http {
@@ -68,8 +68,9 @@ Description
 
     This module does not generate human-readable outputs, rather, in a
     binary format called Resty-DBD-Stream (RDS) designed by ourselves. You
-    usually need other components to work with this module. See Output
-    Format for details.
+    usually need other components, like [[HttpRdsJsonModule]],
+    [[HttpRdsCsvModule]], or [[LuaRdsParser]], to work with this module. See
+    Output Format for details.
 
   Keepalive connection pool
     This module also provides a builtin per-worker connection pool mechanism
@@ -548,12 +549,12 @@ Installation
         (<http://github.com/agentzh/drizzle-nginx-module/downloads>).
 
     *   Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-        example, the version 1.0.5 (see nginx compatibility), and then build
+        example, the version 1.0.8 (see nginx compatibility), and then build
         the source with this module:
 
-            wget 'http://nginx.org/download/nginx-1.0.5.tar.gz'
-            tar -xzvf nginx-1.0.5.tar.gz
-            cd nginx-1.0.4/
+            wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
+            tar -xzvf nginx-1.0.8.tar.gz
+            cd nginx-1.0.8/
 
             # if you have installed libdrizzle to the prefix /opt/drizzle, then
             # specify the following environments:
@@ -579,7 +580,9 @@ Compatibility
 
     The following versions of Nginx should work with this module:
 
-    *   1.0.x (last tested: 1.0.5)
+    *   1.1.x (last tested: 1.1.5)
+
+    *   1.0.x (last tested: 1.0.8)
 
     *   0.8.x (last tested: 0.8.55)
 
