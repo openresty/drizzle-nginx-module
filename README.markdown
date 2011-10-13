@@ -13,7 +13,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.2rc1](https://github.com/chaoslawful/drizzle-nginx-module/downloads) released on 8 October 2011.
+This document describes ngx_drizzle [v0.1.2rc1](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 8 October 2011.
 
 Synopsis
 ========
@@ -570,7 +570,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
         make: *** [.plugin.scan] Error 1
 
 	You can fix this by pointing `python` to `python2`.
-* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/downloads).
+* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/tags).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.0.8 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
         wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'

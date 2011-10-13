@@ -11,8 +11,8 @@ Status
 
 Version
     This document describes ngx_drizzle v0.1.2rc1
-    (<https://github.com/chaoslawful/drizzle-nginx-module/downloads>)
-    released on 8 October 2011.
+    (<https://github.com/chaoslawful/drizzle-nginx-module/tags>) released on
+    8 October 2011.
 
 Synopsis
         http {
@@ -546,7 +546,7 @@ Installation
 
     *   Download the latest version of the release tarball of this module
         from drizzle-nginx-module file list
-        (<http://github.com/agentzh/drizzle-nginx-module/downloads>).
+        (<http://github.com/agentzh/drizzle-nginx-module/tags>).
 
     *   Grab the nginx source code from nginx.org (<http://nginx.org/>), for
         example, the version 1.0.8 (see nginx compatibility), and then build
