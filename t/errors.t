@@ -18,9 +18,11 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 worker_connections(128);
+no_diff();
+no_long_string();
+
 run_tests();
 
-no_diff();
 
 __DATA__
 
@@ -172,4 +174,26 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 500
+
+
+
+=== TEST 9: bad query and output errors in RDS
+little-endian systems only
+
+--- http_config eval: $::http_config
+--- config
+    location /mysql {
+        set $backend foo;
+        drizzle_pass $backend;
+        drizzle_module_header off;
+        drizzle_output_errors on;
+        drizzle_query "update table_that_doesnt_exist set name='bob'";
+        rds_json on;
+    }
+--- request
+GET /mysql
+--- error_code: 200
+--- response_body chomp
+{"errcode":1146,"errstr":"Table 'ngx_test.table_that_doesnt_exist' doesn't exist"}
+--- timeout: 5
 

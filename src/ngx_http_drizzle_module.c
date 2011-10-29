@@ -44,6 +44,15 @@ static ngx_http_variable_t ngx_http_drizzle_variables[] = {
 
 /* config directives for module drizzle */
 static ngx_command_t ngx_http_drizzle_cmds[] = {
+
+    { ngx_string("drizzle_output_errors"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF
+          |NGX_HTTP_LIF_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, output_errors),
+      NULL },
+
     { ngx_string("drizzle_server"),
       NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
       ngx_http_upstream_drizzle_server,
@@ -211,6 +220,7 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
     conf->recv_rows_timeout = NGX_CONF_UNSET_MSEC;
 
     conf->enable_module_header = NGX_CONF_UNSET;
+    conf->output_errors = NGX_CONF_UNSET;
 
     /* the hardcoded values */
     conf->upstream.cyclic_temp_file = 0;

@@ -56,6 +56,7 @@ typedef struct {
     ngx_msec_t                           recv_rows_timeout;
 
     ngx_flag_t                           enable_module_header;
+    ngx_flag_t                           output_errors;
 
     /* for quoting */
     ngx_array_t                         *vars_to_quote;

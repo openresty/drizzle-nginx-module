@@ -207,7 +207,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         ngx_del_timer(c->write);
     }
 
-    if (ret != DRIZZLE_RETURN_OK) {
+    if (!dp->loc_conf->output_errors && ret != DRIZZLE_RETURN_OK) {
 #if 1
         if (ret == DRIZZLE_RETURN_ERROR_CODE) {
             if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
