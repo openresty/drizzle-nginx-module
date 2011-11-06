@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(2);
 
-plan tests => repeat_each() * (blocks() * 3 - 2 * 2);
+plan tests => repeat_each() * 26;
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 

@@ -104,9 +104,17 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     }
 
     if (rc == NGX_AGAIN) {
+        if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
         rc = ngx_http_drizzle_output_bufs(r, dp);
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_INTERNAL_SERVER_ERROR) {
-            return rc;
+
+        if (rc == NGX_ERROR || rc > NGX_OK) {
+            ngx_http_upstream_drizzle_finalize_request(r, u,
+                                           NGX_HTTP_INTERNAL_SERVER_ERROR);
+
+            return NGX_ERROR;
         }
     }
 
@@ -129,6 +137,12 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                 "drizzle libdrizzle returned IO_WAIT while connecting");
+
+#if 0
+        if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+            return NGX_ERROR;
+        }
+#endif
 
         return NGX_AGAIN;
     }
@@ -301,7 +315,14 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
                 }
 
                 ngx_add_timer(c->read, dp->loc_conf->recv_cols_timeout);
+
             }
+
+#if 0
+            if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+                return NGX_ERROR;
+            }
+#endif
 
             return NGX_AGAIN;
         }
@@ -475,6 +496,12 @@ io_wait:
 
         ngx_add_timer(c->read, dp->loc_conf->recv_rows_timeout);
     }
+
+#if 0
+    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        return NGX_ERROR;
+    }
+#endif
 
     return NGX_AGAIN;
 }

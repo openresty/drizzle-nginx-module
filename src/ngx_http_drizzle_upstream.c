@@ -542,9 +542,10 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     drizzle_con_st                          *dc = NULL;
     ngx_str_t                                dbname;
     drizzle_return_t                         ret;
-    int                                      fd;
+    ngx_socket_t                             fd;
     ngx_event_t                             *rev, *wev;
     ngx_int_t                                rc;
+    ngx_int_t                                event;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, dp->request->connection->log, 0,
             "drizzle get peer");
@@ -652,6 +653,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
             "drizzle using mysql protocol");
 
         drizzle_con_add_options(dc, DRIZZLE_CON_MYSQL);
+
     }
 
     /* set dbname for the drizzle connection */
@@ -725,8 +727,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         goto invalid;
     }
 
-    c = pc->connection = ngx_get_connection(fd, pc->log);
-
+    c = ngx_get_connection(fd, pc->log);
     if (c == NULL) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "drizzle: failed to get a free nginx connection");
@@ -744,69 +745,91 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     rev->log = pc->log;
     wev->log = pc->log;
 
+    pc->connection = c;
+
     /* register the connection with the drizzle fd into the
      * nginx event model */
 
-    if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
+#if 0
+    if (ngx_nonblocking(fd) == -1) {
+        ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
+                      ngx_nonblocking_n " failed");
+
+        goto invalid;
+    }
+#endif
+
+    if (ret == DRIZZLE_RETURN_IO_WAIT) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0,
-                "drizzle use RTSIG event");
-        rc = ngx_add_conn(c);
+                "drizzle get peer: still connecting to remote");
 
-    } else if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+        dp->state = state_db_connect;
+
+        c->log->action = "connecting to drizzle upstream";
+
+    } else {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0,
-                "drizzle use clear event");
+                "drizzle get peer: already connected to remote");
 
-        rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT);
-        if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_CLEAR_EVENT) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                          "drizzle: failed to add nginx connection");
+        /* to ensure send_query sets corresponding timers */
+        dp->state = state_db_idle;
+    }
 
+    if (ngx_add_conn) {
+        dd("Found ngx_add_conn");
+
+        if (ngx_add_conn(c) == NGX_ERROR) {
             goto invalid;
         }
 
-    } else {
-        dd("use other event...");
-        rc = ngx_add_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT);
+        if (ret == DRIZZLE_RETURN_IO_WAIT) {
+            dd("returned NGX_AGAIN!!!");
+
+            return NGX_AGAIN;
+        }
+
+        /* ret == DRIZZLE_RETURN_OK */
+
+        wev->ready = 1;
+
+        return NGX_DONE;
     }
 
-    if (rc != NGX_OK) {
+    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+
+        /* kqueue */
+
+        event = NGX_CLEAR_EVENT;
+
+    } else {
+
+        /* select, poll, /dev/poll */
+
+        event = NGX_LEVEL_EVENT;
+    }
+
+    if (ngx_add_event(rev, NGX_READ_EVENT, event) != NGX_OK) {
         ngx_log_error(NGX_LOG_ERR, pc->log, 0,
                 "drizzle: failed to add connection into nginx event model");
 
         goto invalid;
     }
 
-    if (ret == DRIZZLE_RETURN_OK) {
-        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0,
-                "drizzle get peer: already connected to remote");
-
-        wev->ready = 1;
-
-        /* to ensure send_query sets corresponding timers */
-        dp->state = state_db_idle;
-
-        return NGX_DONE;
-    }
-
-    /* ret == DRIZZLE_RETURN_IO_WAIT */
-
-    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0,
-            "drizzle get peer: still connecting to remote");
-
-    dp->state = state_db_connect;
-
-    c->log->action = "connecting to drizzle upstream";
-
-    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
-        if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_CLEAR_EVENT) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERR, pc->log, 0,
-                    "drizzle: failed to add connection into nginx event model");
-
+    if (ret == DRIZZLE_RETURN_IO_WAIT) {
+        if (ngx_add_event(wev, NGX_WRITE_EVENT, event) != NGX_OK) {
             goto invalid;
         }
+
+        return NGX_AGAIN;
     }
 
-    return NGX_AGAIN;
+    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, pc->log, 0, "drizzle connected");
+
+    wev->ready = 1;
+
+    /* ret == DRIZZLE_RETURN_OK */
+
+    return NGX_DONE;
 
 invalid:
 
@@ -884,7 +907,7 @@ ngx_http_drizzle_output_filter(void *data, ngx_chain_t *in)
      * upstream_next */
     r->upstream->request_sent = 1;
 
-    ngx_http_drizzle_process_events(r);
+    (void) ngx_http_drizzle_process_events(r);
 
     /* discard the ret val from process events because
      * we can only return NGX_AGAIN here to prevent

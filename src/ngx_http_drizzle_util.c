@@ -735,6 +735,8 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_http_upstream_send_request(r, u);
 #endif
 
+    dd("connection error: %d", c->error);
+
     ngx_http_drizzle_set_libdrizzle_ready(r);
 
     (void) ngx_http_drizzle_process_events(r);
@@ -930,6 +932,8 @@ ngx_http_upstream_dbd_handler(ngx_event_t *ev)
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream request: \"%V?%V\"", &r->uri, &r->args);
+
+    dd("upstream ev write:%d, ready:%d", (int) ev->write, (int) ev->ready);
 
     if (ev->write) {
         u->write_event_handler(r, u);
