@@ -21,6 +21,7 @@ ngx-build $force $version \
             --without-http_auth_basic_module \
             --without-http_userid_module \
           --add-module=$root/../echo-nginx-module \
+          --add-module=$root/../lua-nginx-module \
           --add-module=$root/../rds-json-nginx-module \
           --add-module=$root/../headers-more-nginx-module \
           --add-module=$root $opts \
