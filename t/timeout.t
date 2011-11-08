@@ -18,6 +18,7 @@ worker_connections(128);
 #log_level('error');
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
+$ENV{TEST_NGINX_MYSQL_HOST} ||= '127.0.0.1';
 
 no_diff();
 
@@ -131,7 +132,7 @@ X-Mysql-Tid:
 === TEST 6: serv_config send query timeout (sleep select)
 --- http_config
     upstream backend {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
     }
 

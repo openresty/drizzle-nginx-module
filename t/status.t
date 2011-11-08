@@ -8,17 +8,18 @@ use Test::Nginx::Socket;
 plan tests => repeat_each() * 2 * blocks();
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
+$ENV{TEST_NGINX_MYSQL_HOST} ||= '127.0.0.1';
 
 #master_on();
 
 our $http_config = <<'_EOC_';
     upstream backend {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
         drizzle_keepalive max=10 overflow=reject mode=single;
     }
     upstream backend2 {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
         #drizzle_keepalive max=10 overflow=ignore mode=single;
     }
@@ -29,12 +30,12 @@ _EOC_
 
 our $http_config2 = <<'_EOC_';
     upstream backend {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
         drizzle_keepalive max=10 overflow=reject mode=single;
     }
     upstream backend2 {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
         drizzle_keepalive max=5 overflow=ignore mode=multi;
     }

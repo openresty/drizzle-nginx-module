@@ -8,10 +8,11 @@ repeat_each(2);
 plan tests => repeat_each() * 2 * blocks() + 2 * repeat_each() * 6;
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
+$ENV{TEST_NGINX_MYSQL_HOST} ||= '127.0.0.1';
 
 our $http_config = <<'_EOC_';
     upstream backend {
-        drizzle_server 127.0.0.1:$TEST_NGINX_MYSQL_PORT protocol=mysql
+        drizzle_server $TEST_NGINX_MYSQL_HOST:$TEST_NGINX_MYSQL_PORT protocol=mysql
                        dbname=ngx_test user=ngx_test password=ngx_test;
         drizzle_keepalive max=10 overflow=ignore mode=single;
     }
