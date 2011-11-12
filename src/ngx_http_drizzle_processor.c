@@ -104,9 +104,11 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     }
 
     if (rc == NGX_AGAIN) {
+#if 0
         if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
             return NGX_ERROR;
         }
+#endif
 
         rc = ngx_http_drizzle_output_bufs(r, dp);
 
