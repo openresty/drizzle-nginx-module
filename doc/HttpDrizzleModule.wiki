@@ -518,16 +518,14 @@ The installation steps are usually as simple as <code>./configure --with-http_dr
 
 Alternatively, you can compile this module with Nginx core's source by hand:
 
-* You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [https://launchpad.net/drizzle https://launchpad.net/drizzle].
-: Installation of libdrizzle 1.0 is usually as simple as
+* You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [https://launchpad.net/drizzle https://launchpad.net/drizzle]. The latest drizzle7 release does not support building libdrizzle 1.0 separately and requires a lot of external dependencies like Boost and Protobuf which are painful to install. The last version supporting building libdrizzle 1.0 separately is <code>2011.07.21</code>. You can download it from http://agentzh.org/misc/nginx/drizzle7-2011.07.21.tar.gz . Which this version of drizzle7, installation of libdrizzle 1.0 is usually as simple as
 <geshi lang="nginx">
-        tar xzvf drizzle7-VERSION.tar.gz
-        cd drizzle7-VERSION/
+        tar xzvf drizzle7-2011.07.21.tar.gz
+        cd drizzle7-2011.07.21/
         ./configure --without-server
         make libdrizzle-1.0
         make install-libdrizzle-1.0
 </geshi>
-: where <code>VERSION</code> should be replaced by real version numbers like <code>2011.07.21</code>.
 : Ensure that you have the <code>python</code> command point to a <code>python2</code> interpreter. It's known that on recent : Arch Linux distribution, <code>python</code> is linked to <code>python3</code> by default, and while running <code>make libdrizzle-1.0</code> will yield the error
 <geshi lang="bash">
         File "config/pandora-plugin", line 185

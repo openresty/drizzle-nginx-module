@@ -551,16 +551,14 @@ The installation steps are usually as simple as `./configure --with-http_drizzle
 
 Alternatively, you can compile this module with Nginx core's source by hand:
 
-* You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [<https://launchpad.net/drizzle]>(https://launchpad.net/drizzle).
-	Installation of libdrizzle 1.0 is usually as simple as
+* You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [<https://launchpad.net/drizzle]>(https://launchpad.net/drizzle). The latest drizzle7 release does not support building libdrizzle 1.0 separately and requires a lot of external dependencies like Boost and Protobuf which are painful to install. The last version supporting building libdrizzle 1.0 separately is `2011.07.21`. You can download it from <http://agentzh.org/misc/nginx/drizzle7-2011.07.21.tar.gz> . Which this version of drizzle7, installation of libdrizzle 1.0 is usually as simple as
 
-        tar xzvf drizzle7-VERSION.tar.gz
-        cd drizzle7-VERSION/
+        tar xzvf drizzle7-2011.07.21.tar.gz
+        cd drizzle7-2011.07.21/
         ./configure --without-server
         make libdrizzle-1.0
         make install-libdrizzle-1.0
 
-	where `VERSION` should be replaced by real version numbers like `2011.07.21`.
 	Ensure that you have the `python` command point to a `python2` interpreter. It's known that on recent : Arch Linux distribution, `python` is linked to `python3` by default, and while running `make libdrizzle-1.0` will yield the error
 
         File "config/pandora-plugin", line 185
