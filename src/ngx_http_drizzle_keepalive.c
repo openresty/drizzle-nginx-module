@@ -1,7 +1,9 @@
 /* Copyright (C) Maxim Dounin */
 /* Copyright (C) agentzh */
 
+#ifndef DDEBUG
 #define DDEBUG 0
+#endif
 #include "ddebug.h"
 
 #include "ngx_http_drizzle_keepalive.h"
