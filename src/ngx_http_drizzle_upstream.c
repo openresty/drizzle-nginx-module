@@ -883,7 +883,7 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
     }
 
-    if (pc->connection) {
+    if (pc && pc->connection) {
         dd("actually free the drizzle connection");
 
         ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,

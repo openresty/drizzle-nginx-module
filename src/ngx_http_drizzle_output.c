@@ -446,7 +446,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     }
 
     /* field data */
-    if (len) {
+    if (len && field) {
         last = ngx_copy(last, field, (uint32_t) len);
     }
 
