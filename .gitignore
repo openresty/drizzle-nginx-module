@@ -58,4 +58,6 @@ pack
 t/servroot/
 build10
 build11
+*.patch
+analyze
 *.html
