@@ -9,7 +9,7 @@ force=$2
 
 
 ngx-build $force $version \
-            --with-ld-opt="-Wl,-rpath,/opt/drizzle/lib" \
+            --with-ld-opt="-Wl,-rpath,$LIBDRIZZLE_LIB" \
             --without-mail_pop3_module \
             --without-mail_imap_module \
             --without-mail_smtp_module \
