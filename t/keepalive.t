@@ -77,7 +77,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- timeout: 60
+--- timeout: 5
 
 
 
@@ -183,6 +183,7 @@ GET /mysql
 "\x{04}\x{00}".  # col name len
 "name".  # col name data
 "\x{00}"  # row list terminator
+--- timeout: 5
 
 
 
@@ -291,7 +292,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- timeout: 60
+--- timeout: 5
 
 
 
@@ -341,7 +342,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- timeout: 60
+--- timeout: 5
 
 
 
@@ -391,7 +392,7 @@ Content-Type: application/x-resty-dbd-stream
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
---- timeout: 60
+--- timeout: 5
 
 
 
