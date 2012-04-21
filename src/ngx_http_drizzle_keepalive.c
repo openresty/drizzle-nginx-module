@@ -381,9 +381,11 @@ ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev)
     if (n == -1 && ngx_socket_errno == NGX_EAGAIN) {
         /* stale event */
 
+#if 0
         if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
             goto close;
         }
+#endif
 
         return;
     }
