@@ -19,9 +19,10 @@ _EOC_
 
 worker_connections(128);
 no_shuffle();
-run_tests();
-
+#log_level 'warn';
 no_diff();
+
+run_tests();
 
 __DATA__
 
