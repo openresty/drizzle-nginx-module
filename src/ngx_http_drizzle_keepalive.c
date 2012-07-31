@@ -395,11 +395,10 @@ close:
     item = c->data;
     dscf = item->srv_conf;
 
+    ngx_http_upstream_drizzle_free_connection(ev->log, c, item->drizzle_con,
+                                              dscf);
+
     ngx_queue_remove(&item->queue);
-
-    ngx_http_upstream_drizzle_free_connection(ev->log, item->connection,
-            item->drizzle_con, dscf);
-
     ngx_queue_insert_head(&dscf->free, &item->queue);
 }
 
