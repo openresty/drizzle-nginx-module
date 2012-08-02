@@ -10,9 +10,9 @@ Status
     LineZing site (<http://lz.taobao.com>).
 
 Version
-    This document describes ngx_drizzle v0.1.2rc1
+    This document describes ngx_drizzle v0.1.2
     (<https://github.com/chaoslawful/drizzle-nginx-module/tags>) released on
-    8 October 2011.
+    2 August 2012.
 
 Synopsis
         http {
@@ -236,7 +236,7 @@ Directives
 
     The "<time>" argument can be an integer, with an optional time unit,
     like "s" (second), "ms" (millisecond), "m" (minute). The default time
-    unit is "s", ie, "second". The default setting is "60s".
+    unit is "s", i.e., "second". The default setting is "60s".
 
   drizzle_send_query_timeout
     syntax: *drizzle_send_query_timeout <time>*
@@ -476,6 +476,11 @@ Output Format
     *   each field in each row (if any) but the field data can span multiple
         bufs.
 
+Status Code
+    If the MySQL error code in MySQL's query result is not OK, then a 500
+    error page is returned by this module, except for the table non-existent
+    error, which results in the "410 Gone" error page.
+
 Caveats
     *   Other usptream modules like "upstream_hash" and
         [[HttpUpstreamKeepaliveModule]] *must not* be used with this module
@@ -556,12 +561,12 @@ Installation
         (<http://github.com/agentzh/drizzle-nginx-module/tags>).
 
     *   Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-        example, the version 1.0.8 (see nginx compatibility), and then build
+        example, the version 1.2.1 (see nginx compatibility), and then build
         the source with this module:
 
-            wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
-            tar -xzvf nginx-1.0.8.tar.gz
-            cd nginx-1.0.8/
+            wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
+            tar -xzvf nginx-1.2.1.tar.gz
+            cd nginx-1.2.1/
 
             # if you have installed libdrizzle to the prefix /opt/drizzle, then
             # specify the following environments:
@@ -586,6 +591,8 @@ Compatibility
     POSIX-compliant systems will be highly appreciated.
 
     The following versions of Nginx should work with this module:
+
+    *   1.2.x (last tested: 1.2.1)
 
     *   1.1.x (last tested: 1.1.5)
 
@@ -698,16 +705,13 @@ Authors
 Copyright & License
     This module is licenced under the BSD license.
 
-    Copyright (C) 2009, 2010, 2011, Taobao Inc., Alibaba Group (
-    http://www.taobao.com ).
-
-    Copyright (C) 2009, 2010, 2011, by Xiaozhe Wang (chaoslawful)
+    Copyright (C) 2009-2012, by Xiaozhe Wang (chaoslawful)
     <chaoslawful@gmail.com>.
 
-    Copyright (C) 2009, 2010, 2011, by Zhang "agentzh" Yichun (章亦春)
+    Copyright (C) 2009-2012, by Zhang "agentzh" Yichun (章亦春)
     <agentzh@gmail.com>.
 
-    Copyright (C) 2010, 2011, by FRiCKLE Piotr Sikora <info@frickle.com>.
+    Copyright (C) 2010-2012, by FRiCKLE Piotr Sikora <info@frickle.com>.
 
     All rights reserved.
 
@@ -749,4 +753,7 @@ See Also
     *   postgres-nginx-module (<http://github.com/FRiCKLE/ngx_postgres>)
 
     *   [[HttpLuaModule]]
+
+    *   The lua-resty-mysql (<https://github.com/agentzh/lua-resty-mysql>)
+        library based on the [[HttpLuaModule]] cosocket API.
 

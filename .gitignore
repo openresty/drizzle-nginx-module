@@ -56,8 +56,7 @@ go
 buildroot/
 pack
 t/servroot/
-build10
-build11
+build1[012]
 *.patch
 analyze
 *.html

@@ -1,3 +1,8 @@
+<!---
+Don't edit this file manually! Instead you should generate it by using:
+    wiki2markdown.pl doc/HttpDrizzleModule.wiki
+-->
+
 Name
 ====
 
@@ -13,7 +18,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.2rc1](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 8 October 2011.
+This document describes ngx_drizzle [v0.1.2](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 2 August 2012.
 
 Synopsis
 ========
@@ -239,7 +244,7 @@ drizzle_connect_timeout
 
 Specify the (total) timeout for connecting to a remote Drizzle or MySQL server.
 
-The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
+The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, i.e., "second". The default setting is `60s`.
 
 drizzle_send_query_timeout
 --------------------------
@@ -508,6 +513,11 @@ On the nginx output chain link level, the following components should be put int
 
 * each field in each row (if any) but the field data can span multiple bufs.
 
+Status Code
+===========
+
+If the MySQL error code in MySQL's query result is not OK, then a 500 error page is returned by this module, except for the table non-existent error, which results in the `410 Gone` error page.
+
 Caveats
 =======
 
@@ -569,11 +579,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.0.8 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.1 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
-        wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
-        tar -xzvf nginx-1.0.8.tar.gz
-        cd nginx-1.0.8/
+        wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
+        tar -xzvf nginx-1.2.1.tar.gz
+        cd nginx-1.2.1/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
@@ -599,6 +609,7 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
+* 1.2.x (last tested: 1.2.1)
 * 1.1.x (last tested: 1.1.5)
 * 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
@@ -672,13 +683,11 @@ Copyright & License
 
 This module is licenced under the BSD license.
 
-Copyright (C) 2009, 2010, 2011, Taobao Inc., Alibaba Group ( <http://www.taobao.com> ).
+Copyright (C) 2009-2012, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009, 2010, 2011, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
+Copyright (C) 2009-2012, by Zhang "agentzh" Yichun (章亦春) <agentzh@gmail.com>.
 
-Copyright (C) 2009, 2010, 2011, by Zhang "agentzh" Yichun (章亦春) <agentzh@gmail.com>.
-
-Copyright (C) 2010, 2011, by FRiCKLE Piotr Sikora <info@frickle.com>.
+Copyright (C) 2010-2012, by FRiCKLE Piotr Sikora <info@frickle.com>.
 
 All rights reserved.
 
@@ -700,4 +709,5 @@ See Also
 * [DrizzleNginxModule bundled by ngx_openresty](http://openresty.org/#DrizzleNginxModule)
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
 * [HttpLuaModule](http://wiki.nginx.org/HttpLuaModule)
+* The [lua-resty-mysql](https://github.com/agentzh/lua-resty-mysql) library based on the [HttpLuaModule](http://wiki.nginx.org/HttpLuaModule) cosocket API.
 

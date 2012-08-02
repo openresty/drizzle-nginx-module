@@ -10,7 +10,7 @@ This module is already production ready and is powering [http://lz.taobao.com th
 
 = Version =
 
-This document describes ngx_drizzle [https://github.com/chaoslawful/drizzle-nginx-module/tags v0.1.2rc1] released on 8 October 2011.
+This document describes ngx_drizzle [https://github.com/chaoslawful/drizzle-nginx-module/tags v0.1.2] released on 2 August 2012.
 
 = Synopsis =
 
@@ -226,7 +226,7 @@ Nginx variables can also be interpolated into the <code><remote></code> argument
 
 Specify the (total) timeout for connecting to a remote Drizzle or MySQL server.
 
-The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, ie, "second". The default setting is <code>60s</code>.
+The <code><time></code> argument can be an integer, with an optional time unit, like <code>s</code> (second), <code>ms</code> (millisecond), <code>m</code> (minute). The default time unit is <code>s</code>, i.e., "second". The default setting is <code>60s</code>.
 
 == drizzle_send_query_timeout ==
 '''syntax:''' ''drizzle_send_query_timeout <time>''
@@ -479,6 +479,10 @@ On the nginx output chain link level, the following components should be put int
 
 * each field in each row (if any) but the field data can span multiple bufs.
 
+= Status Code =
+
+If the MySQL error code in MySQL's query result is not OK, then a 500 error page is returned by this module, except for the table non-existent error, which results in the <code>410 Gone</code> error page.
+
 = Caveats =
 
 * Other usptream modules like <code>upstream_hash</code> and [[HttpUpstreamKeepaliveModule]] ''must not'' be used with this module in a single upstream block.
@@ -536,11 +540,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 </geshi>
 : You can fix this by pointing <code>python</code> to <code>python2</code>.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [http://github.com/agentzh/drizzle-nginx-module/tags file list].
-* Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.0.8 (see [[#Compatibility|nginx compatibility]]), and then build the source with this module:
+* Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.2.1 (see [[#Compatibility|nginx compatibility]]), and then build the source with this module:
 <geshi lang="bash">
-        wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
-        tar -xzvf nginx-1.0.8.tar.gz
-        cd nginx-1.0.8/
+        wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
+        tar -xzvf nginx-1.2.1.tar.gz
+        cd nginx-1.2.1/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
@@ -565,6 +569,7 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
+* 1.2.x (last tested: 1.2.1)
 * 1.1.x (last tested: 1.1.5)
 * 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
@@ -630,13 +635,11 @@ Because a single nginx server (by default, <code>localhost:1984</code>) is used 
 
 This module is licenced under the BSD license.
 
-Copyright (C) 2009, 2010, 2011, Taobao Inc., Alibaba Group ( http://www.taobao.com ).
+Copyright (C) 2009-2012, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009, 2010, 2011, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
+Copyright (C) 2009-2012, by Zhang "agentzh" Yichun (章亦春) <agentzh@gmail.com>.
 
-Copyright (C) 2009, 2010, 2011, by Zhang "agentzh" Yichun (章亦春) <agentzh@gmail.com>.
-
-Copyright (C) 2010, 2011, by FRiCKLE Piotr Sikora <info@frickle.com>.
+Copyright (C) 2010-2012, by FRiCKLE Piotr Sikora <info@frickle.com>.
 
 All rights reserved.
 
@@ -657,4 +660,5 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 * [http://openresty.org/#DrizzleNginxModule DrizzleNginxModule bundled by ngx_openresty]
 * [http://github.com/FRiCKLE/ngx_postgres postgres-nginx-module]
 * [[HttpLuaModule]]
+* The [https://github.com/agentzh/lua-resty-mysql lua-resty-mysql] library based on the [[HttpLuaModule]] cosocket API.
 
