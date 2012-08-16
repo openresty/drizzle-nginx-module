@@ -395,6 +395,8 @@ close:
     item = c->data;
     dscf = item->srv_conf;
 
+    dd("closing fd %d", c->fd);
+
     ngx_http_upstream_drizzle_free_connection(ev->log, c, item->drizzle_con,
                                               dscf);
 
