@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(2);
 
-plan tests => repeat_each() * 2 * blocks() + 2 * repeat_each() * 6;
+plan tests => repeat_each() * (4 * blocks() + 12);
 
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 $ENV{TEST_NGINX_MYSQL_HOST} ||= '127.0.0.1';
@@ -78,6 +78,9 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 5
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -123,6 +126,9 @@ GET /mysql
 "\x{03}\x{00}\x{00}\x{00}".  # field len
 "bob".  # field data
 "\x{00}"  # row list terminator
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -149,6 +155,9 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -184,6 +193,9 @@ GET /mysql
 "name".  # col name data
 "\x{00}"  # row list terminator
 --- timeout: 5
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -213,6 +225,9 @@ Content-Type: application/x-resty-dbd-stream
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -243,6 +258,9 @@ Content-Type: application/x-resty-dbd-stream
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -293,6 +311,9 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 5
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -343,6 +364,9 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 5
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -393,6 +417,9 @@ Content-Type: application/x-resty-dbd-stream
 "bob".  # field data
 "\x{00}"  # row list terminator
 --- timeout: 5
+--- no_error_log
+[alert]
+[error]
 
 
 
@@ -419,4 +446,7 @@ GET /mysql
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # rows affected
 "\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}\x{00}".  # insert id
 "\x{00}\x{00}"  # col count
+--- no_error_log
+[alert]
+[error]
 
