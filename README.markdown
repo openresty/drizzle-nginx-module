@@ -18,7 +18,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.2](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 2 August 2012.
+This document describes ngx_drizzle [v0.1.3](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 16 August 2012.
 
 Synopsis
 ========
@@ -609,7 +609,8 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.2.x (last tested: 1.2.1)
+* 1.3.x (last tested: 1.3.4)
+* 1.2.x (last tested: 1.2.3)
 * 1.1.x (last tested: 1.1.5)
 * 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
@@ -619,13 +620,26 @@ Earlier versions of Nginx like `0.6.x` and `0.5.x` will *not* work.
 
 If you find that any particular version of Nginx above `0.7.44` does not work with this module, please consider reporting a bug.
 
+Community
+=========
+
+English Mailing List
+--------------------
+
+The [openresty-en](https://groups.google.com/group/openresty-en) mailing list is for English speakers.
+
+Chinese Mailing List
+--------------------
+
+The [openresty](https://groups.google.com/group/openresty) mailing list is for Chinese speakers.
+
 Report Bugs
 ===========
 
-Although a lot of effort has been put into testing and code tuning, there must be some serious bugs lurking somewhere in this module. So whenever you are bitten by any quirks, please don't hesitate to
+Please submit bug reports, wishlists, or patches by
 
-1. create a ticket on the [issue tracking interface](http://github.com/chaoslawful/drizzle-nginx-module/issues) provided by GitHub,
-1. or send a bug report or even patches to the [nginx mailing list](http://mailman.nginx.org/mailman/listinfo/nginx).
+1. creating a ticket on the [issue tracking interface](http://github.com/chaoslawful/drizzle-nginx-module/issues) provided by GitHub,
+1. or sending an email to the [OpenResty community](http://wiki.nginx.org/HttpDrizzleModule#Community).
 
 Source Repository
 =================
@@ -662,20 +676,15 @@ TODO
 Changes
 =======
 
-v0.1.1
-------
-* fixed segmentation faults on 32-bit systems. thanks @魏世江 and @stefanli for reporting this issue.
-* documented the [$drizzle_thread_id](http://wiki.nginx.org/HttpDrizzleModule#.24drizzle_thread_id) variable.
-* added lots of debug outputs (enabled by the `--with-debug` option while building Nginx or OpenResty), inspired by github issue #10.
-* fixed issues regarding defining global variables in C header files: we should have defined `rds_rough_col_type_t` as a type rather than a global variable. thanks @姜大炮.
-* documented the python -> python3 pitfall while building libdrizzle 1.0 on at least ArchLinux.
-* fixed the automatic libdrizzle searching algorithm in the config file: now we should look under `libdrizzle-1.0/` instead. thanks 支家乐 (Calio) for reporting this issue.
+The changes of every release of this module can be obtained from the ngx_openresty bundle's change logs:
+
+<http://openresty.org/#Changes>
 
 Authors
 =======
 
 * chaoslawful (王晓哲) <chaoslawful at gmail dot com>
-* Zhang "agentzh" Yichun (章亦春) <agentzh at gmail dot com>
+* Yichun "agentzh" Zhang (章亦春) <agentzh at gmail dot com>
 * Piotr Sikora <piotr.sikora at frickle dot com>
 
 Copyright & License
@@ -685,7 +694,7 @@ This module is licenced under the BSD license.
 
 Copyright (C) 2009-2012, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009-2012, by Zhang "agentzh" Yichun (章亦春) <agentzh@gmail.com>.
+Copyright (C) 2009-2012, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>.
 
 Copyright (C) 2010-2012, by FRiCKLE Piotr Sikora <info@frickle.com>.
 
