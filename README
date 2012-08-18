@@ -10,9 +10,9 @@ Status
     LineZing site (<http://lz.taobao.com>).
 
 Version
-    This document describes ngx_drizzle v0.1.3
+    This document describes ngx_drizzle v0.1.4
     (<https://github.com/chaoslawful/drizzle-nginx-module/tags>) released on
-    16 August 2012.
+    17 August 2012.
 
 Synopsis
         http {
@@ -561,12 +561,12 @@ Installation
         (<http://github.com/agentzh/drizzle-nginx-module/tags>).
 
     *   Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-        example, the version 1.2.1 (see nginx compatibility), and then build
+        example, the version 1.2.3 (see nginx compatibility), and then build
         the source with this module:
 
-            wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
-            tar -xzvf nginx-1.2.1.tar.gz
-            cd nginx-1.2.1/
+            wget 'http://nginx.org/download/nginx-1.2.3.tar.gz'
+            tar -xzvf nginx-1.2.3.tar.gz
+            cd nginx-1.2.3/
 
             # if you have installed libdrizzle to the prefix /opt/drizzle, then
             # specify the following environments:

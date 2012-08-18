@@ -18,7 +18,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.3](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 16 August 2012.
+This document describes ngx_drizzle [v0.1.4](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 17 August 2012.
 
 Synopsis
 ========
@@ -555,7 +555,7 @@ Installation
 ============
 You're recommended to install this module as well as [HttpRdsJsonModule](http://wiki.nginx.org/HttpRdsJsonModule) via the ngx_openresty bundle:
 
-<http://openresty.org> 
+<http://openresty.org>
 
 The installation steps are usually as simple as `./configure --with-http_drizzle_module && make && make install` (But you still need to install the libdrizzle library manually, see [<http://openresty.org/#DrizzleNginxModule]>(http://openresty.org/#DrizzleNginxModule) for detailed instructions.
 
@@ -579,11 +579,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.1 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.3 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
-        wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
-        tar -xzvf nginx-1.2.1.tar.gz
-        cd nginx-1.2.1/
+        wget 'http://nginx.org/download/nginx-1.2.3.tar.gz'
+        tar -xzvf nginx-1.2.3.tar.gz
+        cd nginx-1.2.3/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:

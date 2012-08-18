@@ -10,7 +10,7 @@ This module is already production ready and is powering [http://lz.taobao.com th
 
 = Version =
 
-This document describes ngx_drizzle [https://github.com/chaoslawful/drizzle-nginx-module/tags v0.1.3] released on 16 August 2012.
+This document describes ngx_drizzle [https://github.com/chaoslawful/drizzle-nginx-module/tags v0.1.4] released on 17 August 2012.
 
 = Synopsis =
 
@@ -516,7 +516,7 @@ If the MySQL error code in MySQL's query result is not OK, then a 500 error page
 = Installation =
 You're recommended to install this module as well as [[HttpRdsJsonModule]] via the ngx_openresty bundle:
 
-http://openresty.org 
+http://openresty.org
 
 The installation steps are usually as simple as <code>./configure --with-http_drizzle_module && make && make install</code> (But you still need to install the libdrizzle library manually, see [http://openresty.org/#DrizzleNginxModule http://openresty.org/#DrizzleNginxModule] for detailed instructions.
 
@@ -540,11 +540,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 </geshi>
 : You can fix this by pointing <code>python</code> to <code>python2</code>.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [http://github.com/agentzh/drizzle-nginx-module/tags file list].
-* Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.2.1 (see [[#Compatibility|nginx compatibility]]), and then build the source with this module:
+* Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.2.3 (see [[#Compatibility|nginx compatibility]]), and then build the source with this module:
 <geshi lang="bash">
-        wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
-        tar -xzvf nginx-1.2.1.tar.gz
-        cd nginx-1.2.1/
+        wget 'http://nginx.org/download/nginx-1.2.3.tar.gz'
+        tar -xzvf nginx-1.2.3.tar.gz
+        cd nginx-1.2.3/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
