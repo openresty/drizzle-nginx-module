@@ -146,7 +146,12 @@ The following options are supported:
 	MySQL/Drizzle user name `<user>` for login.
 
 **password=**`<pass>`
-	Specify mysql password `<pass>`for login.
+	Specify mysql password `<pass>`for login. If you have special characters like `#` or spaces in your password text, then you'll have to quote the whole key-value pair with either single-quotes or double-quotes, as in
+
+
+    drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
+            dbname=test protocol=mysql;
+
 
 **dbname=**`<database>`
 	Specify default MySQL database `<database>` for the connection. Note that MySQL does allow referencing tables belonging to different databases by qualifying table names with database names in SQL queries.

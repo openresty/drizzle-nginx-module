@@ -132,7 +132,12 @@ The following options are supported:
 : MySQL/Drizzle user name <code><user></code> for login.
 
 '''password='''<code><pass></code>
-: Specify mysql password <code><pass></code>for login.
+: Specify mysql password <code><pass></code>for login. If you have special characters like <code>#</code> or spaces in your password text, then you'll have to quote the whole key-value pair with either single-quotes or double-quotes, as in
+
+<geshi lang="nginx">
+    drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
+            dbname=test protocol=mysql;
+</geshi>
 
 '''dbname='''<code><database></code>
 : Specify default MySQL database <code><database></code> for the connection. Note that MySQL does allow referencing tables belonging to different databases by qualifying table names with database names in SQL queries.
