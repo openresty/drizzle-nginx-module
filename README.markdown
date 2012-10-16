@@ -381,7 +381,7 @@ Here's an example:
 
     location /main {
         content_by_lua '
-            local res = ngx.location.catpure("/query")
+            local res = ngx.location.capture("/query")
             if res.status ~= ngx.HTTP_OK then
                 local tid = res.header["X-Mysql-Tid"]
                 if tid and tid ~= "" then
@@ -584,11 +584,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.3 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.4 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
-        wget 'http://nginx.org/download/nginx-1.2.3.tar.gz'
-        tar -xzvf nginx-1.2.3.tar.gz
-        cd nginx-1.2.3/
+        wget 'http://nginx.org/download/nginx-1.2.4.tar.gz'
+        tar -xzvf nginx-1.2.4.tar.gz
+        cd nginx-1.2.4/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
@@ -614,8 +614,8 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.3.x (last tested: 1.3.4)
-* 1.2.x (last tested: 1.2.3)
+* 1.3.x (last tested: 1.3.7)
+* 1.2.x (last tested: 1.2.4)
 * 1.1.x (last tested: 1.1.5)
 * 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
