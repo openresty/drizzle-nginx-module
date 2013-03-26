@@ -433,8 +433,10 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
         return;
     }
 
+#if 0
 #if defined(nginx_version) && nginx_version >= 8022
     u->peer.local = u->conf->local;
+#endif
 #endif
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
@@ -580,8 +582,6 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_connection_t  *c;
 
     r->connection->log->action = "connecting to upstream";
-
-    r->connection->single_connection = 0;
 
     if (u->state && u->state->response_sec) {
         tp = ngx_timeofday();
