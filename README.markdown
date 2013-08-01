@@ -583,7 +583,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
         make: *** [.plugin.scan] Error 1
 
 	You can fix this by pointing `python` to `python2`.
-* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/agentzh/drizzle-nginx-module/tags).
+* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](https://github.com/chaoslawful/drizzle-nginx-module/releases).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.2.7 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
         wget 'http://nginx.org/download/nginx-1.2.7.tar.gz'
