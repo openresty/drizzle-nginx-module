@@ -20,7 +20,7 @@ static void ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev);
 
 char *
 ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf)
+    void *conf)
 {
     ngx_http_upstream_drizzle_srv_conf_t        *dscf = conf;
     ngx_str_t                                   *value;
@@ -127,7 +127,7 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
 
 ngx_int_t
 ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
-        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+    ngx_http_upstream_drizzle_srv_conf_t *dscf)
 {
     ngx_uint_t                              i;
     ngx_http_drizzle_keepalive_cache_t     *cached;
@@ -154,8 +154,8 @@ ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
 
 ngx_int_t
 ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
-        ngx_http_upstream_drizzle_peer_data_t *dp,
-        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+    ngx_http_upstream_drizzle_peer_data_t *dp,
+    ngx_http_upstream_drizzle_srv_conf_t *dscf)
 {
     ngx_http_drizzle_keepalive_cache_t      *item;
     ngx_queue_t                             *q;
@@ -200,8 +200,8 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
 
 ngx_int_t
 ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
-        ngx_http_upstream_drizzle_peer_data_t *dp,
-        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+    ngx_http_upstream_drizzle_peer_data_t *dp,
+    ngx_http_upstream_drizzle_srv_conf_t *dscf)
 {
     ngx_queue_t                             *q, *cache;
     ngx_http_drizzle_keepalive_cache_t      *item;
@@ -253,9 +253,8 @@ ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
 
 void
 ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
-        ngx_http_upstream_drizzle_peer_data_t *dp,
-        ngx_http_upstream_drizzle_srv_conf_t *dscf,
-        ngx_uint_t  state)
+    ngx_http_upstream_drizzle_peer_data_t *dp,
+    ngx_http_upstream_drizzle_srv_conf_t *dscf, ngx_uint_t state)
 {
     ngx_uint_t                               status;
     ngx_http_drizzle_keepalive_cache_t      *item;

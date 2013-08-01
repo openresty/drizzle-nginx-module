@@ -299,7 +299,7 @@ ngx_http_drizzle_abort_request(ngx_http_request_t *r)
 
 static void
 ngx_http_drizzle_finalize_request(ngx_http_request_t *r,
-        ngx_int_t rc)
+    ngx_int_t rc)
 {
 }
 

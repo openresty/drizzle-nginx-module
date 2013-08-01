@@ -286,7 +286,7 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
 static char *
 ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf)
+    void *conf)
 {
     char                             *p = conf;
     ngx_http_complex_value_t        **field;
@@ -538,7 +538,7 @@ ngx_http_drizzle_add_variables(ngx_conf_t *cf)
 
 static ngx_int_t
 ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
-        ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_http_variable_value_t *v, uintptr_t data)
 {
     v->valid = 1;
     v->no_cacheable = 0;

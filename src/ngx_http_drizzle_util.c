@@ -30,7 +30,7 @@ static void ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
 
 ngx_int_t
 ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
-        ngx_str_t *value)
+    ngx_str_t *value)
 {
     ngx_table_elt_t             *h;
     ngx_list_part_t             *part;
@@ -984,7 +984,7 @@ ngx_http_upstream_dbd_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 ngx_int_t
 ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
-        ngx_http_upstream_t *u)
+    ngx_http_upstream_t *u)
 {
     ngx_http_drizzle_loc_conf_t    *dlcf;
     size_t                          size;

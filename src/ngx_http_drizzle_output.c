@@ -47,7 +47,7 @@ static ngx_int_t ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
 
 ngx_int_t
 ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
-        drizzle_result_st *res)
+    drizzle_result_st *res)
 {
     u_char                          *pos, *last;
     ngx_int_t                        rc;
@@ -189,7 +189,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
 ngx_int_t
 ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp)
+    ngx_http_upstream_drizzle_peer_data_t *dp)
 {
     ngx_http_upstream_t                    *u = r->upstream;
     ngx_int_t                               rc;
@@ -403,7 +403,7 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
 
 ngx_int_t
 ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
-        size_t len, size_t total, drizzle_field_t field)
+    size_t len, size_t total, drizzle_field_t field)
 {
     u_char                              *pos, *last;
     ngx_http_upstream_t                 *u = r->upstream;
@@ -562,7 +562,7 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
 
 static u_char *
 ngx_http_drizzle_request_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
     ngx_int_t                rc;
     u_char                  *p;
@@ -591,7 +591,7 @@ ngx_http_drizzle_request_mem(ngx_http_request_t *r,
 
 static ngx_int_t
 ngx_http_drizzle_get_buf(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp)
+    ngx_http_upstream_drizzle_peer_data_t *dp)
 {
     ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
     ngx_http_upstream_t                 *u = dp->upstream;
@@ -629,7 +629,7 @@ ngx_http_drizzle_get_buf(ngx_http_request_t *r,
 
 static u_char *
 ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
     u_char          *p;
 
@@ -661,7 +661,7 @@ alloc:
 
 static ngx_int_t
 ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
     ngx_chain_t             *cl;
     ngx_int_t                rc;

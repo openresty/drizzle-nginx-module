@@ -126,8 +126,8 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
 static ngx_int_t
 ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc)
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc)
 {
     drizzle_return_t             ret;
 
@@ -172,8 +172,8 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
 
 static ngx_int_t
 ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc)
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc)
 {
     ngx_http_upstream_t         *u = r->upstream;
     drizzle_return_t             ret;
@@ -294,8 +294,8 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
 static ngx_int_t
 ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc)
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc)
 {
     drizzle_column_st               *col;
     ngx_int_t                        rc;
@@ -369,8 +369,8 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
 static ngx_int_t
 ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc)
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc)
 {
     ngx_http_upstream_t             *u = r->upstream;
     ngx_int_t                        rc;
@@ -511,8 +511,8 @@ io_wait:
 
 void
 ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
-        ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp,
-        ngx_int_t rc)
+    ngx_http_upstream_t *u, ngx_http_upstream_drizzle_peer_data_t *dp,
+    ngx_int_t rc)
 {
     ngx_connection_t            *c;
 

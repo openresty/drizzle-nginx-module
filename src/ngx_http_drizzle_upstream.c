@@ -80,7 +80,7 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
  * Copyright (C) Igor Sysoev */
 char *
 ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf)
+    void *conf)
 {
     ngx_http_upstream_drizzle_srv_conf_t        *dscf = conf;
     ngx_http_upstream_drizzle_server_t          *ds;
@@ -296,7 +296,7 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
 
 static ngx_int_t
 ngx_http_upstream_drizzle_init(ngx_conf_t *cf,
-        ngx_http_upstream_srv_conf_t *uscf)
+    ngx_http_upstream_srv_conf_t *uscf)
 {
     ngx_uint_t                               i, j, n;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
@@ -851,7 +851,7 @@ failed:
 
 static void
 ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
-        void *data, ngx_uint_t state)
+    void *data, ngx_uint_t state)
 {
     ngx_http_upstream_drizzle_peer_data_t   *dp = data;
     ngx_http_upstream_drizzle_srv_conf_t    *dscf;
@@ -928,8 +928,8 @@ ngx_http_upstream_drizzle_is_my_peer(const ngx_peer_connection_t    *peer)
 
 void
 ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
-        ngx_connection_t *c, drizzle_con_st *dc,
-        ngx_http_upstream_drizzle_srv_conf_t *dscf)
+    ngx_connection_t *c, drizzle_con_st *dc,
+    ngx_http_upstream_drizzle_srv_conf_t *dscf)
 {
     ngx_event_t  *rev, *wev;
 
