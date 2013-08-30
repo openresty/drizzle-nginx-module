@@ -56,7 +56,9 @@ go
 buildroot/
 pack
 t/servroot/
-build1[0-3]
+build1[0-9]
+*.plist
+Makefile
 *.patch
 analyze
 *.html
