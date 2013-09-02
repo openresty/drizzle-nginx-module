@@ -18,7 +18,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.5](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 27 March 2013.
+This document describes ngx_drizzle [v0.1.6](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 2 September 2013.
 
 Synopsis
 ========
@@ -584,11 +584,11 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/chaoslawful/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.4.1 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.4.2 (see [nginx compatibility](http://wiki.nginx.org/HttpDrizzleModule#Compatibility)), and then build the source with this module:
 
-        wget 'http://nginx.org/download/nginx-1.4.1.tar.gz'
-        tar -xzvf nginx-1.4.1.tar.gz
-        cd nginx-1.4.1/
+        wget 'http://nginx.org/download/nginx-1.4.2.tar.gz'
+        tar -xzvf nginx-1.4.2.tar.gz
+        cd nginx-1.4.2/
       
         # if you have installed libdrizzle to the prefix /opt/drizzle, then
         # specify the following environments:
@@ -614,7 +614,8 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.4.x (last tested: 1.4.1)
+* 1.5.x (last tested: 1.5.4)
+* 1.4.x (last tested: 1.4.2)
 * 1.3.x (last tested: 1.3.7)
 * 1.2.x (last tested: 1.2.7)
 * 1.1.x (last tested: 1.1.5)
