@@ -617,7 +617,7 @@ The following versions of Nginx should work with this module:
 * 1.5.x (last tested: 1.5.4)
 * 1.4.x (last tested: 1.4.2)
 * 1.3.x (last tested: 1.3.7)
-* 1.2.x (last tested: 1.2.7)
+* 1.2.x (last tested: 1.2.9)
 * 1.1.x (last tested: 1.1.5)
 * 1.0.x (last tested: 1.0.8)
 * 0.8.x (last tested: 0.8.55)
