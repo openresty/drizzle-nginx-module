@@ -10,6 +10,55 @@ drizzle-nginx-module - Upstream module for talking to MySQL and Drizzle directly
 
 *This module is not distributed with the Nginx source.* See [the installation instructions](#installation).
 
+Table of Contents
+=================
+
+* [Status](#status)
+* [Version](#version)
+* [Synopsis](#synopsis)
+* [Description](#description)
+    * [Keepalive connection pool](#keepalive-connection-pool)
+    * [Last Insert ID](#last-insert-id)
+* [Directives](#directives)
+    * [drizzle_server](#drizzle_server)
+    * [drizzle_keepalive](#drizzle_keepalive)
+    * [drizzle_query](#drizzle_query)
+    * [drizzle_pass](#drizzle_pass)
+    * [drizzle_connect_timeout](#drizzle_connect_timeout)
+    * [drizzle_send_query_timeout](#drizzle_send_query_timeout)
+    * [drizzle_recv_cols_timeout](#drizzle_recv_cols_timeout)
+    * [drizzle_recv_rows_timeout](#drizzle_recv_rows_timeout)
+    * [drizzle_buffer_size](#drizzle_buffer_size)
+    * [drizzle_module_header](#drizzle_module_header)
+    * [drizzle_status](#drizzle_status)
+* [Variables](#variables)
+    * [$drizzle_thread_id](#drizzle_thread_id)
+* [Output Format](#output-format)
+    * [RDS Header Part](#rds-header-part)
+    * [RDS Body Part](#rds-body-part)
+        * [Columns](#columns)
+        * [Rows](#rows)
+            * [Row Flag](#row-flag)
+            * [Fields Data](#fields-data)
+    * [RDS buffer Limitations](#rds-buffer-limitations)
+* [Status Code](#status-code)
+* [Caveats](#caveats)
+* [Trouble Shooting](#trouble-shooting)
+* [Known Issues](#known-issues)
+* [Installation](#installation)
+* [Compatibility](#compatibility)
+* [Community](#community)
+    * [English Mailing List](#english-mailing-list)
+    * [Chinese Mailing List](#chinese-mailing-list)
+* [Report Bugs](#report-bugs)
+* [Source Repository](#source-repository)
+* [Test Suite](#test-suite)
+* [TODO](#todo)
+* [Changes](#changes)
+* [Authors](#authors)
+* [Copyright & License](#copyright--license)
+* [See Also](#see-also)
+
 Status
 ======
 
@@ -66,6 +115,8 @@ Synopsis
     }
 
 
+[Back to TOC](#table-of-contents)
+
 Description
 ===========
 
@@ -74,6 +125,8 @@ This is an nginx upstream module integrating [libdrizzle](https://launchpad.net/
 Essentially it provides a very efficient and flexible way for nginx internals to access MySQL, Drizzle, as well as other RDBMS's that support the Drizzle or MySQL wired protocol. Also it can serve as a direct REST interface to those RDBMS backends.
 
 This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components, like [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module), [rds-csv-nginx-module](http://github.com/agentzh/rds-csv-nginx-module), or [lua-rds-parser](http://github.com/agentzh/lua-rds-parser), to work with this module. See [Output Format](#output-format) for details.
+
+[Back to TOC](#table-of-contents)
 
 Keepalive connection pool
 -------------------------
@@ -93,6 +146,8 @@ Here's a sample configuration:
 For now, the connection pool uses a simple LIFO algorithm to assign idle connections in the pool. That is, most recently (successfully) used connections will be reused first the next time. And new idle connections will always replace the oldest idle connections in the pool even if the pool is already full.
 
 See the [drizzle_keepalive](#drizzle_keepalive) directive for more details.
+
+[Back to TOC](#table-of-contents)
 
 Last Insert ID
 --------------
@@ -125,8 +180,12 @@ Then request `GET /test` gives the following outputs:
 
 You can see the `insert_id` field (as well as the `affected_rows` field in the 3rd JSON response.
 
+[Back to TOC](#table-of-contents)
+
 Directives
 ==========
+
+[Back to TOC](#table-of-contents)
 
 drizzle_server
 --------------
@@ -170,6 +229,8 @@ The following options are supported:
 
 Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
+[Back to TOC](#table-of-contents)
+
 drizzle_keepalive
 -----------------
 **syntax:** *drizzle_keepalive max=&lt;size&gt; mode=&lt;mode&gt;*
@@ -190,6 +251,8 @@ The following options are supported:
 
 **overflow=**`<action>`
 	This option specifies what to do when the connection pool is already full while new database connection is required. Either `reject` or `ignore` can be specified. In case of `reject`, it will reject the current request, and returns the `503 Service Unavailable` error page. For `ignore`, this module will go on creating a new database connection.
+
+[Back to TOC](#table-of-contents)
 
 drizzle_query
 -------------
@@ -212,6 +275,8 @@ Nginx variable interpolation is supported, but you must be careful with SQL inje
         drizzle_pass my_backend;
     }
 
+
+[Back to TOC](#table-of-contents)
 
 drizzle_pass
 ------------
@@ -239,6 +304,8 @@ Nginx variables can also be interpolated into the `<remote>` argument, so as to 
     }
 
 
+[Back to TOC](#table-of-contents)
+
 drizzle_connect_timeout
 -----------------------
 **syntax:** *drizzle_connect_time &lt;time&gt;*
@@ -250,6 +317,8 @@ drizzle_connect_timeout
 Specify the (total) timeout for connecting to a remote Drizzle or MySQL server.
 
 The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, i.e., "second". The default setting is `60s`.
+
+[Back to TOC](#table-of-contents)
 
 drizzle_send_query_timeout
 --------------------------
@@ -263,6 +332,8 @@ Specify the (total) timeout for sending a SQL query to a remote Drizzle or MySQL
 
 The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
+[Back to TOC](#table-of-contents)
+
 drizzle_recv_cols_timeout
 -------------------------
 **syntax:** *drizzle_recv_cols_timeout &lt;time&gt;*
@@ -274,6 +345,8 @@ drizzle_recv_cols_timeout
 Specify the (total) timeout for receiving the columns metadata of the result-set to a remote Drizzle or MySQL server.
 
 The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
+
+[Back to TOC](#table-of-contents)
 
 drizzle_recv_rows_timeout
 -------------------------
@@ -287,6 +360,8 @@ Specify the (total) timeout for receiving the rows data of the result-set (if an
 
 The `<time>` argument can be an integer, with an optional time unit, like `s` (second), `ms` (millisecond), `m` (minute). The default time unit is `s`, ie, "second". The default setting is `60s`.
 
+[Back to TOC](#table-of-contents)
+
 drizzle_buffer_size
 -------------------
 **syntax:** *drizzle_buffer_size &lt;size&gt;*
@@ -296,6 +371,8 @@ drizzle_buffer_size
 **context:** *http, server, location, location if*
 
 Specify the buffer size for drizzle outputs. Default to the page size (4k/8k). The larger the buffer, the less streammy the outputing process will be.
+
+[Back to TOC](#table-of-contents)
 
 drizzle_module_header
 ---------------------
@@ -312,6 +389,8 @@ The drizzle module header looks like this:
 
     X-Resty-DBD-Module: ngx_drizzle 0.1.0
 
+
+[Back to TOC](#table-of-contents)
 
 drizzle_status
 --------------
@@ -348,10 +427,14 @@ The output looks like this:
 
 Note that, this is *not* the global statistics if you do have multiple Nginx worker processes configured in your `nginx.conf`.
 
+[Back to TOC](#table-of-contents)
+
 Variables
 =========
 
 This module creates the following Nginx variables:
+
+[Back to TOC](#table-of-contents)
 
 $drizzle_thread_id
 ------------------
@@ -401,6 +484,8 @@ where we make use of [headers-more-nginx-module](http://github.com/agentzh/heade
 
 Such that, their output filters will work in the *reversed* order, i.e., first convert RDS to JSON, and then add our `X-Mysql-Tid` custom header, and finally capture the whole (subrequest) response with the Lua module. You're recommended to use the [OpenResty bundle](http://openresty.org/) though, it ensures the module building order automatically for you.
 
+[Back to TOC](#table-of-contents)
+
 Output Format
 =============
 
@@ -419,6 +504,8 @@ For the HTTP response header part, the `200 OK` status code should always be ret
 where `0.1.0` is this module's own version number. This `X-Resty-DBD-Module` header is optional though.
 
 Below is the HTTP response body format (version 0.0.3):
+
+[Back to TOC](#table-of-contents)
 
 RDS Header Part
 ---------------
@@ -454,6 +541,8 @@ The RDS Header Part consists of the following fields:
 
 **uint16_t**
 	column count
+
+[Back to TOC](#table-of-contents)
 
 RDS Body Part
 -------------
@@ -505,6 +594,8 @@ The Fields Data consists zero or more fields of data. The field count is predete
 **u_char ***
 	field data in textual representation), is empty (0) if field length == (uint32_t) -1
 
+[Back to TOC](#table-of-contents)
+
 RDS buffer Limitations
 ----------------------
 
@@ -518,10 +609,14 @@ On the nginx output chain link level, the following components should be put int
 
 * each field in each row (if any) but the field data can span multiple bufs.
 
+[Back to TOC](#table-of-contents)
+
 Status Code
 ===========
 
 If the MySQL error code in MySQL's query result is not OK, then a 500 error page is returned by this module, except for the table non-existent error, which results in the `410 Gone` error page.
+
+[Back to TOC](#table-of-contents)
 
 Caveats
 =======
@@ -529,6 +624,8 @@ Caveats
 * Other usptream modules like `upstream_hash` and [HttpUpstreamKeepaliveModule](http://wiki.nginx.org/HttpUpstreamKeepaliveModule) *must not* be used with this module in a single upstream block.
 * Directives like [server](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#server) *must not* be mixed with [drizzle_server](#drizzle_server) either.
 * Upstream backends that don't use [drizzle_server](#drizzle_server) to define server entries *must not* be used in the [drizzle_pass](#drizzle_pass) directive.
+
+[Back to TOC](#table-of-contents)
 
 Trouble Shooting
 ================
@@ -549,12 +646,16 @@ Trouble Shooting
 
 	Note that the `--protocol=tcp` option is required here, or your MySQL client may use Unix Domain Socket to connect to your MySQL server.
 
+[Back to TOC](#table-of-contents)
+
 Known Issues
 ============
 
 * Calling mysql procedures are currently not supported because the underlying libdrizzle library does not support the `CLIENT_MULTI_RESULTS` flag yet :( But we'll surely work on it.
 * Multiple SQL statements in a single query are not supported due to the lack of `CLIENT_MULTI_STATEMENTS` support in the underlying libdrizzle library.
 * This module does not (yet) work with the `RTSIG` event model.
+
+[Back to TOC](#table-of-contents)
 
 Installation
 ============
@@ -605,6 +706,8 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 
 You usually also need [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) to obtain JSON output from the binary RDS output generated by this upstream module.
 
+[Back to TOC](#table-of-contents)
+
 Compatibility
 =============
 
@@ -627,18 +730,26 @@ Earlier versions of Nginx like `0.6.x` and `0.5.x` will *not* work.
 
 If you find that any particular version of Nginx above `0.7.44` does not work with this module, please consider reporting a bug.
 
+[Back to TOC](#table-of-contents)
+
 Community
 =========
+
+[Back to TOC](#table-of-contents)
 
 English Mailing List
 --------------------
 
 The [openresty-en](https://groups.google.com/group/openresty-en) mailing list is for English speakers.
 
+[Back to TOC](#table-of-contents)
+
 Chinese Mailing List
 --------------------
 
 The [openresty](https://groups.google.com/group/openresty) mailing list is for Chinese speakers.
+
+[Back to TOC](#table-of-contents)
 
 Report Bugs
 ===========
@@ -648,10 +759,14 @@ Please submit bug reports, wishlists, or patches by
 1. creating a ticket on the [issue tracking interface](http://github.com/chaoslawful/drizzle-nginx-module/issues) provided by GitHub,
 1. or sending an email to the [OpenResty community](#community).
 
+[Back to TOC](#table-of-contents)
+
 Source Repository
 =================
 
 Available on github at [chaoslawful/drizzle-nginx-module](http://github.com/chaoslawful/drizzle-nginx-module).
+
+[Back to TOC](#table-of-contents)
 
 Test Suite
 ==========
@@ -667,6 +782,8 @@ To run it on your side:
 
 Because a single nginx server (by default, `localhost:1984`) is used across all the test scripts (`.t` files), it's meaningless to run the test suite in parallel by specifying `-jN` when invoking the `prove` utility.
 
+[Back to TOC](#table-of-contents)
+
 TODO
 ====
 * add the MySQL transaction support.
@@ -680,6 +797,8 @@ TODO
 * add Unix domain socket support in the `drizzle_server` directive.
 * make the [drizzle_query](#drizzle_query) directive reject variables that have not been processed by a [drizzle_process](#drizzle_process) directive. This will pretect us from SQL injections. There will also be an option ("strict=no") to disable such checks.
 
+[Back to TOC](#table-of-contents)
+
 Changes
 =======
 
@@ -687,12 +806,16 @@ The changes of every release of this module can be obtained from the ngx_openres
 
 <http://openresty.org/#Changes>
 
+[Back to TOC](#table-of-contents)
+
 Authors
 =======
 
 * chaoslawful (王晓哲) <chaoslawful at gmail dot com>
 * Yichun "agentzh" Zhang (章亦春) <agentzh at gmail dot com>, CloudFlare Inc.
 * Piotr Sikora <piotr.sikora at frickle dot com>, CloudFlare Inc.
+
+[Back to TOC](#table-of-contents)
 
 Copyright & License
 ===================
@@ -714,6 +837,8 @@ Redistribution and use in source and binary forms, with or without modification,
 * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+[Back to TOC](#table-of-contents)
 
 See Also
 ========
