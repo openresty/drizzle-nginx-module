@@ -72,6 +72,7 @@ This document describes ngx_drizzle [v0.1.6](https://github.com/chaoslawful/driz
 Synopsis
 ========
 
+```nginx
 
     http {
         ...
@@ -113,7 +114,7 @@ Synopsis
             }
         }
     }
-
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -135,13 +136,14 @@ This module also provides a builtin per-worker connection pool mechanism for MyS
 
 Here's a sample configuration:
 
+```nginx
 
     upstream backend {
         drizzle_server 127.0.0.1:3306 dbname=test
              password=some_pass user=monty protocol=mysql;
         drizzle_keepalive max=100 mode=single overflow=reject;
     }
-
+```
 
 For now, the connection pool uses a simple LIFO algorithm to assign idle connections in the pool. That is, most recently (successfully) used connections will be reused first the next time. And new idle connections will always replace the oldest idle connections in the pool even if the pool is already full.
 
@@ -152,6 +154,7 @@ See the [drizzle_keepalive](#drizzle_keepalive) directive for more details.
 Last Insert ID
 --------------
 If you want to get LAST_INSERT_ID, then ngx_drizzle already returns that automatically for you when you're doing a SQL insert query. Consider the following sample `nginx.conf` snippet:
+```nginx
 
     location /test {
         echo_location /mysql "drop table if exists foo";
@@ -170,14 +173,15 @@ If you want to get LAST_INSERT_ID, then ngx_drizzle already returns that automat
         drizzle_query $query_string;
         rds_json on;
     }
-
+```
 Then request `GET /test` gives the following outputs:
+```javascript
 
     {"errcode":0}
     {"errcode":0}
     {"errcode":0,"insert_id":1,"affected_rows":1}
     [{"id":1,"val":3.1415926}]
-
+```
 You can see the `insert_id` field (as well as the `affected_rows` field in the 3rd JSON response.
 
 [Back to TOC](#table-of-contents)
@@ -207,10 +211,11 @@ The following options are supported:
 **password=**`<pass>`
 	Specify mysql password `<pass>`for login. If you have special characters like `#` or spaces in your password text, then you'll have to quote the whole key-value pair with either single-quotes or double-quotes, as in
 
+```nginx
 
     drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
             dbname=test protocol=mysql;
-
+```
 
 **dbname=**`<database>`
 	Specify default MySQL database `<database>` for the connection. Note that MySQL does allow referencing tables belonging to different databases by qualifying table names with database names in SQL queries.
@@ -222,11 +227,12 @@ The following options are supported:
 	Explicitly specify the character set for the MySQL connections. Setting this option to a non-empty value will make this module send out a `set names '<charset>'` query right after the mysql connection is established.
 	If the default character encoding of the MySQL connection is already what you want, you needn't set this option because it has extra runtime cost.
 	Here is a small example:
+```nginx
 
     drizzle_server foo.bar.com:3306 user=monty password=some_pass
                                     dbname=test protocol=mysql
                                     charset=utf8;
-
+```
 Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
 [Back to TOC](#table-of-contents)
@@ -266,6 +272,7 @@ Specify the SQL queries sent to the Drizzle/MySQL backend.
 
 Nginx variable interpolation is supported, but you must be careful with SQL injection attacks. You can use the [set_quote_sql_str](http://github.com/agentzh/set-misc-nginx-module#set_quote_sql_str) directive, for example, to quote values for SQL interpolation:
 
+```nginx
 
     location /cat {
         set_unescape_uri $name $arg_name;
@@ -274,7 +281,7 @@ Nginx variable interpolation is supported, but you must be careful with SQL inje
         drizzle_query "select * from cats where name = $quoted_name";
         drizzle_pass my_backend;
     }
-
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -291,6 +298,7 @@ drizzle_pass
 This directive specifies the Drizzle or MySQL upstream name to be queried in the current location. The `<remote>` argument can be any upstream name defined with the [drizzle_server](#drizzle_server) directive.
 
 Nginx variables can also be interpolated into the `<remote>` argument, so as to do dynamic backend routing, for example:
+```nginx
 
     upstream moon { drizzle_server ...; }
 
@@ -302,7 +310,7 @@ Nginx variables can also be interpolated into the `<remote>` argument, so as to 
             drizzle_pass $backend;
         }
     }
-
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -442,6 +450,7 @@ $drizzle_thread_id
 This variable will be assigned a textual number of the underlying MySQL or Drizzle query thread ID when the current SQL query times out. This thread ID can be further used in a SQL kill command to cancel the timed-out query.
 
 Here's an example:
+```nginx
 
     drizzle_connect_timeout 1s;
     drizzle_send_query_timeout 2s;
@@ -475,7 +484,7 @@ Here's an example:
             ngx.print(res.body)
         '
     }
-
+```
 where we make use of [headers-more-nginx-module](http://github.com/agentzh/headers-more-nginx-module), [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module), and [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
 
 * [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module)
@@ -641,9 +650,10 @@ Trouble Shooting
           (using password: YES) while connecting to drizzle upstream, ...
 
 	You should check if your MySQL account does have got TCP login access on your MySQL server side. A quick check is to use MySQL's official client to connect to your server:
+```bash
 
         mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
-
+```
 	Note that the `--protocol=tcp` option is required here, or your MySQL client may use Unix Domain Socket to connect to your MySQL server.
 
 [Back to TOC](#table-of-contents)
@@ -668,24 +678,27 @@ The installation steps are usually as simple as `./configure --with-http_drizzle
 Alternatively, you can compile this module with Nginx core's source by hand:
 
 * You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [<https://launchpad.net/drizzle]>(https://launchpad.net/drizzle). The latest drizzle7 release does not support building libdrizzle 1.0 separately and requires a lot of external dependencies like Boost and Protobuf which are painful to install. The last version supporting building libdrizzle 1.0 separately is `2011.07.21`. You can download it from <http://agentzh.org/misc/nginx/drizzle7-2011.07.21.tar.gz> . Which this version of drizzle7, installation of libdrizzle 1.0 is usually as simple as
+```nginx
 
         tar xzvf drizzle7-2011.07.21.tar.gz
         cd drizzle7-2011.07.21/
         ./configure --without-server
         make libdrizzle-1.0
         make install-libdrizzle-1.0
-
+```
 	Ensure that you have the `python` command point to a `python2` interpreter. It's known that on recent : Arch Linux distribution, `python` is linked to `python3` by default, and while running `make libdrizzle-1.0` will yield the error
+```bash
 
         File "config/pandora-plugin", line 185
             print "Dependency loop detected with %s" % plugin['name']
                                                      ^
         SyntaxError: invalid syntax
         make: *** [.plugin.scan] Error 1
-
+```
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/chaoslawful/drizzle-nginx-module/tags).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.4.2 (see [nginx compatibility](#compatibility)), and then build the source with this module:
+```bash
 
         wget 'http://nginx.org/download/nginx-1.4.2.tar.gz'
         tar -xzvf nginx-1.4.2.tar.gz
@@ -702,7 +715,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
       
         make -j2
         make install
-
+```
 
 You usually also need [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) to obtain JSON output from the binary RDS output generated by this upstream module.
 
@@ -776,9 +789,10 @@ This module comes with a Perl-driven test suite. The [test cases](http://github.
 
 To run it on your side:
 
+```bash
 
     $ PATH=/path/to/your/nginx-with-echo-module:$PATH prove -r t
-
+```
 
 Because a single nginx server (by default, `localhost:1984`) is used across all the test scripts (`.t` files), it's meaningless to run the test suite in parallel by specifying `-jN` when invoking the `prove` utility.
 
