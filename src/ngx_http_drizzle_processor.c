@@ -228,9 +228,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
         if (ret == DRIZZLE_RETURN_ERROR_CODE) {
             if (drizzle_error_code(dc->drizzle) == MYSQL_ER_NO_SUCH_TABLE) {
                 ngx_log_error(NGX_LOG_NOTICE, c->log, 0,
-                               "failed to send query: %i (%d): %s",
-                               ret, drizzle_error_code(dc->drizzle),
-                               drizzle_error(dc->drizzle));
+                              "failed to send query: %i (%d): %s",
+                              ret, drizzle_error_code(dc->drizzle),
+                              drizzle_error(dc->drizzle));
 
                 if (dp->enable_charset && ! dp->has_set_names) {
                     c->log->action = "sending query to drizzle upstream";
@@ -247,9 +247,9 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 #endif
 
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "failed to send query: %d (%d): %s",
-                       (int) ret, drizzle_error_code(dc->drizzle),
-                       drizzle_error(dc->drizzle));
+                      "failed to send query: %d (%d): %s",
+                      (int) ret, drizzle_error_code(dc->drizzle),
+                      drizzle_error(dc->drizzle));
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
