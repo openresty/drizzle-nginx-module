@@ -1,9 +1,14 @@
-/* Copyright (C) agentzh */
+
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_handler.h"
@@ -664,4 +669,3 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
 
     return ngx_http_output_filter(r, cl);
 }
-

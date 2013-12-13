@@ -1,7 +1,14 @@
+
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
+
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include <ngx_core.h>
 #include <ngx_http.h>
@@ -54,4 +61,3 @@ ngx_http_drizzle_check_keyword(ngx_str_t *value, void *data)
     /* TODO */
     return NGX_OK;
 }
-

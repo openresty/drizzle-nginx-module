@@ -1,20 +1,24 @@
-/* Copyright (C) Maxim Dounin */
-/* Copyright (C) agentzh */
+
+/*
+ * Copyright (C) Xiaozhe Wang (chaoslawful)
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
 
+
 #include "ngx_http_drizzle_keepalive.h"
 #include "ngx_http_drizzle_util.h"
-
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <nginx.h>
 
-static void ngx_http_drizzle_keepalive_dummy_handler(ngx_event_t *ev);
 
+static void ngx_http_drizzle_keepalive_dummy_handler(ngx_event_t *ev);
 static void ngx_http_drizzle_keepalive_close_handler(ngx_event_t *ev);
 
 
@@ -38,7 +42,7 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
     for (i = 1; i < cf->args->nelts; i++) {
 
         if (ngx_http_drizzle_strcmp_const(value[i].data, "max=")
-                == 0)
+            == 0)
         {
             len = value[i].len - (sizeof("max=") - 1);
             data = &value[i].data[sizeof("max=") - 1];
@@ -135,7 +139,8 @@ ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,
     /* allocate cache items and add to free queue */
 
     cached = ngx_pcalloc(pool,
-                sizeof(ngx_http_drizzle_keepalive_cache_t) * dscf->max_cached);
+                         sizeof(ngx_http_drizzle_keepalive_cache_t)
+                         * dscf->max_cached);
     if (cached == NULL) {
         return NGX_ERROR;
     }
@@ -161,7 +166,7 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
     ngx_queue_t                             *q;
     ngx_connection_t                        *c;
 
-    if (! ngx_queue_empty(&dscf->cache)) {
+    if (!ngx_queue_empty(&dscf->cache)) {
         dd("getting cached mysql connection...");
 
         q = ngx_queue_head(&dscf->cache);
@@ -222,7 +227,7 @@ ngx_http_drizzle_keepalive_get_peer_multi(ngx_peer_connection_t *pc,
          * as well? */
         if (ngx_memn2cmp((u_char *) &item->sockaddr, (u_char *) pc->sockaddr,
                          item->socklen, pc->socklen)
-                == 0)
+            == 0)
         {
             ngx_queue_remove(q);
             ngx_queue_insert_head(&dscf->free, q);
@@ -402,4 +407,3 @@ close:
     ngx_queue_remove(&item->queue);
     ngx_queue_insert_head(&dscf->free, &item->queue);
 }
-

@@ -1,9 +1,15 @@
-/* Copyright (C) Igor Sysoev */
+
+/*
+ * Copyright (C) Igor Sysoev
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_util.h"
@@ -15,15 +21,15 @@
 
 
 static ngx_int_t ngx_http_upstream_dbd_reinit(ngx_http_request_t *r,
-        ngx_http_upstream_t *u);
+    ngx_http_upstream_t *u);
 static void ngx_http_upstream_dbd_handler(ngx_event_t *ev);
 static void ngx_http_upstream_dbd_connect(ngx_http_request_t *r,
-        ngx_http_upstream_t *u);
+    ngx_http_upstream_t *u);
 static void ngx_http_upstream_dbd_cleanup(void *data);
 static void ngx_http_upstream_dbd_wr_check_broken_connection(
-        ngx_http_request_t *r);
+    ngx_http_request_t *r);
 static void ngx_http_upstream_dbd_rd_check_broken_connection(
-        ngx_http_request_t *r);
+    ngx_http_request_t *r);
 static void ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
     ngx_event_t *ev);
 
@@ -54,9 +60,7 @@ ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
         }
 
         if (h[i].key.len == key->len
-                && ngx_strncasecmp(h[i].key.data,
-                    key->data,
-                    h[i].key.len) == 0)
+            && ngx_strncasecmp(h[i].key.data, key->data, h[i].key.len) == 0)
         {
             if (value->len == 0) {
                 h[i].hash = 0;
@@ -247,7 +251,7 @@ ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
 
     if (r->connection->error) {
         ngx_http_upstream_drizzle_finalize_request(r, u,
-                                           NGX_HTTP_CLIENT_CLOSED_REQUEST);
+                                              NGX_HTTP_CLIENT_CLOSED_REQUEST);
         return;
     }
 
@@ -307,7 +311,8 @@ ngx_http_upstream_drizzle_test_connect(ngx_connection_t *c)
         if (c->write->pending_eof) {
             c->log->action = "connecting to upstream";
             (void) ngx_connection_error(c, c->write->kq_errno,
-                                    "kevent() reported that connect() failed");
+                                        "kevent() reported that connect() "
+                                        "failed");
             return NGX_ERROR;
         }
 
@@ -419,9 +424,9 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
 
     if (!u->store && !r->post_action && !u->conf->ignore_client_abort) {
         r->read_event_handler =
-            ngx_http_upstream_dbd_rd_check_broken_connection;
+                             ngx_http_upstream_dbd_rd_check_broken_connection;
         r->write_event_handler =
-            ngx_http_upstream_dbd_wr_check_broken_connection;
+                             ngx_http_upstream_dbd_wr_check_broken_connection;
     }
 
     if (r->request_body) {
@@ -456,7 +461,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
     if (r->upstream_states == NULL) {
 
         r->upstream_states = ngx_array_create(r->pool, 1,
-                                            sizeof(ngx_http_upstream_state_t));
+                                           sizeof(ngx_http_upstream_state_t));
         if (r->upstream_states == NULL) {
             ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
@@ -467,7 +472,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
         u->state = ngx_array_push(r->upstream_states);
         if (u->state == NULL) {
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -496,7 +501,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
                 != NGX_OK)
             {
                 ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
                 return;
             }
 
@@ -529,7 +534,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
         ctx = ngx_resolve_start(clcf->resolver, &temp);
         if (ctx == NULL) {
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -566,7 +571,7 @@ found:
 
     if (uscf->peer.init(r, uscf) != NGX_OK) {
         ngx_http_upstream_drizzle_finalize_request(r, u,
-                                           NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
@@ -592,7 +597,7 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state = ngx_array_push(r->upstream_states);
     if (u->state == NULL) {
         ngx_http_upstream_drizzle_finalize_request(r, u,
-                                           NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
@@ -609,7 +614,7 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     if (rc == NGX_ERROR) {
         ngx_http_upstream_drizzle_finalize_request(r, u,
-                                           NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
@@ -656,7 +661,7 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     if (u->request_sent) {
         if (ngx_http_upstream_dbd_reinit(r, u) != NGX_OK) {
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
         }
     }
@@ -674,7 +679,7 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
         u->output.free = ngx_alloc_chain_link(r->pool);
         if (u->output.free == NULL) {
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -754,14 +759,14 @@ ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
 
             if (ngx_del_event(ev, event, 0) != NGX_OK) {
                 ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
                 return;
             }
         }
 
         if (!u->cacheable) {
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                                               NGX_HTTP_CLIENT_CLOSED_REQUEST);
+                                              NGX_HTTP_CLIENT_CLOSED_REQUEST);
         }
 
         return;
@@ -1071,4 +1076,3 @@ ngx_http_drizzle_queue_size(ngx_queue_t *queue)
 
     return n;
 }
-

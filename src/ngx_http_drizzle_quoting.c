@@ -1,13 +1,20 @@
+
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
+
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
 
+
 #include "ngx_http_drizzle_quoting.h"
 #include "ngx_http_drizzle_checker.h"
-
 #include <ngx_core.h>
 #include <ngx_http.h>
+
 
 /* static */ ngx_http_drizzle_var_type_t  ngx_http_drizzle_builtin_types[] = {
     { ngx_string("string"),
@@ -46,4 +53,3 @@
       quotes_type_none
     }
 };
-

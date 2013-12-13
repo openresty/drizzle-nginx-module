@@ -1,9 +1,14 @@
-/* Copyright (C) agentzh */
+
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_output.h"
@@ -30,19 +35,15 @@
 
 
 static ngx_int_t ngx_http_drizzle_get_buf(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp);
-
+    ngx_http_upstream_drizzle_peer_data_t *dp);
 static u_char * ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
-
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 static rds_col_type_t ngx_http_drizzle_std_col_type(
-        drizzle_column_type_t col_type);
-
+    drizzle_column_type_t col_type);
 static u_char * ngx_http_drizzle_request_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
-
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 static ngx_int_t ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
-        ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
+    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 
 
 ngx_int_t
@@ -65,15 +66,13 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     if (dp->enable_charset && ! dp->has_set_names) {
         if (errcode != 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                   "drizzle: FATAL: failed to set names 'utf8' (error %d)",
-                   (int) errcode);
-
+                          "drizzle: FATAL: failed to set names 'utf8' "
+                          "(error %d)", (int) errcode);
             return NGX_ERROR;
         }
 
         if (dp->drizzle_con && dp->drizzle_res.con) {
             dd("before drizzle result free");
-
             dd("%p vs. %p", dp->drizzle_res.con, dp->drizzle_con);
 
             drizzle_result_free(&dp->drizzle_res);
@@ -92,19 +91,18 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     col_count = drizzle_result_column_count(res);
 
-    size = sizeof(uint8_t)      /* endian type */
-         + sizeof(uint32_t)     /* format version */
-         + sizeof(uint8_t)      /* result type */
+    size = sizeof(uint8_t)        /* endian type */
+           + sizeof(uint32_t)     /* format version */
+           + sizeof(uint8_t)      /* result type */
 
-         + sizeof(uint16_t)     /* standard error code */
-         + sizeof(uint16_t)     /* driver-specific error code */
+           + sizeof(uint16_t)     /* standard error code */
+           + sizeof(uint16_t)     /* driver-specific error code */
 
-         + sizeof(uint16_t)     /* driver-specific errstr len */
-         + errstr_len           /* driver-specific errstr data */
-         + sizeof(uint64_t)     /* rows affected */
-         + sizeof(uint64_t)     /* insert id */
-         + sizeof(uint16_t)     /* column count */
-         ;
+           + sizeof(uint16_t)     /* driver-specific errstr len */
+           + errstr_len           /* driver-specific errstr data */
+           + sizeof(uint64_t)     /* rows affected */
+           + sizeof(uint64_t)     /* insert id */
+           + sizeof(uint16_t);    /* column count */
 
     pos = ngx_http_drizzle_request_mem(r, dp, size);
     if (pos == NULL) {
@@ -160,7 +158,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
 
     if ((size_t) (last - pos) != size) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "drizzle: FATAL: output result header buffer error");
+                      "drizzle: FATAL: output result header buffer error");
         return NGX_ERROR;
     }
 
@@ -218,22 +216,15 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         }
     }
 
-    if ( ! u->header_sent && u->out_bufs) {
+    if (!u->header_sent && u->out_bufs) {
         ngx_http_clear_content_length(r);
 
         r->headers_out.status = NGX_HTTP_OK;
 
         /* set the Content-Type header */
-
-        r->headers_out.content_type.data =
-            (u_char *) rds_content_type;
-
-        r->headers_out.content_type.len =
-            rds_content_type_len;
-
-        r->headers_out.content_type_len =
-            rds_content_type_len;
-
+        r->headers_out.content_type.data = (u_char *) rds_content_type;
+        r->headers_out.content_type.len = rds_content_type_len;
+        r->headers_out.content_type_len = rds_content_type_len;
         r->headers_out.content_type_lowcase = NULL;
 
         dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
@@ -289,10 +280,10 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
 
 #if defined(nginx_version) && nginx_version >= 1001004
         ngx_chain_update_chains(r->pool, &u->free_bufs, &u->busy_bufs,
-                &u->out_bufs, u->output.tag);
+                                &u->out_bufs, u->output.tag);
 #else
         ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs,
-                u->output.tag);
+                                u->output.tag);
 #endif
 
         dp->last_out = &u->out_bufs;
@@ -324,10 +315,9 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
     col_name_len = (uint16_t) strlen(col_name);
 
     size = sizeof(uint16_t)     /* std col type */
-         + sizeof(uint16_t)     /* driver-specific col type */
-         + sizeof(uint16_t)     /* col name str len */
-         + col_name_len         /* col name str len */
-         ;
+           + sizeof(uint16_t)     /* driver-specific col type */
+           + sizeof(uint16_t)     /* col name str len */
+           + col_name_len;        /* col name str len */
 
     pos = ngx_http_drizzle_request_mem(r, dp, size);
     if (pos == NULL) {
@@ -365,7 +355,7 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 
     if ((size_t) (last - pos) != size) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "drizzle: FATAL: output column buffer error");
+                      "drizzle: FATAL: output column buffer error");
         return NGX_ERROR;
     }
 
@@ -390,7 +380,6 @@ ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
     }
 
     last = pos;
-
     *last++ = (row != 0);
 
     if (row == 0) {
@@ -438,6 +427,7 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
         /* field total length */
         if (field == NULL) {
             *(uint32_t *) last = (uint32_t) -1;
+
         } else {
             *(uint32_t *) last = (uint32_t) total;
         }
@@ -452,11 +442,10 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 
     if ((size_t) (last - pos) != size) {
         dd("offset %d, len %d, size %d", (int) offset,
-                (int) len, (int) size);
+           (int) len, (int) size);
 
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-               "drizzle: FATAL: output field buffer error");
-
+                      "drizzle: FATAL: output field buffer error");
         return NGX_ERROR;
     }
 
@@ -646,6 +635,7 @@ ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
     return dp->cached.start;
 
 alloc:
+
     p = ngx_palloc(r->pool, len);
     if (p == NULL) {
         return NULL;
@@ -695,8 +685,7 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
             len = postponed_len > conf->buf_size ?
                 postponed_len : conf->buf_size;
 
-            dp->out_buf = ngx_create_temp_buf(r->pool,
-                    len);
+            dp->out_buf = ngx_create_temp_buf(r->pool, len);
 
             if (dp->out_buf == NULL) {
                 return NGX_ERROR;
@@ -706,7 +695,7 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
             dp->out_buf->recycled = 1;
 
             dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
-                    postponed_len);
+                                         postponed_len);
 
             dp->avail_out = len - postponed_len;
 
@@ -796,4 +785,3 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
 
     return NGX_OK;
 }
-

@@ -1,10 +1,15 @@
-/* Copyright (C) chaoslawful */
-/* Copyright (C) agentzh */
+
+/*
+ * Copyright (C) Xiaozhe Wang (chaoslawful)
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_module.h"
@@ -16,20 +21,17 @@
 #define MYSQL_ER_NO_SUCH_TABLE 1146
 
 static ngx_int_t ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc);
-
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc);
 static ngx_int_t ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc);
-
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc);
 static ngx_int_t ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc);
-
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc);
 static ngx_int_t ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
-        ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
-        drizzle_con_st *dc);
+    ngx_connection_t *c, ngx_http_upstream_drizzle_peer_data_t *dp,
+    drizzle_con_st *dc);
 
 
 ngx_int_t
@@ -50,12 +52,12 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     dp = u->peer.data;
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-            "drizzle process events, state: %d", dp->state);
+                   "drizzle process events, state: %d", dp->state);
 
-    if ( ! ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
+    if (!ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "process events: it seems you "
-                       "are using a non-drizzle upstream backend"
+                      "process events: it seems you "
+                      "are using a non-drizzle upstream backend"
         );
 
         return NGX_ERROR;
@@ -85,7 +87,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     default:
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "unknown state: %d", (int) dp->state);
+                      "unknown state: %d", (int) dp->state);
         return NGX_ERROR;
     }
 
@@ -132,13 +134,15 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     drizzle_return_t             ret;
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-            "drizzle connect: user %s, password %s", dc->user, dc->password);
+                   "drizzle connect: user %s, password %s", dc->user,
+                   dc->password);
 
     ret = drizzle_con_connect(dc);
 
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                "drizzle libdrizzle returned IO_WAIT while connecting");
+                       "drizzle libdrizzle returned IO_WAIT while "
+                       "connecting");
 
 #if 0
         if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
@@ -154,10 +158,8 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     }
 
     if (ret != DRIZZLE_RETURN_OK) {
-       ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                       "failed to connect: %d: %s",
-                       (int) ret,
-                       drizzle_error(dc->drizzle));
+       ngx_log_error(NGX_LOG_ERR, c->log, 0, "failed to connect: %d: %s",
+                     (int) ret, drizzle_error(dc->drizzle));
 
        return NGX_ERROR;
     }
@@ -186,7 +188,7 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
 
     if (dp->enable_charset && ! dp->has_set_names) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                "drizzle enables connection charset setting");
+                       "drizzle enables connection charset setting");
 
         query.len = dp->set_names_query->len;
         query.data = dp->set_names_query->data;
@@ -197,14 +199,15 @@ ngx_http_upstream_drizzle_send_query(ngx_http_request_t *r,
     }
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
-            "drizzle sending query \"%V\"", &query);
+                   "drizzle sending query \"%V\"", &query);
 
     (void) drizzle_query(dc, &dp->drizzle_res, (const char *) query.data,
-            query.len, &ret);
+                         query.len, &ret);
 
     if (ret == DRIZZLE_RETURN_IO_WAIT) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                "drizzle libdrizzle returned IO_WAIT while sending query");
+                       "drizzle libdrizzle returned IO_WAIT while sending "
+                       "query");
 
         if (dp->state != state_db_send_query) {
             dp->state = state_db_send_query;
@@ -302,7 +305,7 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
     drizzle_return_t                 ret;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-            "drizzle receive resultset columns");
+                   "drizzle receive resultset columns");
 
     for (;;) {
         col = drizzle_column_read(&dp->drizzle_res, &dp->drizzle_col, &ret);
@@ -331,9 +334,9 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
 
         if (ret != DRIZZLE_RETURN_OK) {
             ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                           "failed to recv cols: %d: %s",
-                           (int) ret,
-                           drizzle_error(dc->drizzle));
+                          "failed to recv cols: %d: %s",
+                          (int) ret,
+                          drizzle_error(dc->drizzle));
 
             return NGX_ERROR;
         }
@@ -354,8 +357,8 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
                 ngx_del_timer(c->read);
             }
 
-            c->log->action = "receiving result set rows "
-                    "from drizzle upstream";
+            c->log->action = "receiving result set rows from drizzle "
+                             "upstream";
 
             return ngx_http_upstream_drizzle_recv_rows(r, c, dp, dc);
         }
@@ -381,11 +384,11 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
     drizzle_field_t                  field;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-            "drizzle receive resultset rows");
+                   "drizzle receive resultset rows");
 
     for (;;) {
         ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                "drizzle receive resultset row %uL", dp->drizzle_row);
+                       "drizzle receive resultset row %uL", dp->drizzle_row);
 
         if (dp->drizzle_row == 0) {
             dp->drizzle_row = drizzle_row_read(&dp->drizzle_res, &ret);
@@ -398,9 +401,9 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
 
             if (ret != DRIZZLE_RETURN_OK) {
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                               "failed to read row: %d: %s",
-                               (int) ret,
-                               drizzle_error(dc->drizzle));
+                              "failed to read row: %d: %s",
+                              (int) ret,
+                              drizzle_error(dc->drizzle));
 
                 return NGX_ERROR;
             }
@@ -440,11 +443,11 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
 
         for (;;) {
             field = drizzle_field_read(&dp->drizzle_res, &offset, &len,
-                                      &total, &ret);
+                                       &total, &ret);
 
             ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                    "drizzle field read: %p (offset %z, len %z)", field,
-                    offset, len);
+                           "drizzle field read: %p (offset %z, len %z)",
+                           field, offset, len);
 
             if (ret == DRIZZLE_RETURN_IO_WAIT) {
                 goto io_wait;
@@ -459,9 +462,9 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
                 drizzle_result_free(&dp->drizzle_res);
 
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
-                               "failed to read row field: %d: %s",
-                               (int) ret,
-                               drizzle_error(dc->drizzle));
+                              "failed to read row field: %d: %s",
+                              (int) ret,
+                              drizzle_error(dc->drizzle));
 
                 return NGX_ERROR;
             }
@@ -478,7 +481,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
 
             if (field) {
                 ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                        "drizzle field value read: %*s", len, field);
+                               "drizzle field value read: %*s", len, field);
             }
         }
 
@@ -517,7 +520,7 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     ngx_connection_t            *c;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-            "drizzle upstream done");
+                   "drizzle upstream done");
 
     (void) ngx_http_drizzle_output_bufs(r, dp);
 
@@ -547,4 +550,3 @@ ngx_http_upstream_drizzle_done(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_finalize_request(r, u, rc);
     dd("after finalize request...");
 }
-

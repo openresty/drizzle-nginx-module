@@ -1,3 +1,9 @@
+
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
+
 #ifndef NGX_HTTP_DRIZZLE_MODULE_H
 #define NGX_HTTP_DRIZZLE_MODULE_H
 
@@ -5,6 +11,7 @@
 #include <ngx_config.h>
 #include <nginx.h>
 #include <ngx_http.h>
+
 
 /* XXX nginx undefines "bool", which breaks the libdrizzle 1.0 API
  * which makes use of "bool" */
@@ -97,5 +104,5 @@ typedef enum {
 
 } ngx_http_drizzle_state_t;
 
-#endif /* NGX_HTTP_DRIZZLE_MODULE_H */
 
+#endif /* NGX_HTTP_DRIZZLE_MODULE_H */

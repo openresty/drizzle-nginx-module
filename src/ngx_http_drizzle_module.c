@@ -1,10 +1,15 @@
-/* Copyright (C) chaoslawful */
-/* Copyright (C) agentzh */
+
+/*
+ * Copyright (C) Xiaozhe Wang (chaoslawful)
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
+
 
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
 #include "ddebug.h"
+
 
 #include "ngx_http_drizzle_module.h"
 #include "ngx_http_drizzle_handler.h"
@@ -19,19 +24,19 @@ static ngx_str_t  ngx_http_drizzle_tid_var_name =
 /* Forward declaration */
 
 static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
-        ngx_command_t *cmd, void *conf);
+    ngx_command_t *cmd, void *conf);
 static char * ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
 static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
-        void *child);
+    void *child);
 static ngx_int_t ngx_http_drizzle_add_variables(ngx_conf_t *cf);
 static ngx_int_t ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
-        ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_http_variable_value_t *v, uintptr_t data);
 static char * ngx_http_drizzle_enable_status(ngx_conf_t *cf,
-        ngx_command_t *cmd, void *conf);
+    ngx_command_t *cmd, void *conf);
 
 
 static ngx_http_variable_t ngx_http_drizzle_variables[] = {
@@ -249,7 +254,7 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_drizzle_loc_conf_t *conf = child;
 
     ngx_conf_merge_value(conf->enable_module_header,
-            prev->enable_module_header, 1);
+                         prev->enable_module_header, 1);
 
     ngx_conf_merge_msec_value(conf->upstream.connect_timeout,
                               prev->upstream.connect_timeout, 60000);
@@ -274,7 +279,7 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     ngx_conf_merge_size_value(conf->buf_size, prev->buf_size,
-            (size_t) ngx_pagesize);
+                              (size_t) ngx_pagesize);
 
     if (conf->tid_var_index == NGX_CONF_UNSET) {
         conf->tid_var_index = prev->tid_var_index;
@@ -353,7 +358,7 @@ ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         dlcf->default_query = ngx_pcalloc(cf->pool,
-                                           sizeof(ngx_drizzle_mixed_t));
+                                          sizeof(ngx_drizzle_mixed_t));
         if (dlcf->default_query == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -396,7 +401,7 @@ next:
 
         if (dlcf->queries == NULL) {
             dlcf->queries = ngx_array_create(cf->pool, 4,
-                                              sizeof(ngx_drizzle_mixed_t));
+                                             sizeof(ngx_drizzle_mixed_t));
             if (dlcf->queries == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -464,7 +469,7 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     dlcf->tid_var_index = ngx_http_get_variable_index(cf,
-            &ngx_http_drizzle_tid_var_name);
+                                              &ngx_http_drizzle_tid_var_name);
 
     if (dlcf->tid_var_index == NGX_ERROR) {
         return NGX_CONF_ERROR;
@@ -483,7 +488,7 @@ ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     n = ngx_http_script_variables_count(&value[1]);
     if (n) {
         dlcf->complex_target = ngx_palloc(cf->pool,
-                sizeof(ngx_http_complex_value_t));
+                                          sizeof(ngx_http_complex_value_t));
         if (dlcf->complex_target == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -557,9 +562,7 @@ ngx_http_drizzle_enable_status(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_core_loc_conf_t                *clcf;
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
-
     clcf->handler = ngx_http_drizzle_status_handler;
 
     return NGX_CONF_OK;
 }
-
