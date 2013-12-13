@@ -12,6 +12,16 @@
 #include "ngx_http_drizzle_upstream.h"
 #include "ngx_http_drizzle_keepalive.h"
 
+
+#ifdef _WIN32
+/* import the POLLIN and POLLOUT flags */
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   define <winsock2.h>
+#endif
+
+
 /* for read/write event handlers */
 
 

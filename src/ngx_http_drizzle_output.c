@@ -298,7 +298,7 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         dp->last_out = &u->out_bufs;
     }
 
-    return NGX_ERROR;
+    /* impossible to reach here */
 }
 
 
@@ -556,7 +556,6 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
     }
 
     /* impossible to reach here */
-    return rds_col_type_unknown;
 }
 
 

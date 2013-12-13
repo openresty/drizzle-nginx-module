@@ -291,7 +291,7 @@ ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
         status = NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    return ngx_http_upstream_drizzle_finalize_request(r, u, status);
+    ngx_http_upstream_drizzle_finalize_request(r, u, status);
 }
 
 

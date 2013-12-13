@@ -363,7 +363,7 @@ ngx_http_upstream_drizzle_recv_cols(ngx_http_request_t *r,
         dd_drizzle_column(col);
     }
 
-    return NGX_OK;
+    /* impossible to reach here */
 }
 
 
@@ -485,7 +485,7 @@ ngx_http_upstream_drizzle_recv_rows(ngx_http_request_t *r,
         dp->drizzle_row = 0;
     }
 
-    return NGX_OK;
+    /* impossible to reach here */
 
 io_wait:
 

@@ -17,6 +17,13 @@
 #include <libdrizzle/drizzle_client.h>
 
 
+#ifdef _WIN32
+/* remove the bad macros defined in libdrizzle/drizzle.h */
+#   undef close
+#   undef snprintf
+#endif
+
+
 #ifndef NGX_HTTP_GONE
 #define NGX_HTTP_GONE 410
 #endif
