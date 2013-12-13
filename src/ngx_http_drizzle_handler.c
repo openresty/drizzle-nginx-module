@@ -23,7 +23,7 @@
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
-#   define <winsock2.h>
+#   include <winsock2.h>
 #endif
 
 
