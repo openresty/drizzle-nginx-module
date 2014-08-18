@@ -67,7 +67,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.7](https://github.com/chaoslawful/drizzle-nginx-module/tags) released on 19 December 2013.
+This document describes ngx_drizzle [v0.1.7](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 December 2013.
 
 Synopsis
 ========
@@ -125,7 +125,7 @@ This is an nginx upstream module integrating [libdrizzle](https://launchpad.net/
 
 Essentially it provides a very efficient and flexible way for nginx internals to access MySQL, Drizzle, as well as other RDBMS's that support the Drizzle or MySQL wired protocol. Also it can serve as a direct REST interface to those RDBMS backends.
 
-This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components, like [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module), [rds-csv-nginx-module](http://github.com/agentzh/rds-csv-nginx-module), or [lua-rds-parser](http://github.com/agentzh/lua-rds-parser), to work with this module. See [Output Format](#output-format) for details.
+This module does not generate human-readable outputs, rather, in a binary format called Resty-DBD-Stream (RDS) designed by ourselves. You usually need other components, like [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module), [rds-csv-nginx-module](http://github.com/openresty/rds-csv-nginx-module), or [lua-rds-parser](http://github.com/openresty/lua-rds-parser), to work with this module. See [Output Format](#output-format) for details.
 
 [Back to TOC](#table-of-contents)
 
@@ -270,7 +270,7 @@ drizzle_query
 
 Specify the SQL queries sent to the Drizzle/MySQL backend.
 
-Nginx variable interpolation is supported, but you must be careful with SQL injection attacks. You can use the [set_quote_sql_str](http://github.com/agentzh/set-misc-nginx-module#set_quote_sql_str) directive, for example, to quote values for SQL interpolation:
+Nginx variable interpolation is supported, but you must be careful with SQL injection attacks. You can use the [set_quote_sql_str](http://github.com/openresty/set-misc-nginx-module#set_quote_sql_str) directive, for example, to quote values for SQL interpolation:
 
 ```nginx
 
@@ -485,11 +485,11 @@ location /main {
     '
 }
 ```
-where we make use of [headers-more-nginx-module](http://github.com/agentzh/headers-more-nginx-module), [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module), and [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
+where we make use of [headers-more-nginx-module](http://github.com/openresty/headers-more-nginx-module), [lua-nginx-module](http://github.com/openresty/lua-nginx-module), and [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
 
-* [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module)
-* [headers-more-nginx-module](http://github.com/agentzh/headers-more-nginx-module)
-* [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module)
+* [lua-nginx-module](http://github.com/openresty/lua-nginx-module)
+* [headers-more-nginx-module](http://github.com/openresty/headers-more-nginx-module)
+* [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module)
 
 Such that, their output filters will work in the *reversed* order, i.e., first convert RDS to JSON, and then add our `X-Mysql-Tid` custom header, and finally capture the whole (subrequest) response with the Lua module. You're recommended to use the [OpenResty bundle](http://openresty.org/) though, it ensures the module building order automatically for you.
 
@@ -502,9 +502,9 @@ This module generates binary query results in a format that is shared among the 
 
 If you're a web app developer, you may be more interested in
 
-* using [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) to obtain JSON output,
-* using [rds-csv-nginx-module](http://github.com/agentzh/rds-csv-nginx-module) to obain Comma-Separated-Value (CSV) output,
-* or using [lua-rds-parser](http://github.com/agentzh/lua-rds-parser) to parse the RDS data into Lua data structures.
+* using [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) to obtain JSON output,
+* using [rds-csv-nginx-module](http://github.com/openresty/rds-csv-nginx-module) to obain Comma-Separated-Value (CSV) output,
+* or using [lua-rds-parser](http://github.com/openresty/lua-rds-parser) to parse the RDS data into Lua data structures.
 
 For the HTTP response header part, the `200 OK` status code should always be returned. The `Content-Type` header *must* be set to `application/x-resty-dbd-stream`. And the driver generating this response also sets a `X-Resty-DBD` header. For instance, this module adds the following output header:
 
@@ -669,7 +669,7 @@ Known Issues
 
 Installation
 ============
-You're recommended to install this module as well as [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) via the ngx_openresty bundle:
+You're recommended to install this module as well as [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) via the ngx_openresty bundle:
 
 <http://openresty.org>
 
@@ -696,7 +696,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
     make: *** [.plugin.scan] Error 1
 ```
 	You can fix this by pointing `python` to `python2`.
-* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/chaoslawful/drizzle-nginx-module/tags).
+* Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/openresty/drizzle-nginx-module/tags).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.5.8 (see [nginx compatibility](#compatibility)), and then build the source with this module:
 ```bash
 
@@ -717,7 +717,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
     make install
 ```
 
-You usually also need [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module) to obtain JSON output from the binary RDS output generated by this upstream module.
+You usually also need [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) to obtain JSON output from the binary RDS output generated by this upstream module.
 
 [Back to TOC](#table-of-contents)
 
@@ -769,7 +769,7 @@ Report Bugs
 
 Please submit bug reports, wishlists, or patches by
 
-1. creating a ticket on the [issue tracking interface](http://github.com/chaoslawful/drizzle-nginx-module/issues) provided by GitHub,
+1. creating a ticket on the [issue tracking interface](http://github.com/openresty/drizzle-nginx-module/issues) provided by GitHub,
 1. or sending an email to the [OpenResty community](#community).
 
 [Back to TOC](#table-of-contents)
@@ -777,15 +777,15 @@ Please submit bug reports, wishlists, or patches by
 Source Repository
 =================
 
-Available on github at [chaoslawful/drizzle-nginx-module](http://github.com/chaoslawful/drizzle-nginx-module).
+Available on github at [openresty/drizzle-nginx-module](http://github.com/openresty/drizzle-nginx-module).
 
 [Back to TOC](#table-of-contents)
 
 Test Suite
 ==========
 
-This module comes with a Perl-driven test suite. The [test cases](http://github.com/chaoslawful/drizzle-nginx-module/tree/master/t/) are
-[declarative](http://github.com/chaoslawful/drizzle-nginx-module/blob/master/t/sanity.t) too. Thanks to the [Test::Nginx](http://search.cpan.org/perldoc?Test::Nginx) module in the Perl world.
+This module comes with a Perl-driven test suite. The [test cases](http://github.com/openresty/drizzle-nginx-module/tree/master/t/) are
+[declarative](http://github.com/openresty/drizzle-nginx-module/blob/master/t/sanity.t) too. Thanks to the [Test::Nginx](http://search.cpan.org/perldoc?Test::Nginx) module in the Perl world.
 
 To run it on your side:
 
@@ -836,11 +836,11 @@ Copyright & License
 
 This module is licenced under the BSD license.
 
-Copyright (C) 2009-2013, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
+Copyright (C) 2009-2014, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009-2013, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
+Copyright (C) 2009-2014, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
 
-Copyright (C) 2010-2013, by FRiCKLE Piotr Sikora <info@frickle.com>, CloudFlare Inc.
+Copyright (C) 2010-2014, by FRiCKLE Piotr Sikora <info@frickle.com>, CloudFlare Inc.
 
 All rights reserved.
 
@@ -857,11 +857,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 See Also
 ========
 
-* [rds-json-nginx-module](http://github.com/agentzh/rds-json-nginx-module)
-* [rds-csv-nginx-module](http://github.com/agentzh/rds-csv-nginx-module)
-* [lua-rds-parser](http://github.com/agentzh/lua-rds-parser)
+* [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module)
+* [rds-csv-nginx-module](http://github.com/openresty/rds-csv-nginx-module)
+* [lua-rds-parser](http://github.com/openresty/lua-rds-parser)
 * [The ngx_openresty bundle](http://openresty.org)
 * [DrizzleNginxModule bundled by ngx_openresty](http://openresty.org/#DrizzleNginxModule)
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
-* [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module)
-* The [lua-resty-mysql](https://github.com/agentzh/lua-resty-mysql) library based on the [lua-nginx-module](http://github.com/chaoslawful/lua-nginx-module) cosocket API.
+* [lua-nginx-module](http://github.com/openresty/lua-nginx-module)
+* The [lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) library based on the [lua-nginx-module](http://github.com/openresty/lua-nginx-module) cosocket API.
+

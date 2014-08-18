@@ -10,7 +10,7 @@ This module is already production ready and is powering [http://lz.taobao.com th
 
 = Version =
 
-This document describes ngx_drizzle [https://github.com/chaoslawful/drizzle-nginx-module/tags v0.1.7] released on 19 December 2013.
+This document describes ngx_drizzle [https://github.com/openresty/drizzle-nginx-module/tags v0.1.7] released on 19 December 2013.
 
 = Synopsis =
 
@@ -544,7 +544,7 @@ Alternatively, you can compile this module with Nginx core's source by hand:
         make: *** [.plugin.scan] Error 1
 </geshi>
 : You can fix this by pointing <code>python</code> to <code>python2</code>.
-* Download the latest version of the release tarball of this module from drizzle-nginx-module [http://github.com/chaoslawful/drizzle-nginx-module/tags file list].
+* Download the latest version of the release tarball of this module from drizzle-nginx-module [http://github.com/openresty/drizzle-nginx-module/tags file list].
 * Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.5.8 (see [[#Compatibility|nginx compatibility]]), and then build the source with this module:
 <geshi lang="bash">
         wget 'http://nginx.org/download/nginx-1.5.8.tar.gz'
@@ -601,17 +601,17 @@ The [https://groups.google.com/group/openresty openresty] mailing list is for Ch
 
 Please submit bug reports, wishlists, or patches by
 
-# creating a ticket on the [http://github.com/chaoslawful/drizzle-nginx-module/issues issue tracking interface] provided by GitHub,
+# creating a ticket on the [http://github.com/openresty/drizzle-nginx-module/issues issue tracking interface] provided by GitHub,
 # or sending an email to the [[#Community|OpenResty community]].
 
 = Source Repository =
 
-Available on github at [http://github.com/chaoslawful/drizzle-nginx-module chaoslawful/drizzle-nginx-module].
+Available on github at [http://github.com/openresty/drizzle-nginx-module openresty/drizzle-nginx-module].
 
 = Test Suite =
 
-This module comes with a Perl-driven test suite. The [http://github.com/chaoslawful/drizzle-nginx-module/tree/master/t/ test cases] are
-[http://github.com/chaoslawful/drizzle-nginx-module/blob/master/t/sanity.t declarative] too. Thanks to the [http://search.cpan.org/perldoc?Test::Nginx Test::Nginx] module in the Perl world.
+This module comes with a Perl-driven test suite. The [http://github.com/openresty/drizzle-nginx-module/tree/master/t/ test cases] are
+[http://github.com/openresty/drizzle-nginx-module/blob/master/t/sanity.t declarative] too. Thanks to the [http://search.cpan.org/perldoc?Test::Nginx Test::Nginx] module in the Perl world.
 
 To run it on your side:
 
@@ -649,11 +649,11 @@ http://openresty.org/#Changes
 
 This module is licenced under the BSD license.
 
-Copyright (C) 2009-2013, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
+Copyright (C) 2009-2014, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009-2013, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
+Copyright (C) 2009-2014, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
 
-Copyright (C) 2010-2013, by FRiCKLE Piotr Sikora <info@frickle.com>, CloudFlare Inc.
+Copyright (C) 2010-2014, by FRiCKLE Piotr Sikora <info@frickle.com>, CloudFlare Inc.
 
 All rights reserved.
 
@@ -674,4 +674,5 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 * [http://openresty.org/#DrizzleNginxModule DrizzleNginxModule bundled by ngx_openresty]
 * [http://github.com/FRiCKLE/ngx_postgres postgres-nginx-module]
 * [[HttpLuaModule]]
-* The [https://github.com/agentzh/lua-resty-mysql lua-resty-mysql] library based on the [[HttpLuaModule]] cosocket API.
+* The [https://github.com/openresty/lua-resty-mysql lua-resty-mysql] library based on the [[HttpLuaModule]] cosocket API.
+
