@@ -396,6 +396,7 @@ ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
 
 next:
+
             continue;
         }
 
