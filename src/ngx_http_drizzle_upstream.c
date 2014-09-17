@@ -974,11 +974,19 @@ ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
             }
         }
 
+#if defined(nginx_version) && nginx_version >= 1007005
+        if (rev->posted) {
+#else
         if (rev->prev) {
+#endif
             ngx_delete_posted_event(rev);
         }
 
+#if defined(nginx_version) && nginx_version >= 1007005
+        if (wev->posted) {
+#else
         if (wev->prev) {
+#endif
             ngx_delete_posted_event(wev);
         }
 
