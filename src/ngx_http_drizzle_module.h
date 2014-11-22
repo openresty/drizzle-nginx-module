@@ -35,7 +35,7 @@
 #define NGX_HTTP_GONE 410
 #endif
 
-#define ngx_http_drizzle_module_version 1007
+#define ngx_http_drizzle_module_version 1008
 #define ngx_http_drizzle_module_version_string \
     "0.1.7"
 

@@ -67,7 +67,7 @@ This module is already production ready and is powering [the Taobao LineZing sit
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.7](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 December 2013.
+This document describes ngx_drizzle [v0.1.8](https://github.com/openresty/drizzle-nginx-module/tags) released on 21 November 2014.
 
 Synopsis
 ========
@@ -697,12 +697,12 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 ```
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/openresty/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.7.4 (see [nginx compatibility](#compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.7.7 (see [nginx compatibility](#compatibility)), and then build the source with this module:
 ```bash
 
-    wget 'http://nginx.org/download/nginx-1.7.4.tar.gz'
-    tar -xzvf nginx-1.7.4.tar.gz
-    cd nginx-1.7.4/
+    wget 'http://nginx.org/download/nginx-1.7.7.tar.gz'
+    tar -xzvf nginx-1.7.7.tar.gz
+    cd nginx-1.7.7/
   
     # if you have installed libdrizzle to the prefix /opt/drizzle, then
     # specify the following environments:
@@ -730,7 +730,7 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.7.x (last tested: 1.7.4)
+* 1.7.x (last tested: 1.7.7)
 * 1.6.x
 * 1.5.x (last tested: 1.5.8)
 * 1.4.x (last tested: 1.4.4)
