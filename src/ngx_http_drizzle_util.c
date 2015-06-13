@@ -98,7 +98,9 @@ void
 ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc)
 {
+#if !defined(nginx_version) || nginx_version < 1009001
     ngx_time_t  *tp;
+#endif
 
     dd("enter");
 
@@ -114,10 +116,19 @@ ngx_http_upstream_drizzle_finalize_request(ngx_http_request_t *r,
         u->resolved->ctx = NULL;
     }
 
+#if defined(nginx_version) && nginx_version >= 1009001
+
+    if (u->state && u->state->response_time) {
+        u->state->response_time = ngx_current_msec - u->state->response_time;
+
+#else
+
     if (u->state && u->state->response_sec) {
         tp = ngx_timeofday();
         u->state->response_sec = tp->sec - u->state->response_sec;
         u->state->response_msec = tp->msec - u->state->response_msec;
+
+#endif
 
         if (u->pipe) {
             u->state->response_length = u->pipe->read_length;
@@ -583,16 +594,29 @@ static void
 ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_int_t          rc;
+#if !defined(nginx_version) || nginx_version < 1009001
     ngx_time_t        *tp;
+#endif
     ngx_connection_t  *c;
 
     r->connection->log->action = "connecting to upstream";
 
+#if defined(nginx_version) && nginx_version >= 1009001
+
+    if (u->state && u->state->response_time) {
+        u->state->response_time = ngx_current_msec - u->state->response_time;
+    }
+
+#else
+
     if (u->state && u->state->response_sec) {
         tp = ngx_timeofday();
+
         u->state->response_sec = tp->sec - u->state->response_sec;
         u->state->response_msec = tp->msec - u->state->response_msec;
     }
+
+#endif
 
     u->state = ngx_array_push(r->upstream_states);
     if (u->state == NULL) {
@@ -603,9 +627,19 @@ ngx_http_upstream_dbd_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     ngx_memzero(u->state, sizeof(ngx_http_upstream_state_t));
 
+#if defined(nginx_version) && nginx_version >= 1009001
+
+    u->state->response_time = ngx_current_msec;
+    u->state->connect_time = (ngx_msec_t) -1;
+    u->state->header_time = (ngx_msec_t) -1;
+
+#else
+
     tp = ngx_timeofday();
     u->state->response_sec = tp->sec;
     u->state->response_msec = tp->msec;
+
+#endif
 
     rc = ngx_event_connect_peer(&u->peer);
 

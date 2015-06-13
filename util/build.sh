@@ -29,7 +29,6 @@ ngx-build $force $version \
           --add-module=$root/../set-misc-nginx-module \
           --with-select_module \
           --with-poll_module \
-          --with-rtsig_module \
           --with-debug
           #--with-cc-opt="-g3 -O0"
           #--add-module=$home/work/nginx_eval_module-1.0.1 \
