@@ -19,7 +19,7 @@ else
     ngx_feature_path=
     ngx_feature_libs="-ldrizzle"
     . auto/feature
-	
+
     if [ $ngx_found = no ]; then
         # Ubuntu 12.04
         ngx_feature="libdrizzle library in /usr/local/"
