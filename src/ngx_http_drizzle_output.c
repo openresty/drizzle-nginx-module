@@ -36,11 +36,11 @@
 
 static ngx_int_t ngx_http_drizzle_get_buf(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp);
-static u_char * ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
+static u_char *ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 static rds_col_type_t ngx_http_drizzle_std_col_type(
     drizzle_column_type_t col_type);
-static u_char * ngx_http_drizzle_request_mem(ngx_http_request_t *r,
+static u_char *ngx_http_drizzle_request_mem(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
 static ngx_int_t ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);

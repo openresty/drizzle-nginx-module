@@ -28,7 +28,7 @@ typedef struct {
 } ngx_http_drizzle_keepalive_cache_t;
 
 
-char * ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
+char *ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 
 ngx_int_t ngx_http_drizzle_keepalive_init(ngx_pool_t *pool,

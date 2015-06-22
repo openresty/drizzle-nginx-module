@@ -23,19 +23,19 @@ static ngx_str_t  ngx_http_drizzle_tid_var_name =
 
 /* Forward declaration */
 
-static char * ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
+static char *ngx_http_drizzle_set_complex_value_slot(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
-static char * ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd,
+static char *ngx_http_drizzle_query(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
-static char * ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd,
+static char *ngx_http_drizzle_pass(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
-static void * ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
-static char * ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
+static void *ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf);
+static char *ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent,
     void *child);
 static ngx_int_t ngx_http_drizzle_add_variables(ngx_conf_t *cf);
 static ngx_int_t ngx_http_drizzle_tid_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
-static char * ngx_http_drizzle_enable_status(ngx_conf_t *cf,
+static char *ngx_http_drizzle_enable_status(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
 
 

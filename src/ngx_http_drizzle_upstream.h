@@ -133,15 +133,15 @@ typedef struct {
 } ngx_http_upstream_drizzle_peer_data_t;
 
 
-char * ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
+char *ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
-void * ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);
+void *ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf);
 ngx_flag_t ngx_http_upstream_drizzle_is_my_peer(
         const ngx_peer_connection_t *peer);
 void ngx_http_upstream_drizzle_free_connection(ngx_log_t *log,
         ngx_connection_t *c, drizzle_con_st *dc,
         ngx_http_upstream_drizzle_srv_conf_t *dscf);
-ngx_http_upstream_srv_conf_t * ngx_http_upstream_drizzle_add(
+ngx_http_upstream_srv_conf_t *ngx_http_upstream_drizzle_add(
         ngx_http_request_t *r, ngx_url_t *url);
 
 
