@@ -74,46 +74,46 @@ Synopsis
 
 ```nginx
 
-http {
-    ...
+ http {
+     ...
 
-    upstream cluster {
-        # simple round-robin
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-        drizzle_server 127.0.0.1:1234 dbname=test2
-             password=pass user=bob protocol=drizzle;
-    }
+     upstream cluster {
+         # simple round-robin
+         drizzle_server 127.0.0.1:3306 dbname=test
+              password=some_pass user=monty protocol=mysql;
+         drizzle_server 127.0.0.1:1234 dbname=test2
+              password=pass user=bob protocol=drizzle;
+     }
 
-    upstream backend {
-        drizzle_server 127.0.0.1:3306 dbname=test
-             password=some_pass user=monty protocol=mysql;
-    }
+     upstream backend {
+         drizzle_server 127.0.0.1:3306 dbname=test
+              password=some_pass user=monty protocol=mysql;
+     }
 
-    server {
-        location /mysql {
-            set $my_sql 'select * from cats';
-            drizzle_query $my_sql;
+     server {
+         location /mysql {
+             set $my_sql 'select * from cats';
+             drizzle_query $my_sql;
 
-            drizzle_pass backend;
+             drizzle_pass backend;
 
-            drizzle_connect_timeout    500ms; # default 60s
-            drizzle_send_query_timeout 2s;    # default 60s
-            drizzle_recv_cols_timeout  1s;    # default 60s
-            drizzle_recv_rows_timeout  1s;    # default 60s
-        }
+             drizzle_connect_timeout    500ms; # default 60s
+             drizzle_send_query_timeout 2s;    # default 60s
+             drizzle_recv_cols_timeout  1s;    # default 60s
+             drizzle_recv_rows_timeout  1s;    # default 60s
+         }
 
-        ...
+         ...
 
-        # for connection pool monitoring
-        location /mysql-pool-status {
-            allow 127.0.0.1;
-            deny all;
+         # for connection pool monitoring
+         location /mysql-pool-status {
+             allow 127.0.0.1;
+             deny all;
 
-            drizzle_status;
-        }
-    }
-}
+             drizzle_status;
+         }
+     }
+ }
 ```
 
 [Back to TOC](#table-of-contents)
@@ -138,11 +138,11 @@ Here's a sample configuration:
 
 ```nginx
 
-upstream backend {
-    drizzle_server 127.0.0.1:3306 dbname=test
-         password=some_pass user=monty protocol=mysql;
-    drizzle_keepalive max=100 mode=single overflow=reject;
-}
+ upstream backend {
+     drizzle_server 127.0.0.1:3306 dbname=test
+          password=some_pass user=monty protocol=mysql;
+     drizzle_keepalive max=100 mode=single overflow=reject;
+ }
 ```
 
 For now, the connection pool uses a simple LIFO algorithm to assign idle connections in the pool. That is, most recently (successfully) used connections will be reused first the next time. And new idle connections will always replace the oldest idle connections in the pool even if the pool is already full.
@@ -156,31 +156,31 @@ Last Insert ID
 If you want to get LAST_INSERT_ID, then ngx_drizzle already returns that automatically for you when you're doing a SQL insert query. Consider the following sample `nginx.conf` snippet:
 ```nginx
 
-location /test {
-    echo_location /mysql "drop table if exists foo";
-    echo;
-    echo_location /mysql "create table foo (id serial not null, primary key (id), val real);";
-    echo;
-    echo_location /mysql "insert into foo (val) values (3.1415926);";
-    echo;
-    echo_location /mysql "select * from foo;";
-    echo;
-}
+ location /test {
+     echo_location /mysql "drop table if exists foo";
+     echo;
+     echo_location /mysql "create table foo (id serial not null, primary key (id), val real);";
+     echo;
+     echo_location /mysql "insert into foo (val) values (3.1415926);";
+     echo;
+     echo_location /mysql "select * from foo;";
+     echo;
+ }
 
-location /mysql {
-    drizzle_pass backend;
-    drizzle_module_header off;
-    drizzle_query $query_string;
-    rds_json on;
-}
+ location /mysql {
+     drizzle_pass backend;
+     drizzle_module_header off;
+     drizzle_query $query_string;
+     rds_json on;
+ }
 ```
 Then request `GET /test` gives the following outputs:
 ```javascript
 
-{"errcode":0}
-{"errcode":0}
-{"errcode":0,"insert_id":1,"affected_rows":1}
-[{"id":1,"val":3.1415926}]
+ {"errcode":0}
+ {"errcode":0}
+ {"errcode":0,"insert_id":1,"affected_rows":1}
+ [{"id":1,"val":3.1415926}]
 ```
 You can see the `insert_id` field (as well as the `affected_rows` field in the 3rd JSON response.
 
@@ -213,8 +213,8 @@ The following options are supported:
 
 ```nginx
 
-drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
-        dbname=test protocol=mysql;
+ drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
+         dbname=test protocol=mysql;
 ```
 
 **dbname=**`<database>`
@@ -229,9 +229,9 @@ drizzle_server 127.0.0.1:3306 user=monty "password=a b#1"
 	Here is a small example:
 ```nginx
 
-drizzle_server foo.bar.com:3306 user=monty password=some_pass
-                                dbname=test protocol=mysql
-                                charset=utf8;
+ drizzle_server foo.bar.com:3306 user=monty password=some_pass
+                                 dbname=test protocol=mysql
+                                 charset=utf8;
 ```
 Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
@@ -274,13 +274,13 @@ Nginx variable interpolation is supported, but you must be careful with SQL inje
 
 ```nginx
 
-location /cat {
-    set_unescape_uri $name $arg_name;
-    set_quote_sql_str $quoted_name $name;
+ location /cat {
+     set_unescape_uri $name $arg_name;
+     set_quote_sql_str $quoted_name $name;
 
-    drizzle_query "select * from cats where name = $quoted_name";
-    drizzle_pass my_backend;
-}
+     drizzle_query "select * from cats where name = $quoted_name";
+     drizzle_pass my_backend;
+ }
 ```
 
 [Back to TOC](#table-of-contents)
@@ -300,16 +300,16 @@ This directive specifies the Drizzle or MySQL upstream name to be queried in the
 Nginx variables can also be interpolated into the `<remote>` argument, so as to do dynamic backend routing, for example:
 ```nginx
 
-upstream moon { drizzle_server ...; }
+ upstream moon { drizzle_server ...; }
 
-server {
-    location /cat {
-        set $backend 'moon';
+ server {
+     location /cat {
+         set $backend 'moon';
 
-        drizzle_query ...;
-        drizzle_pass $backend;
-    }
-}
+         drizzle_query ...;
+         drizzle_pass $backend;
+     }
+ }
 ```
 
 [Back to TOC](#table-of-contents)
@@ -452,38 +452,38 @@ This variable will be assigned a textual number of the underlying MySQL or Drizz
 Here's an example:
 ```nginx
 
-drizzle_connect_timeout 1s;
-drizzle_send_query_timeout 2s;
-drizzle_recv_cols_timeout 1s;
-drizzle_recv_rows_timeout 1s;
+ drizzle_connect_timeout 1s;
+ drizzle_send_query_timeout 2s;
+ drizzle_recv_cols_timeout 1s;
+ drizzle_recv_rows_timeout 1s;
 
-location /query {
-    drizzle_query 'select sleep(10)';
-    drizzle_pass my_backend;
-    rds_json on;
+ location /query {
+     drizzle_query 'select sleep(10)';
+     drizzle_pass my_backend;
+     rds_json on;
 
-    more_set_headers -s 504 'X-Mysql-Tid: $drizzle_thread_id';                                   
-}
+     more_set_headers -s 504 'X-Mysql-Tid: $drizzle_thread_id';
+ }
 
-location /kill {
-    drizzle_query "kill query $arg_tid";
-    drizzle_pass my_backend;
-    rds_json on;
-}
+ location /kill {
+     drizzle_query "kill query $arg_tid";
+     drizzle_pass my_backend;
+     rds_json on;
+ }
 
-location /main {
-    content_by_lua '
-        local res = ngx.location.capture("/query")
-        if res.status ~= ngx.HTTP_OK then
-            local tid = res.header["X-Mysql-Tid"]
-            if tid and tid ~= "" then
-                ngx.location.capture("/kill", { args = {tid = tid} })
-            end
-            return ngx.HTTP_INTERNAL_SERVER_ERROR;
-        end
-        ngx.print(res.body)
-    '
-}
+ location /main {
+     content_by_lua '
+         local res = ngx.location.capture("/query")
+         if res.status ~= ngx.HTTP_OK then
+             local tid = res.header["X-Mysql-Tid"]
+             if tid and tid ~= "" then
+                 ngx.location.capture("/kill", { args = {tid = tid} })
+             end
+             return ngx.HTTP_INTERNAL_SERVER_ERROR;
+         end
+         ngx.print(res.body)
+     '
+ }
 ```
 where we make use of [headers-more-nginx-module](http://github.com/openresty/headers-more-nginx-module), [lua-nginx-module](http://github.com/openresty/lua-nginx-module), and [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
 
@@ -652,7 +652,7 @@ Trouble Shooting
 	You should check if your MySQL account does have got TCP login access on your MySQL server side. A quick check is to use MySQL's official client to connect to your server:
 ```bash
 
-    mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
+     mysql --protocol=tcp -u user --password=password -h foo.bar.com dbname
 ```
 	Note that the `--protocol=tcp` option is required here, or your MySQL client may use Unix Domain Socket to connect to your MySQL server.
 
@@ -680,41 +680,41 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 * You should first install libdrizzle 1.0 which is now distributed with the drizzle project and can be obtained from [<https://launchpad.net/drizzle]>(https://launchpad.net/drizzle). The latest drizzle7 release does not support building libdrizzle 1.0 separately and requires a lot of external dependencies like Boost and Protobuf which are painful to install. The last version supporting building libdrizzle 1.0 separately is `2011.07.21`. You can download it from <http://agentzh.org/misc/nginx/drizzle7-2011.07.21.tar.gz> . Which this version of drizzle7, installation of libdrizzle 1.0 is usually as simple as
 ```nginx
 
-    tar xzvf drizzle7-2011.07.21.tar.gz
-    cd drizzle7-2011.07.21/
-    ./configure --without-server
-    make libdrizzle-1.0
-    make install-libdrizzle-1.0
+     tar xzvf drizzle7-2011.07.21.tar.gz
+     cd drizzle7-2011.07.21/
+     ./configure --without-server
+     make libdrizzle-1.0
+     make install-libdrizzle-1.0
 ```
 	Ensure that you have the `python` command point to a `python2` interpreter. It's known that on recent : Arch Linux distribution, `python` is linked to `python3` by default, and while running `make libdrizzle-1.0` will yield the error
 ```bash
 
-    File "config/pandora-plugin", line 185
-        print "Dependency loop detected with %s" % plugin['name']
-                                                 ^
-    SyntaxError: invalid syntax
-    make: *** [.plugin.scan] Error 1
+     File "config/pandora-plugin", line 185
+         print "Dependency loop detected with %s" % plugin['name']
+                                                  ^
+     SyntaxError: invalid syntax
+     make: *** [.plugin.scan] Error 1
 ```
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/openresty/drizzle-nginx-module/tags).
 * Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.7.7 (see [nginx compatibility](#compatibility)), and then build the source with this module:
 ```bash
 
-    wget 'http://nginx.org/download/nginx-1.7.7.tar.gz'
-    tar -xzvf nginx-1.7.7.tar.gz
-    cd nginx-1.7.7/
-  
-    # if you have installed libdrizzle to the prefix /opt/drizzle, then
-    # specify the following environments:
-    # export LIBDRIZZLE_INC=/opt/drizzle/include/libdrizzle-1.0
-    # export LIBDRIZZLE_LIB=/opt/drizzle/lib
-  
-    # Here we assume you would install you nginx under /opt/nginx/.
-    ./configure --prefix=/opt/nginx \
-                --add-module=/path/to/drizzle-nginx-module
-  
-    make -j2
-    make install
+     wget 'http://nginx.org/download/nginx-1.7.7.tar.gz'
+     tar -xzvf nginx-1.7.7.tar.gz
+     cd nginx-1.7.7/
+
+     # if you have installed libdrizzle to the prefix /opt/drizzle, then
+     # specify the following environments:
+     # export LIBDRIZZLE_INC=/opt/drizzle/include/libdrizzle-1.0
+     # export LIBDRIZZLE_LIB=/opt/drizzle/lib
+
+     # Here we assume you would install you nginx under /opt/nginx/.
+     ./configure --prefix=/opt/nginx \
+                 --add-module=/path/to/drizzle-nginx-module
+
+     make -j2
+     make install
 ```
 
 You usually also need [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) to obtain JSON output from the binary RDS output generated by this upstream module.
@@ -793,7 +793,7 @@ To run it on your side:
 
 ```bash
 
-$ PATH=/path/to/your/nginx-with-echo-module:$PATH prove -r t
+ $ PATH=/path/to/your/nginx-with-echo-module:$PATH prove -r t
 ```
 
 Because a single nginx server (by default, `localhost:1984`) is used across all the test scripts (`.t` files), it's meaningless to run the test suite in parallel by specifying `-jN` when invoking the `prove` utility.
