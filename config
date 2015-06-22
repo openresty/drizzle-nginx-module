@@ -21,6 +21,18 @@ else
     . auto/feature
 
     if [ $ngx_found = no ]; then
+        # Ubuntu 12.04
+        ngx_feature="libdrizzle library in /usr/local/"
+        ngx_feature_path="/usr/include/libdrizzle-1.0"
+        if [ $NGX_RPATH = YES ]; then
+            ngx_feature_libs="-R/usr/lib -L/usr/lib -ldrizzle"
+        else
+            ngx_feature_libs="-L/usr/lib -ldrizzle"
+        fi
+        . auto/feature
+    fi
+
+    if [ $ngx_found = no ]; then
         # FreeBSD, OpenBSD
         ngx_feature="libdrizzle library in /usr/local/"
         ngx_feature_path="/usr/local/include/libdrizzle-1.0"
