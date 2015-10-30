@@ -1,8 +1,3 @@
-<!---
-Don't edit this file manually! Instead you should generate it by using:
-    wiki2markdown.pl doc/HttpDrizzleModule.wiki
--->
-
 Name
 ====
 
@@ -730,6 +725,8 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
+* 1.9.x (last tested: 1.9.3)
+* 1.8.x
 * 1.7.x (last tested: 1.7.10)
 * 1.6.x
 * 1.5.x (last tested: 1.5.8)
@@ -840,7 +837,7 @@ This module is licenced under the BSD license.
 
 Copyright (C) 2009-2014, by Xiaozhe Wang (chaoslawful) <chaoslawful@gmail.com>.
 
-Copyright (C) 2009-2014, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
+Copyright (C) 2009-2015, by Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>, CloudFlare Inc.
 
 Copyright (C) 2010-2014, by FRiCKLE Piotr Sikora <info@frickle.com>, CloudFlare Inc.
 
