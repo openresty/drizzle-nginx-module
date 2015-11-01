@@ -29,7 +29,8 @@
 
 #include <stdarg.h>
 
-static void dd(const char * fmt, ...) {
+static ngx_inline void
+dd(const char * fmt, ...) {
 }
 
 #    endif
@@ -46,7 +47,8 @@ static void dd(const char * fmt, ...) {
 
 #include <stdarg.h>
 
-static void dd(const char * fmt, ...) {
+static ngx_inline void
+dd(const char * fmt, ...) {
 }
 
 #   endif
