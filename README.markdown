@@ -664,7 +664,7 @@ Known Issues
 
 Installation
 ============
-You're recommended to install this module as well as [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) via the ngx_openresty bundle:
+You're recommended to install this module as well as [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) via the OpenResty bundle:
 
 <http://openresty.org>
 
@@ -815,7 +815,7 @@ TODO
 Changes
 =======
 
-The changes of every release of this module can be obtained from the ngx_openresty bundle's change logs:
+The changes of every release of this module can be obtained from the OpenResty bundle's change logs:
 
 <http://openresty.org/#Changes>
 
@@ -859,8 +859,8 @@ See Also
 * [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module)
 * [rds-csv-nginx-module](http://github.com/openresty/rds-csv-nginx-module)
 * [lua-rds-parser](http://github.com/openresty/lua-rds-parser)
-* [The ngx_openresty bundle](http://openresty.org)
-* [DrizzleNginxModule bundled by ngx_openresty](http://openresty.org/#DrizzleNginxModule)
+* [The OpenResty bundle](http://openresty.org)
+* [DrizzleNginxModule bundled by OpenResty](http://openresty.org/#DrizzleNginxModule)
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
 * [lua-nginx-module](http://github.com/openresty/lua-nginx-module)
 * The [lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) library based on the [lua-nginx-module](http://github.com/openresty/lua-nginx-module) cosocket API.
