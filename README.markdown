@@ -668,7 +668,7 @@ You're recommended to install this module as well as [rds-json-nginx-module](htt
 
 <http://openresty.org>
 
-The installation steps are usually as simple as `./configure --with-http_drizzle_module && make && make install` (But you still need to install the libdrizzle library manually, see [<http://openresty.org/#DrizzleNginxModule]>(http://openresty.org/#DrizzleNginxModule) for detailed instructions.
+The installation steps are usually as simple as `./configure --with-http_drizzle_module && make && make install` (But you still need to install the libdrizzle library manually, see [<http://openresty.org/en/drizzle-nginx-module.html]>(http://openresty.org/en/drizzle-nginx-module.html) for detailed instructions.
 
 Alternatively, you can compile this module with Nginx core's source by hand:
 
