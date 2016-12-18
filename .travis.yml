@@ -12,7 +12,19 @@ cache:
 
 addons:
   apt:
-    packages: [ axel, mysql-server, cpanminus, libtest-base-perl, libtext-diff-perl, liburi-perl, libwww-perl, libtest-longstring-perl, liblist-moreutils-perl ]
+    packages:
+    - axel
+    - cpanminus
+    - libtest-base-perl
+    - libtext-diff-perl
+    - liburi-perl
+    - libwww-perl
+    - libtest-longstring-perl
+    - liblist-moreutils-perl
+    - libgd-dev
+
+services:
+ - mysql
 
 compiler:
   - gcc
