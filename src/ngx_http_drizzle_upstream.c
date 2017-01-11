@@ -1027,12 +1027,14 @@ ngx_http_upstream_drizzle_add(ngx_http_request_t *r, ngx_url_t *url)
             continue;
         }
 
+#if !defined(nginx_version) || nginx_version < 1011006
         if (uscfp[i]->default_port && url->default_port
             && uscfp[i]->default_port != url->default_port)
         {
             dd("upstream_add: default_port not match");
             continue;
         }
+#endif
 
         return uscfp[i];
     }
