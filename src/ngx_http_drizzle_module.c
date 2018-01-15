@@ -181,23 +181,23 @@ ngx_module_t ngx_http_drizzle_module = {
 
 
 ngx_drizzle_http_method_t ngx_drizzle_http_methods[] = {
-   { (u_char *) "GET",       (uint32_t) NGX_HTTP_GET },
-   { (u_char *) "HEAD",      (uint32_t) NGX_HTTP_HEAD },
-   { (u_char *) "POST",      (uint32_t) NGX_HTTP_POST },
-   { (u_char *) "PUT",       (uint32_t) NGX_HTTP_PUT },
-   { (u_char *) "DELETE",    (uint32_t) NGX_HTTP_DELETE },
-   { (u_char *) "MKCOL",     (uint32_t) NGX_HTTP_MKCOL },
-   { (u_char *) "COPY",      (uint32_t) NGX_HTTP_COPY },
-   { (u_char *) "MOVE",      (uint32_t) NGX_HTTP_MOVE },
-   { (u_char *) "OPTIONS",   (uint32_t) NGX_HTTP_OPTIONS },
-   { (u_char *) "PROPFIND" , (uint32_t) NGX_HTTP_PROPFIND },
-   { (u_char *) "PROPPATCH", (uint32_t) NGX_HTTP_PROPPATCH },
-   { (u_char *) "LOCK",      (uint32_t) NGX_HTTP_LOCK },
-   { (u_char *) "UNLOCK",    (uint32_t) NGX_HTTP_UNLOCK },
+    { (u_char *) "GET",       (uint32_t) NGX_HTTP_GET },
+    { (u_char *) "HEAD",      (uint32_t) NGX_HTTP_HEAD },
+    { (u_char *) "POST",      (uint32_t) NGX_HTTP_POST },
+    { (u_char *) "PUT",       (uint32_t) NGX_HTTP_PUT },
+    { (u_char *) "DELETE",    (uint32_t) NGX_HTTP_DELETE },
+    { (u_char *) "MKCOL",     (uint32_t) NGX_HTTP_MKCOL },
+    { (u_char *) "COPY",      (uint32_t) NGX_HTTP_COPY },
+    { (u_char *) "MOVE",      (uint32_t) NGX_HTTP_MOVE },
+    { (u_char *) "OPTIONS",   (uint32_t) NGX_HTTP_OPTIONS },
+    { (u_char *) "PROPFIND" , (uint32_t) NGX_HTTP_PROPFIND },
+    { (u_char *) "PROPPATCH", (uint32_t) NGX_HTTP_PROPPATCH },
+    { (u_char *) "LOCK",      (uint32_t) NGX_HTTP_LOCK },
+    { (u_char *) "UNLOCK",    (uint32_t) NGX_HTTP_UNLOCK },
 #if defined(nginx_version) && (nginx_version >= 8041)
-   { (u_char *) "PATCH",     (uint32_t) NGX_HTTP_PATCH },
+    { (u_char *) "PATCH",     (uint32_t) NGX_HTTP_PATCH },
 #endif
-   { NULL, 0 }
+    { NULL, 0 }
 };
 
 

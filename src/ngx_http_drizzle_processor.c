@@ -159,10 +159,10 @@ ngx_http_upstream_drizzle_connect(ngx_http_request_t *r,
     }
 
     if (ret != DRIZZLE_RETURN_OK) {
-       ngx_log_error(NGX_LOG_ERR, c->log, 0, "failed to connect: %d: %s",
-                     (int) ret, drizzle_error(dc->drizzle));
+        ngx_log_error(NGX_LOG_ERR, c->log, 0, "failed to connect: %d: %s",
+                      (int) ret, drizzle_error(dc->drizzle));
 
-       return NGX_ERROR;
+        return NGX_ERROR;
     }
 
     /* ret == DRIZZLE_RETURN_OK */

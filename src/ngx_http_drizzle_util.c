@@ -38,9 +38,9 @@ ngx_int_t
 ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
     ngx_str_t *value)
 {
+    ngx_uint_t                   i;
     ngx_table_elt_t             *h;
     ngx_list_part_t             *part;
-    ngx_uint_t                  i;
 
     dd("entered set_header");
 
@@ -533,7 +533,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
 
             if (uscf->host.len == host->len
                 && ((uscf->port == 0 && u->resolved->no_port)
-                     || uscf->port == u->resolved->port)
+                    || uscf->port == u->resolved->port)
                 && ngx_memcmp(uscf->host.data, host->data, host->len) == 0)
             {
                 goto found;
@@ -554,7 +554,7 @@ ngx_http_upstream_dbd_init_request(ngx_http_request_t *r)
                           "no resolver defined to resolve %V", host);
 
             ngx_http_upstream_drizzle_finalize_request(r, u,
-                    NGX_HTTP_BAD_GATEWAY);
+                                                       NGX_HTTP_BAD_GATEWAY);
 
             return;
         }
@@ -1101,7 +1101,7 @@ ngx_http_drizzle_queue_size(ngx_queue_t *queue)
     ngx_queue_t     *q;
     ngx_uint_t       n = 0;
 
-   for (q = ngx_queue_head(queue);
+    for (q = ngx_queue_head(queue);
          q != ngx_queue_sentinel(queue);
          q = ngx_queue_next(q))
     {

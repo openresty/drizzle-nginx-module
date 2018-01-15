@@ -305,7 +305,7 @@ ngx_http_drizzle_keepalive_free_peer(ngx_peer_connection_t *pc,
                                   queue);
 
             ngx_http_upstream_drizzle_free_connection(pc->log, item->connection,
-                    item->drizzle_con, dscf);
+                                                      item->drizzle_con, dscf);
 
         } else {
             dd("caching idle connection to the pool");

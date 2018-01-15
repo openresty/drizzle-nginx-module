@@ -32,12 +32,12 @@
 
 
 #ifndef NGX_HTTP_GONE
-#define NGX_HTTP_GONE 410
+#define NGX_HTTP_GONE  410
 #endif
 
-#define ngx_http_drizzle_module_version 1009
-#define ngx_http_drizzle_module_version_string \
-    "0.1.7"
+#define ngx_http_drizzle_module_version  1009
+#define ngx_http_drizzle_module_version_string  "0.1.7"
+
 
 extern ngx_module_t ngx_http_drizzle_module;
 

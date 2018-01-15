@@ -332,11 +332,10 @@ ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 
 #if 0
     dd("std col type for %s: %d, %d (%d, %d, %d)",
-            col_name, std_col_type, rds_col_type_blob,
-            rds_rough_col_type_str,
-            rds_rough_col_type_str << 14,
-            (uint16_t) (19 | (rds_rough_col_type_str << 14))
-            );
+       col_name, std_col_type, rds_col_type_blob,
+       rds_rough_col_type_str,
+       rds_rough_col_type_str << 14,
+       (uint16_t) (19 | (rds_rough_col_type_str << 14)));
 #endif
 
     *(uint16_t *) last = std_col_type;
@@ -598,8 +597,7 @@ ngx_http_drizzle_get_buf(ngx_http_request_t *r,
 
     } else {
         dd("MEM creating temp buf with size: %d", (int) conf->buf_size);
-        dp->out_buf = ngx_create_temp_buf(r->pool,
-                conf->buf_size);
+        dp->out_buf = ngx_create_temp_buf(r->pool, conf->buf_size);
 
         if (dp->out_buf == NULL) {
             return NGX_ERROR;
@@ -724,8 +722,8 @@ ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
                 len = dp->avail_out;
             }
 
-            dp->out_buf->last = ngx_copy(dp->out_buf->last,
-                    dp->postponed.pos, len);
+            dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
+                                         len);
 
             dp->avail_out -= len;
 

@@ -119,7 +119,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
     if (dlcf->complex_target) {
         /* variables used in the drizzle_pass directive */
         if (ngx_http_complex_value(r, dlcf->complex_target, &target)
-                != NGX_OK)
+            != NGX_OK)
         {
             dd("failed to compile");
             return NGX_ERROR;
@@ -127,7 +127,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
         if (target.len == 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                    "drizzle: handler: empty \"drizzle_pass\" target");
+                          "drizzle: handler: empty \"drizzle_pass\" target");
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
 
@@ -139,7 +139,7 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
         if (dlcf->upstream.upstream == NULL) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                   "drizzle: upstream \"%V\" not found", &target);
+                          "drizzle: upstream \"%V\" not found", &target);
 
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
@@ -229,8 +229,7 @@ ngx_http_drizzle_wev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
         ngx_http_drizzle_set_thread_id_variable(r, u);
 
-        ngx_http_upstream_drizzle_next(r, u,
-                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+        ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
@@ -264,8 +263,7 @@ ngx_http_drizzle_rev_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
         dd("drizzle connection read timeout");
         ngx_http_drizzle_set_thread_id_variable(r, u);
 
-        ngx_http_upstream_drizzle_next(r, u,
-                NGX_HTTP_UPSTREAM_FT_TIMEOUT);
+        ngx_http_upstream_drizzle_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
@@ -323,8 +321,8 @@ static ngx_int_t
 ngx_http_drizzle_process_header(ngx_http_request_t *r)
 {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-           "ngx_http_drizzle_process_header should not be called"
-           " by the upstream");
+                  "ngx_http_drizzle_process_header should not be called"
+                  " by the upstream");
 
     return NGX_ERROR;
 }
@@ -336,8 +334,8 @@ ngx_http_drizzle_input_filter_init(void *data)
     ngx_http_request_t          *r = data;
 
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-           "ngx_http_drizzle_input_filter_init should not be called"
-           " by the upstream");
+                  "ngx_http_drizzle_input_filter_init should not be called"
+                  " by the upstream");
 
     return NGX_ERROR;
 }
@@ -349,8 +347,8 @@ ngx_http_drizzle_input_filter(void *data, ssize_t bytes)
     ngx_http_request_t          *r = data;
 
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-           "ngx_http_drizzle_input_filter should not be called"
-           " by the upstream");
+                  "ngx_http_drizzle_input_filter should not be called"
+                  " by the upstream");
 
     return NGX_ERROR;
 }
@@ -493,7 +491,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
                  q = ngx_queue_next(q))
             {
                 item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
-                        queue);
+                                      queue);
 
                 len += sizeof(" ") - 1
                      + ngx_http_drizzle_get_num_size(item->used);
@@ -509,7 +507,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
                  q = ngx_queue_next(q))
             {
                 item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
-                        queue);
+                                      queue);
 
                 len += sizeof(" ") - 1
                      + ngx_http_drizzle_get_num_size(item->used);
@@ -565,10 +563,10 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         *b->last++ = '\n';
 
         b->last = ngx_sprintf(b->last, "  active connections: %uD\n",
-                dscf->active_conns);
+                              dscf->active_conns);
 
         b->last = ngx_sprintf(b->last, "  connection pool capacity: %uD\n",
-                dscf->max_cached);
+                              dscf->max_cached);
 
         if (dscf->max_cached) {
             /* dump overflow flag for the connection pool */
@@ -576,12 +574,12 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
             switch (dscf->overflow) {
                 case drizzle_keepalive_overflow_ignore:
                     b->last = ngx_copy_const_str(b->last,
-                            "  overflow: ignore\n");
+                                                 "  overflow: ignore\n");
                     break;
 
                 case drizzle_keepalive_overflow_reject:
                     b->last = ngx_copy_const_str(b->last,
-                            "  overflow: reject\n");
+                                                 "  overflow: reject\n");
                     break;
 
                 default:
@@ -592,23 +590,23 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
             /* dump the lengths of the "cache" and "free" queues in the pool */
 
             b->last = ngx_sprintf(b->last, "  cached connection queue: %uD\n",
-                    ngx_http_drizzle_queue_size(&dscf->cache));
+                                  ngx_http_drizzle_queue_size(&dscf->cache));
 
             b->last = ngx_sprintf(b->last, "  free'd connection queue: %uD\n",
-                    ngx_http_drizzle_queue_size(&dscf->free));
+                                  ngx_http_drizzle_queue_size(&dscf->free));
 
             /* dump how many times that each individual connection in the
              * pool has been successfully used in the "cache" queue */
 
-            b->last = ngx_copy_const_str(b->last,
-                    "  cached connection successfully used count:");
+            b->last = ngx_copy_const_str(b->last, "  cached connection "
+                                         "successfully used count:");
 
             for (q = ngx_queue_head(&dscf->cache);
                  q != ngx_queue_sentinel(&dscf->cache);
                  q = ngx_queue_next(q))
             {
                 item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
-                        queue);
+                                      queue);
                 b->last = ngx_sprintf(b->last, " %uD", item->used);
             }
 
@@ -617,15 +615,15 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
             /* dump how many times that each individual connection in the
              * pool has been successfully used in the "free" queue */
 
-            b->last = ngx_copy_const_str(b->last,
-                    "  free'd connection successfully used count:");
+            b->last = ngx_copy_const_str(b->last, "  free'd connection "
+                                         "successfully used count:");
 
             for (q = ngx_queue_head(&dscf->free);
                  q != ngx_queue_sentinel(&dscf->free);
                  q = ngx_queue_next(q))
             {
                 item = ngx_queue_data(q, ngx_http_drizzle_keepalive_cache_t,
-                        queue);
+                                      queue);
                 b->last = ngx_sprintf(b->last, " %uD", item->used);
             }
 
@@ -633,7 +631,7 @@ ngx_http_drizzle_status_handler(ngx_http_request_t *r)
         }
 
         b->last = ngx_sprintf(b->last, "  servers: %uD\n",
-                dscf->servers->nelts);
+                              dscf->servers->nelts);
 
         b->last = ngx_sprintf(b->last, "  peers: %uD\n", dscf->peers->number);
     }
