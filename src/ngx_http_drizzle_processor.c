@@ -72,6 +72,7 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
     case state_db_idle: /* from connection pool */
         c->log->action = "sending query to drizzle upstream";
+        /* fallthrough */
 
     case state_db_send_query:
         rc = ngx_http_upstream_drizzle_send_query(r, c, dp, dc);
