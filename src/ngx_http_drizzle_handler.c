@@ -87,8 +87,8 @@ ngx_http_drizzle_handler(ngx_http_request_t *r)
 
     dd("XXX upstream already exists? %p", r->upstream);
 
-#if defined(nginx_version) && \
-    ((nginx_version >= 7063 && nginx_version < 8000) \
+#if defined(nginx_version) &&                                                \
+    ((nginx_version >= 7063 && nginx_version < 8000)                         \
      || nginx_version >= 8007)
 
     dd("creating upstream.......");

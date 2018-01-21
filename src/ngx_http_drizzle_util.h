@@ -7,7 +7,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#define ngx_http_drizzle_strcmp_const(a, b) \
+#define ngx_http_drizzle_strcmp_const(a, b)                                  \
         ngx_strncmp(a, b, sizeof(b) - 1)
 
 #ifndef ngx_copy_const_str

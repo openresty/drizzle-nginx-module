@@ -20,17 +20,17 @@
 
 #define ngx_http_drizzle_module_header_key "X-Resty-DBD-Module"
 
-#define ngx_http_drizzle_module_header_key_len  \
+#define ngx_http_drizzle_module_header_key_len                               \
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
-#define ngx_http_drizzle_module_header_val \
-    "ngx_drizzle " \
+#define ngx_http_drizzle_module_header_val                                   \
+    "ngx_drizzle "                                                           \
       ngx_http_drizzle_module_version_string
 
-#define ngx_http_drizzle_module_header_val_len \
+#define ngx_http_drizzle_module_header_val_len                               \
     (sizeof(ngx_http_drizzle_module_header_val) - 1)
 
-#define ngx_http_drizzle_module_header_key_len  \
+#define ngx_http_drizzle_module_header_key_len                               \
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
 
