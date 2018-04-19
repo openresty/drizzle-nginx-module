@@ -57,12 +57,12 @@ Table of Contents
 Status
 ======
 
-This module is already production ready and is powering [the Taobao LineZing site](http://lz.taobao.com).
+This module is already production ready.
 
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.9](https://github.com/openresty/drizzle-nginx-module/tags) released on 22 June 2015.
+This document describes ngx_drizzle [v0.1.10](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 April 2018.
 
 Synopsis
 ========
@@ -692,12 +692,12 @@ Alternatively, you can compile this module with Nginx core's source by hand:
 ```
 	You can fix this by pointing `python` to `python2`.
 * Download the latest version of the release tarball of this module from drizzle-nginx-module [file list](http://github.com/openresty/drizzle-nginx-module/tags).
-* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.9.7 (see [nginx compatibility](#compatibility)), and then build the source with this module:
+* Grab the nginx source code from [nginx.org](http://nginx.org/), for example, the version 1.13.6 (see [nginx compatibility](#compatibility)), and then build the source with this module:
 ```bash
 
-     wget 'http://nginx.org/download/nginx-1.9.7.tar.gz'
-     tar -xzvf nginx-1.9.7.tar.gz
-     cd nginx-1.9.7/
+     wget 'http://nginx.org/download/nginx-1.13.6.tar.gz'
+     tar -xzvf nginx-1.13.6.tar.gz
+     cd nginx-1.13.6/
 
      # if you have installed libdrizzle to the prefix /opt/drizzle, then
      # specify the following environments:
@@ -725,17 +725,21 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
-* 1.9.x (last tested: 1.9.7)
+* 1.13.x    (last tested: 1.13.6)
+* 1.12.x
+* 1.11.x    (last tested: 1.11.2)
+* 1.10.x
+* 1.9.x     (last tested: 1.9.15)
 * 1.8.x
-* 1.7.x (last tested: 1.7.10)
+* 1.7.x     (last tested: 1.7.10)
 * 1.6.x
-* 1.5.x (last tested: 1.5.8)
-* 1.4.x (last tested: 1.4.4)
-* 1.3.x (last tested: 1.3.7)
-* 1.2.x (last tested: 1.2.9)
-* 1.1.x (last tested: 1.1.5)
-* 1.0.x (last tested: 1.0.8)
-* 0.8.x (last tested: 0.8.55)
+* 1.5.x     (last tested: 1.5.8)
+* 1.4.x     (last tested: 1.4.4)
+* 1.3.x     (last tested: 1.3.7)
+* 1.2.x     (last tested: 1.2.9)
+* 1.1.x     (last tested: 1.1.5)
+* 1.0.x     (last tested: 1.0.8)
+* 0.8.x     (last tested: 0.8.55)
 * 0.7.x >= 0.7.44 (last tested version is 0.7.67)
 
 Earlier versions of Nginx like `0.6.x` and `0.5.x` will *not* work.
