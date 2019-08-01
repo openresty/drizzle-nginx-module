@@ -62,7 +62,7 @@ This module is already production ready.
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.10](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 April 2018.
+This document describes ngx_drizzle [v0.1.11](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 April 2018.
 
 Synopsis
 ========
@@ -725,6 +725,9 @@ This module has been tested on Linux and Mac OS X. Reports on other POSIX-compli
 
 The following versions of Nginx should work with this module:
 
+* 1.16.x
+* 1.15.x    (last tested: 1.15.8)
+* 1.14.x
 * 1.13.x    (last tested: 1.13.6)
 * 1.12.x
 * 1.11.x    (last tested: 1.11.2)
