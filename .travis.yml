@@ -43,13 +43,13 @@ env:
     - TEST_NGINX_SLEEP=0.006
   matrix:
     - NGINX_VERSION=1.9.15
-    - NGINX_VERSION=1.17.8
+    - NGINX_VERSION=1.19.2
 
 install:
   - if [ ! -f download-cache/drizzle7-2011.07.21.tar.gz ]; then wget -P download-cache/ http://openresty.org/download/drizzle7-2011.07.21.tar.gz; fi
   - git clone https://github.com/openresty/nginx-devel-utils.git
   - git clone https://github.com/openresty/openresty.git ../openresty
-  - git clone https://github.com/openresty/no-pool-nginx.git ../no-pool-nginx
+  - git clone -b 1.19.2.x https://github.com/xiaocang/no-pool-nginx.git ../no-pool-nginx
   - git clone https://github.com/simpl/ngx_devel_kit.git ../ndk-nginx-module
   - git clone https://github.com/openresty/test-nginx.git
   - git clone -b v2.1-agentzh https://github.com/openresty/luajit2.git
