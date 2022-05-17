@@ -33,7 +33,6 @@ env:
   global:
     - LUAJIT_PREFIX=/opt/luajit21
     - LUAJIT_LIB=$LUAJIT_PREFIX/lib
-    - LD_LIBRARY_PATH=$LUAJIT_LIB:$LD_LIBRARY_PATH
     - LUAJIT_INC=$LUAJIT_PREFIX/include/luajit-2.1
     - LUA_INCLUDE_DIR=$LUAJIT_INC
     - LUA_CMODULE_DIR=/lib
