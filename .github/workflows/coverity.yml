@@ -1,0 +1,64 @@
+name: Coverity
+
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  scan:
+    runs-on: ubuntu-18.04
+    if: ${{ github.repository_owner == 'openresty' }}
+    env:
+      COVERITY_SCAN_PROJECT_NAME: 'drizzle-nginx-module'
+      COVERITY_SCAN_BRANCH_PATTERN: '*'
+      COVERITY_SCAN_NOTIFICATION_EMAIL: 'chipitsine@gmail.com'
+      LUAJIT_PREFIX: '/opt/luajit21'
+      LUAJIT_LIB: '/opt/luajit21/lib'
+      LUAJIT_INC: '/opt/luajit21/include/luajit-2.1'
+      LUA_INCLUDE_DIR: '/opt/luajit21/include/luajit-2.1'
+      LUA_CMODULE_DIR: '/lib'
+      JOBS: 3
+      NGX_BUILD_JOBS: 3
+      NGINX_VERSION: 1.19.9
+      CC: gcc
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install apt dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y axel libgd-dev
+    - name: clone OpenResty satellites
+      run: |
+        git clone https://github.com/openresty/nginx-devel-utils.git
+        git clone https://github.com/openresty/openresty.git ../openresty
+        git clone https://github.com/openresty/no-pool-nginx.git ../no-pool-nginx
+        git clone https://github.com/simpl/ngx_devel_kit.git ../ndk-nginx-module
+        git clone https://github.com/openresty/lua-nginx-module.git ../lua-nginx-module
+        git clone https://github.com/openresty/lua-resty-core.git ../lua-resty-core
+        git clone https://github.com/openresty/lua-resty-lrucache.git ../lua-resty-lrucache
+        git clone https://github.com/openresty/nginx-eval-module.git ../eval-nginx-module
+        git clone https://github.com/openresty/echo-nginx-module.git ../echo-nginx-module
+        git clone https://github.com/openresty/set-misc-nginx-module.git ../set-misc-nginx-module
+        git clone https://github.com/openresty/headers-more-nginx-module.git ../headers-more-nginx-module
+        git clone https://github.com/openresty/rds-json-nginx-module.git ../rds-json-nginx-module
+        git clone https://github.com/openresty/openresty.git ../ngx_openresty
+    - name: Install libdrizzle
+      run: |
+        wget http://openresty.org/download/drizzle7-2011.07.21.tar.gz
+        tar xzf drizzle7-2011.07.21.tar.gz && cd drizzle7-2011.07.21
+        ./configure --prefix=/usr --without-server
+        sudo PATH=$PATH make libdrizzle-1.0 install-libdrizzle-1.0
+    - name: Install luajit2
+      run: |
+        git clone -b v2.1-agentzh https://github.com/openresty/luajit2.git
+        cd luajit2
+        make -j$JOBS CCDEBUG=-g Q= PREFIX=$LUAJIT_PREFIX CC=$CC XCFLAGS='-DLUA_USE_APICHECK -DLUA_USE_ASSERT'
+        sudo make install PREFIX=$LUAJIT_PREFIX
+    - name: Run Coverity Scan
+      env:
+        COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+      run: |
+        export COVERITY_SCAN_BUILD_COMMAND="sh util/build.sh $NGINX_VERSION"
+        export PATH=$PWD/work/nginx/sbin:$PWD/nginx-devel-utils:$PATH
+        export NGX_BUILD_CC=gcc
+        curl -fsSL "https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh" | bash || true
