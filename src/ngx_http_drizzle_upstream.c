@@ -887,7 +887,7 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         dd("after drizzle result free");
     }
 
-    if(pc){
+    if (pc != NULL) {
         if (dscf->max_cached) {
             ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
         }
