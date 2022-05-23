@@ -887,18 +887,20 @@ ngx_http_upstream_drizzle_free_peer(ngx_peer_connection_t *pc,
         dd("after drizzle result free");
     }
 
-    if (dscf->max_cached) {
-        ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
-    }
+    if (pc != NULL) {
+        if (dscf->max_cached) {
+            ngx_http_drizzle_keepalive_free_peer(pc, dp, dscf, state);
+        }
 
-    if (pc && pc->connection) {
-        dd("actually free the drizzle connection");
+        if (pc->connection) {
+            dd("actually free the drizzle connection");
 
-        ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
-                                                  dp->drizzle_con, dscf);
+            ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
+                                                      dp->drizzle_con, dscf);
 
-        dp->drizzle_con = NULL;
-        pc->connection = NULL;
+            dp->drizzle_con = NULL;
+            pc->connection = NULL;
+        }
     }
 }
 
