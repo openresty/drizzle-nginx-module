@@ -59,6 +59,9 @@ ngx_http_upstream_drizzle_create_srv_conf(ngx_conf_t *cf)
     conf->pool = cf->pool;
 
     cln = ngx_pool_cleanup_add(cf->pool, 0);
+    if (cln == NULL) {
+        return NULL;
+    }
 
     (void) drizzle_create(&conf->drizzle);
 
