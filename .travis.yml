@@ -48,7 +48,7 @@ env:
     - TEST_NGINX_SLEEP=0.006
   matrix:
     - NGINX_VERSION=1.21.4
-    - NGINX_VERSION=1.25.3
+    - NGINX_VERSION=1.27.1
 
 install:
   - if [ ! -f download-cache/drizzle7-2011.07.21.tar.gz ]; then wget -P download-cache https://github.com/openresty/openresty-deps-prebuild/releases/download/v20230902/drizzle7-2011.07.21.tar.gz; fi
