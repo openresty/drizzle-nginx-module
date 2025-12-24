@@ -1,3 +1,7 @@
+||Badges|
+|---|---|
+|Coverity Scan|[![Coverity Scan build status](https://scan.coverity.com/projects/24999/badge.svg)](https://scan.coverity.com/projects/drizzle-nginx-module)|
+
 Name
 ====
 
