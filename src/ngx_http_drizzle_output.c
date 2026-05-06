@@ -59,7 +59,7 @@ ngx_http_drizzle_output_result_header(ngx_http_request_t *r,
     uint16_t                         col_count;
     uint16_t                         errcode;
 
-    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+    ngx_http_upstream_drizzle_peer_data_t   *dp = ngx_http_drizzle_get_peer_data(r);
 
     errcode = drizzle_result_error_code(res);
 
@@ -297,14 +297,13 @@ ngx_int_t
 ngx_http_drizzle_output_col(ngx_http_request_t *r, drizzle_column_st *col)
 {
     u_char                              *pos, *last;
-    ngx_http_upstream_t                 *u = r->upstream;
     drizzle_column_type_t                col_type = 0;
     uint16_t                             std_col_type = 0;
     const char                          *col_name = NULL;
     uint16_t                             col_name_len = 0;
     size_t                               size;
 
-    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+    ngx_http_upstream_drizzle_peer_data_t   *dp = ngx_http_drizzle_get_peer_data(r);
 
     if (col == NULL) {
         return NGX_ERROR;
@@ -366,10 +365,9 @@ ngx_int_t
 ngx_http_drizzle_output_row(ngx_http_request_t *r, uint64_t row)
 {
     u_char                              *pos, *last;
-    ngx_http_upstream_t                 *u = r->upstream;
     size_t                               size;
 
-    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+    ngx_http_upstream_drizzle_peer_data_t   *dp = ngx_http_drizzle_get_peer_data(r);
 
     size = sizeof(uint8_t);
 
@@ -394,10 +392,9 @@ ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
     size_t len, size_t total, drizzle_field_t field)
 {
     u_char                              *pos, *last;
-    ngx_http_upstream_t                 *u = r->upstream;
     size_t                               size = 0;
 
-    ngx_http_upstream_drizzle_peer_data_t   *dp = u->peer.data;
+    ngx_http_upstream_drizzle_peer_data_t   *dp = ngx_http_drizzle_get_peer_data(r);
 
     if (offset == 0) {
 

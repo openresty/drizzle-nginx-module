@@ -87,11 +87,16 @@ typedef struct {
 } ngx_http_drizzle_loc_conf_t;
 
 
-#if defined(nginx_version) && (nginx_version < 8017)
 typedef struct {
+#if defined(nginx_version) && (nginx_version < 8017)
     ngx_int_t                           status;
-} ngx_http_drizzle_ctx_t;
 #endif
+    /* original drizzle peer data; saved here so handlers can find it
+     * even when r->upstream->peer.data has been wrapped by another
+     * module such as the standard upstream keepalive (which became
+     * implicit for explicit upstreams in nginx 1.29.7) */
+    void                               *peer_data;
+} ngx_http_drizzle_ctx_t;
 
 
 /* states for the drizzle client state machine */
