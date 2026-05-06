@@ -15,6 +15,9 @@
 #endif
 
 
+/* Returns the drizzle peer-data pointer (ngx_http_upstream_drizzle_peer_data_t *).
+ * Returns void * to avoid pulling ngx_http_drizzle_upstream.h here. */
+void *ngx_http_drizzle_get_peer_data(ngx_http_request_t *r);
 void ngx_http_upstream_dbd_init(ngx_http_request_t *r);
 void ngx_http_upstream_dbd_init_request(ngx_http_request_t *r);
 ngx_int_t ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,

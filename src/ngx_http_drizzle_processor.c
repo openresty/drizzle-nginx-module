@@ -49,12 +49,9 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
     u = r->upstream;
     c = u->peer.connection;
 
-    dp = u->peer.data;
+    dp = ngx_http_drizzle_get_peer_data(r);
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "drizzle process events, state: %d", dp->state);
-
-    if (!ngx_http_upstream_drizzle_is_my_peer(&u->peer)) {
+    if (dp == NULL) {
         ngx_log_error(NGX_LOG_ERR, c->log, 0,
                       "process events: it seems you "
                       "are using a non-drizzle upstream backend"
@@ -62,6 +59,9 @@ ngx_http_drizzle_process_events(ngx_http_request_t *r)
 
         return NGX_ERROR;
     }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "drizzle process events, state: %d", dp->state);
 
     dc = dp->drizzle_con;
 

@@ -404,6 +404,7 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_t                     *u;
     ngx_http_core_loc_conf_t                *clcf;
     ngx_http_drizzle_loc_conf_t             *dlcf;
+    ngx_http_drizzle_ctx_t                  *dctx;
     ngx_drizzle_mixed_t                     *query;
     ngx_str_t                                dbname, sql;
     ngx_uint_t                               i;
@@ -444,6 +445,14 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     u->peer.data = dp;
     u->peer.get = ngx_http_upstream_drizzle_get_peer;
     u->peer.free = ngx_http_upstream_drizzle_free_peer;
+
+    /* Stash dp in the module ctx so handlers can recover it even if
+     * another module (e.g. the standard upstream keepalive, which is
+     * implicit in nginx 1.29.7+) wraps u->peer.data afterwards. */
+    dctx = ngx_http_get_module_ctx(r, ngx_http_drizzle_module);
+    if (dctx != NULL) {
+        dctx->peer_data = dp;
+    }
 
     /* prepare dbname */
 

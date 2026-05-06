@@ -34,6 +34,24 @@ static void ngx_http_upstream_dbd_check_broken_connection(ngx_http_request_t *r,
     ngx_event_t *ev);
 
 
+void *
+ngx_http_drizzle_get_peer_data(ngx_http_request_t *r)
+{
+    ngx_http_drizzle_ctx_t  *dctx;
+
+    /* Prefer the ctx-saved pointer because r->upstream->peer.data may have
+     * been wrapped by the standard upstream keepalive (implicit since
+     * nginx 1.29.7) or by another balancer module. Fall back to peer.data
+     * for the rare case where the ctx is missing. */
+    dctx = ngx_http_get_module_ctx(r, ngx_http_drizzle_module);
+    if (dctx != NULL && dctx->peer_data != NULL) {
+        return dctx->peer_data;
+    }
+
+    return r->upstream ? r->upstream->peer.data : NULL;
+}
+
+
 ngx_int_t
 ngx_http_drizzle_set_header(ngx_http_request_t *r, ngx_str_t *key,
     ngx_str_t *value)
@@ -1033,7 +1051,7 @@ ngx_http_drizzle_set_thread_id_variable(ngx_http_request_t *r,
 
     ngx_http_upstream_drizzle_peer_data_t       *dp;
 
-    dp = r->upstream->peer.data;
+    dp = ngx_http_drizzle_get_peer_data(r);
     if (dp == NULL) {
         return NGX_ERROR;
     }
