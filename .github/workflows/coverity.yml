@@ -19,7 +19,7 @@ jobs:
       LUA_CMODULE_DIR: '/lib'
       JOBS: 3
       NGX_BUILD_JOBS: 3
-      NGINX_VERSION: 1.31.4
+      NGINX_VERSION: 1.31.6
       CC: gcc
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
