@@ -294,4 +294,3 @@ upstream backend2
   connection pool capacity: 0
   servers: 1
   peers: 1
-

@@ -47,4 +47,3 @@ GET /mysql
 --- error_code: 410
 --- response_body_like: 410 Gone
 --- timeout: 5
-

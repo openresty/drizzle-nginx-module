@@ -9,7 +9,9 @@ force=$2
 
 
 ngx-build $force $version \
-            --with-ld-opt="-Wl,-rpath,$LIBDRIZZLE_LIB:$LUAJIT_LIB" \
+            --with-ld-opt="-L$OPENSSL_LIB -L$PCRE_LIB -Wl,-rpath,$OPENSSL_LIB:$PCRE_LIB:$LIBDRIZZLE_LIB:/usr/local/lib" \
+            --with-cc-opt="-DDEBUG_MALLOC -I $OPENSSL_INC -I $PCRE_INC" \
+            --with-http_ssl_module \
             --without-mail_pop3_module \
             --without-mail_imap_module \
             --without-mail_smtp_module \
@@ -30,8 +32,4 @@ ngx-build $force $version \
           --with-select_module \
           --with-poll_module \
           --with-debug
-          #--with-cc-opt="-g3 -O0"
-          #--add-module=$home/work/nginx_eval_module-1.0.1 \
-          #--add-module=$root/../echo-nginx-module \
-  #--without-http_ssi_module  # we cannot disable ssi because echo_location_async depends on it (i dunno why?!)
 

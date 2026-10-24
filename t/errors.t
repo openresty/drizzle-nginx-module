@@ -173,4 +173,3 @@ little-endian systems only
 --- request
 GET /mysql
 --- error_code: 500
-

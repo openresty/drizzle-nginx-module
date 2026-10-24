@@ -449,4 +449,3 @@ GET /mysql
 --- no_error_log
 [alert]
 [error]
-

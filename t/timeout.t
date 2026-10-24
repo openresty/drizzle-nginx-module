@@ -155,4 +155,3 @@ GET /upstream
 --- timeout: 1
 --- response_headers_like
 X-Mysql-Tid: \d+
-

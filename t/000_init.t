@@ -79,4 +79,3 @@ GET /init
 GET /init
 --- error_code: 200
 --- timeout: 10
-
