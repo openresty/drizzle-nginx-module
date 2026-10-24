@@ -14,6 +14,7 @@
 #include "ngx_http_drizzle_output.h"
 #include "ngx_http_drizzle_processor.h"
 #include "ngx_http_drizzle_util.h"
+#include "ngx_http_drizzle_handler.h"
 #include "resty_dbd_stream.h"
 #include <nginx.h>
 
@@ -34,10 +35,11 @@
     (sizeof(ngx_http_drizzle_module_header_key) - 1)
 
 
-static ngx_int_t ngx_http_drizzle_get_buf(ngx_http_request_t *r,
+static ngx_int_t ngx_http_drizzle_queue_buf(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp);
-static u_char *ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
-    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len);
+static size_t ngx_http_drizzle_pending_output(
+    ngx_http_upstream_drizzle_peer_data_t *dp);
+static void ngx_http_drizzle_drain_output(ngx_http_request_t *r);
 static rds_col_type_t ngx_http_drizzle_std_col_type(
     drizzle_column_type_t col_type);
 static u_char *ngx_http_drizzle_request_mem(ngx_http_request_t *r,
@@ -200,19 +202,8 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
 
     if (dp->seen_stream_end) {
         dp->seen_stream_end = 0;
-
-        if (dp->avail_out) {
-            cl = ngx_alloc_chain_link(r->pool);
-            if (cl == NULL) {
-                return NGX_ERROR;
-            }
-
-            cl->buf = dp->out_buf;
-            cl->next = NULL;
-            *dp->last_out = cl;
-            dp->last_out = &cl->next;
-
-            dp->avail_out = 0;
+        if (ngx_http_drizzle_queue_buf(r, dp) != NGX_OK) {
+            return NGX_ERROR;
         }
     }
 
@@ -255,41 +246,35 @@ ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
     }
 
 
-    for ( ;; ) {
-        if (u->out_bufs == NULL) {
-            return NGX_OK;
-        }
-
-#if 0
-        {
-            int              n;
-            ngx_chain_t     *cl;
-
-            for (n = 0, cl = u->out_bufs; cl; cl = cl->next, n++) {
-            }
-
-            fprintf(stderr, "XXX chain size: %d\n", n);
-        }
-#endif
-
-        rc = ngx_http_output_filter(r, u->out_bufs);
-
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-            return rc;
-        }
-
-#if defined(nginx_version) && nginx_version >= 1001004
-        ngx_chain_update_chains(r->pool, &u->free_bufs, &u->busy_bufs,
-                                &u->out_bufs, u->output.tag);
-#else
-        ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs,
-                                u->output.tag);
-#endif
-
-        dp->last_out = &u->out_bufs;
+    if (!u->header_sent) {
+        return NGX_OK;
     }
 
-    /* impossible to reach here */
+    rc = ngx_http_output_filter(r, u->out_bufs);
+
+    if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
+    }
+
+    dp->output_blocked = (rc == NGX_AGAIN || r->buffered
+                          || r->connection->buffered
+                          || r->connection->write->delayed);
+
+#if defined(nginx_version) && nginx_version >= 1001004
+    ngx_chain_update_chains(r->pool, &u->free_bufs, &u->busy_bufs,
+                            &u->out_bufs, u->output.tag);
+#else
+    ngx_chain_update_chains(&u->free_bufs, &u->busy_bufs, &u->out_bufs,
+                            u->output.tag);
+#endif
+
+    dp->last_out = &u->out_bufs;
+    dp->buffered_output = 0;
+    for (cl = u->busy_bufs; cl; cl = cl->next) {
+        dp->buffered_output += cl->buf->end - cl->buf->start;
+    }
+
+    return NGX_OK;
 }
 
 
@@ -544,102 +529,91 @@ ngx_http_drizzle_std_col_type(drizzle_column_type_t col_type)
 }
 
 
-static u_char *
-ngx_http_drizzle_request_mem(ngx_http_request_t *r,
-    ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
-{
-    ngx_int_t                rc;
-    u_char                  *p;
-
-    rc = ngx_http_drizzle_get_buf(r, dp);
-
-    if (rc != NGX_OK) {
-        return NULL;
-    }
-
-    if (dp->avail_out < len) {
-        p = ngx_http_drizzle_get_postponed(r, dp, len);
-        if (p == NULL) {
-            return NULL;
-        }
-
-        dp->postponed.pos = p;
-        dp->postponed.last = p + len;
-
-        return p;
-    }
-
-    return dp->out_buf->last;
-}
-
-
 static ngx_int_t
-ngx_http_drizzle_get_buf(ngx_http_request_t *r,
+ngx_http_drizzle_queue_buf(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp)
 {
-    ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
-    ngx_http_upstream_t                 *u = dp->upstream;
+    ngx_chain_t  *cl;
 
-    dd("MEM enter");
-
-    if (dp->avail_out) {
+    if (dp->out_buf == NULL || dp->out_buf->last == dp->out_buf->pos) {
         return NGX_OK;
     }
 
-    if (u->free_bufs) {
-        dd("MEM reusing temp buf from free_bufs");
-
-        dp->out_buf = u->free_bufs->buf;
-        u->free_bufs = u->free_bufs->next;
-
-    } else {
-        dd("MEM creating temp buf with size: %d", (int) conf->buf_size);
-        dp->out_buf = ngx_create_temp_buf(r->pool, conf->buf_size);
-
-        if (dp->out_buf == NULL) {
-            return NGX_ERROR;
-        }
-
-        dp->out_buf->tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
-        dp->out_buf->recycled = 1;
+    cl = ngx_alloc_chain_link(r->pool);
+    if (cl == NULL) {
+        return NGX_ERROR;
     }
 
-    dp->avail_out = conf->buf_size;
+    cl->buf = dp->out_buf;
+    dp->buffered_output += dp->out_buf->end - dp->out_buf->start;
+    cl->next = NULL;
+    *dp->last_out = cl;
+    dp->last_out = &cl->next;
+    dp->out_buf = NULL;
+    dp->avail_out = 0;
 
     return NGX_OK;
 }
 
 
 static u_char *
-ngx_http_drizzle_get_postponed(ngx_http_request_t *r,
+ngx_http_drizzle_request_mem(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
-    u_char          *p;
+    ngx_chain_t          *cl;
+    ngx_buf_t            *b;
+    size_t                size;
+    u_char               *p;
+    ngx_http_upstream_t  *u = dp->upstream;
 
-    dd("MEM enter");
-
-    if (dp->cached.start == NULL) {
-        goto alloc;
+    if (dp->out_buf != NULL && dp->avail_out >= len) {
+        return dp->out_buf->last;
     }
 
-    if ((size_t) (dp->cached.end - dp->cached.start) < len) {
-        ngx_pfree(r->pool, dp->cached.start);
-        goto alloc;
-    }
-
-    return dp->cached.start;
-
-alloc:
-
-    p = ngx_palloc(r->pool, len);
-    if (p == NULL) {
+    if (ngx_http_drizzle_queue_buf(r, dp) != NGX_OK) {
         return NULL;
     }
 
-    dp->cached.start = p;
-    dp->cached.end = p + len;
+    if (ngx_http_drizzle_output_bufs(r, dp) != NGX_OK) {
+        return NULL;
+    }
 
-    return p;
+    size = ngx_max(len, dp->loc_conf->buf_size);
+
+    if (u->free_bufs) {
+        cl = u->free_bufs;
+        u->free_bufs = cl->next;
+        b = cl->buf;
+        ngx_free_chain(r->pool, cl);
+
+        if ((size_t) (b->end - b->start) < size) {
+            p = ngx_palloc(r->pool, size);
+            if (p == NULL) {
+                return NULL;
+            }
+
+            ngx_pfree(r->pool, b->start);
+            b->start = p;
+            b->end = p + size;
+        }
+
+        b->pos = b->start;
+        b->last = b->start;
+
+    } else {
+        b = ngx_create_temp_buf(r->pool, size);
+        if (b == NULL) {
+            return NULL;
+        }
+
+        b->tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
+        b->recycled = 1;
+    }
+
+    dp->out_buf = b;
+    dp->avail_out = b->end - b->last;
+
+    return b->last;
 }
 
 
@@ -647,136 +621,169 @@ static ngx_int_t
 ngx_http_drizzle_submit_mem(ngx_http_request_t *r,
     ngx_http_upstream_drizzle_peer_data_t *dp, size_t len)
 {
-    ngx_chain_t             *cl;
-    ngx_int_t                rc;
-    size_t                   postponed_len;
-
-    ngx_http_drizzle_loc_conf_t         *conf = dp->loc_conf;
-
-    if (dp->postponed.pos != NULL) {
-        dd("MEM copy postponed data over to u->out_bufs for len %d", (int) len);
-
-        postponed_len = dp->postponed.last - dp->postponed.pos;
-
-        if (postponed_len > dp->avail_out) {
-            /* we should ensure that rds atoms do not get
-             * splitted into multiple bufs. */
-
-            if (dp->out_buf && dp->out_buf->pos != dp->out_buf->last) {
-                /* save the current dp->out_buf */
-                cl = ngx_alloc_chain_link(r->pool);
-                if (cl == NULL) {
-                    return NGX_ERROR;
-                }
-
-                cl->buf = dp->out_buf;
-                cl->next = NULL;
-                *dp->last_out = cl;
-                dp->last_out = &cl->next;
-            }
-
-            /* create a buf for the postponed buf */
-
-            len = postponed_len > conf->buf_size ?
-                postponed_len : conf->buf_size;
-
-            dp->out_buf = ngx_create_temp_buf(r->pool, len);
-
-            if (dp->out_buf == NULL) {
-                return NGX_ERROR;
-            }
-
-            dp->out_buf->tag = (ngx_buf_tag_t) &ngx_http_drizzle_module;
-            dp->out_buf->recycled = 1;
-
-            dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
-                                         postponed_len);
-
-            dp->avail_out = len - postponed_len;
-
-            dp->postponed.pos = NULL;
-
-            if (dp->avail_out == 0) {
-                /* save the new big buf */
-
-                cl = ngx_alloc_chain_link(r->pool);
-                if (cl == NULL) {
-                    return NGX_ERROR;
-                }
-
-                cl->buf = dp->out_buf;
-                cl->next = NULL;
-                *dp->last_out = cl;
-                dp->last_out = &cl->next;
-            }
-
-            return NGX_OK;
-        }
-
-        for ( ;; ) {
-            len = dp->postponed.last - dp->postponed.pos;
-            if (len > dp->avail_out) {
-                len = dp->avail_out;
-            }
-
-            dp->out_buf->last = ngx_copy(dp->out_buf->last, dp->postponed.pos,
-                                         len);
-
-            dp->avail_out -= len;
-
-            dp->postponed.pos += len;
-
-            if (dp->postponed.pos == dp->postponed.last) {
-                dp->postponed.pos = NULL;
-            }
-
-            if (dp->avail_out > 0) {
-                break;
-            }
-
-            dd("MEM save dp->out_buf");
-
-            cl = ngx_alloc_chain_link(r->pool);
-            if (cl == NULL) {
-                return NGX_ERROR;
-            }
-
-            cl->buf = dp->out_buf;
-            cl->next = NULL;
-            *dp->last_out = cl;
-            dp->last_out = &cl->next;
-
-            if (dp->postponed.pos == NULL) {
-                break;
-            }
-
-            rc = ngx_http_drizzle_get_buf(r, dp);
-            if (rc != NGX_OK) {
-                return NGX_ERROR;
-            }
-        }
-
-        return NGX_OK;
-    }
-
-    dd("MEM consuming out_buf for %d", (int) len);
-
     dp->out_buf->last += len;
     dp->avail_out -= len;
 
     if (dp->avail_out == 0) {
-        dd("MEM save dp->out_buf");
-
-        cl = ngx_alloc_chain_link(r->pool);
-        if (cl == NULL) {
-            return NGX_ERROR;
-        }
-
-        cl->buf = dp->out_buf;
-        cl->next = NULL;
-        *dp->last_out = cl;
-        dp->last_out = &cl->next;
+        return ngx_http_drizzle_queue_buf(r, dp);
     }
 
     return NGX_OK;
+}
+
+
+static size_t
+ngx_http_drizzle_pending_output(ngx_http_upstream_drizzle_peer_data_t *dp)
+{
+    size_t  size = dp->buffered_output;
+
+    if (dp->out_buf) {
+        size += dp->out_buf->last - dp->out_buf->pos;
+    }
+
+    return size;
+}
+
+
+ngx_int_t
+ngx_http_drizzle_output_ready(ngx_http_request_t *r,
+    ngx_http_upstream_drizzle_peer_data_t *dp)
+{
+    ngx_connection_t          *c;
+    ngx_http_core_loc_conf_t  *clcf;
+
+    if (!dp->output_blocked
+        && ngx_http_drizzle_pending_output(dp) < dp->loc_conf->max_buffered)
+    {
+        return NGX_OK;
+    }
+
+    if (ngx_http_drizzle_queue_buf(r, dp) != NGX_OK
+        || ngx_http_drizzle_output_bufs(r, dp) != NGX_OK)
+    {
+        return NGX_ERROR;
+    }
+
+    if (!dp->output_blocked
+        && ngx_http_drizzle_pending_output(dp) < dp->loc_conf->max_buffered)
+    {
+        return NGX_OK;
+    }
+
+    c = dp->upstream->peer.connection;
+
+    if ((c->read->active
+         && ngx_del_event(c->read, NGX_READ_EVENT, 0) != NGX_OK)
+        || (c->write->active
+            && ngx_del_event(c->write, NGX_WRITE_EVENT, 0) != NGX_OK))
+    {
+        return NGX_ERROR;
+    }
+
+    if (c->read->timer_set) {
+        dp->read_timeout = (ngx_msec_t) ngx_max(1,
+            (ngx_msec_int_t) (c->read->timer.key - ngx_current_msec));
+        ngx_del_timer(c->read);
+    }
+
+    if (c->write->timer_set) {
+        ngx_del_timer(c->write);
+    }
+
+    dp->output_paused = 1;
+    r->write_event_handler = ngx_http_drizzle_drain_output;
+    c = r->connection;
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+
+    if (!c->write->delayed) {
+        ngx_add_timer(c->write, clcf->send_timeout);
+    }
+
+    if (ngx_handle_write_event(c->write, clcf->send_lowat) != NGX_OK) {
+        return NGX_ERROR;
+    }
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "drizzle paused database reads for client output");
+
+    return NGX_AGAIN;
+}
+
+
+static void
+ngx_http_drizzle_drain_output(ngx_http_request_t *r)
+{
+    ngx_http_upstream_drizzle_peer_data_t  *dp;
+    ngx_http_core_loc_conf_t              *clcf;
+    ngx_connection_t                     *c;
+    ngx_event_t                          *wev;
+
+    dp = ngx_http_drizzle_get_peer_data(r);
+    c = r->connection;
+    wev = c->write;
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+
+    if (wev->timedout && !wev->delayed) {
+        c->timedout = 1;
+        ngx_http_upstream_drizzle_finalize_request(r, r->upstream,
+                                                 NGX_HTTP_REQUEST_TIME_OUT);
+        return;
+    }
+
+    if (wev->timedout) {
+        wev->timedout = 0;
+        wev->delayed = 0;
+    }
+
+    if (wev->delayed) {
+        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+            ngx_http_upstream_drizzle_finalize_request(r, r->upstream,
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return;
+    }
+
+    if (ngx_http_drizzle_output_bufs(r, dp) != NGX_OK) {
+        ngx_http_upstream_drizzle_finalize_request(r, r->upstream, NGX_ERROR);
+        return;
+    }
+
+    if (dp->output_blocked
+        || ngx_http_drizzle_pending_output(dp) >= dp->loc_conf->max_buffered)
+    {
+        if (!wev->delayed) {
+            ngx_add_timer(wev, clcf->send_timeout);
+        }
+
+        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+            ngx_http_upstream_drizzle_finalize_request(r, r->upstream,
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return;
+    }
+
+    if (wev->timer_set) {
+        ngx_del_timer(wev);
+    }
+
+    dp->output_paused = 0;
+    r->write_event_handler = ngx_http_request_empty_handler;
+    c = r->upstream->peer.connection;
+    c->read->ready = 0;
+
+    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        ngx_http_upstream_drizzle_finalize_request(r, r->upstream,
+                                              NGX_HTTP_INTERNAL_SERVER_ERROR);
+        return;
+    }
+
+    ngx_add_timer(c->read, dp->read_timeout);
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "drizzle resumed database reads after client output");
+
+    ngx_http_drizzle_set_libdrizzle_ready(r);
+    (void) ngx_http_drizzle_process_events(r);
 }

@@ -24,6 +24,7 @@ Table of Contents
     * [drizzle_recv_cols_timeout](#drizzle_recv_cols_timeout)
     * [drizzle_recv_rows_timeout](#drizzle_recv_rows_timeout)
     * [drizzle_buffer_size](#drizzle_buffer_size)
+    * [drizzle_max_buffered](#drizzle_max_buffered)
     * [drizzle_module_header](#drizzle_module_header)
     * [drizzle_status](#drizzle_status)
 * [Variables](#variables)
@@ -62,7 +63,7 @@ This module is already production ready.
 Version
 =======
 
-This document describes ngx_drizzle [v0.1.11](https://github.com/openresty/drizzle-nginx-module/tags) released on 19 April 2018.
+This document describes ngx_drizzle [v0.1.14](https://github.com/openresty/drizzle-nginx-module/tags).
 
 Synopsis
 ========
@@ -230,13 +231,20 @@ The following options are supported:
 ```
 Please note that for the mysql server, "utf-8" is not a valid encoding name while `utf8` is.
 
+New connections select configured peers round-robin. If connection establishment
+fails or times out before any SQL is submitted to libdrizzle, another peer is
+tried, with at most one attempt per address per request. Once any SQL (including
+connection charset setup) has been submitted, failures are returned to the
+application without retrying. The server may already have executed the SQL,
+so replay could duplicate non-idempotent changes.
+
 [Back to TOC](#table-of-contents)
 
 drizzle_keepalive
 -----------------
 **syntax:** *drizzle_keepalive max=&lt;size&gt; mode=&lt;mode&gt;*
 
-**default:** *drizzle_keepalive max=0 mode=single*
+**default:** *drizzle_keepalive max=0 mode=multi*
 
 **context:** *upstream*
 
@@ -245,10 +253,10 @@ Configures the keep-alive connection pool for MySQL/Drizzle connections.
 The following options are supported:
 
 **max=**`<num>`
-	Specify the capacity of the connection pool for the current upstream block. The <num> value *must* be non-zero. If set to `0`, it effectively disables the connection pool. This option is default to `0`.
+	Specify the capacity of the connection pool for the current upstream block. If set to `0`, it disables the connection pool regardless of `overflow`. This option is default to `0`.
 
 **mode=**`<mode>`
-	This supports two values, `single` and `multi`. The `single` mode means the pool does not distinguish various drizzle servers in the current upstream block while `multi` means the pool will merely reuse connections which have identical server host names and ports. Note that even under `multi`, differences between `dbname` or `user` parameters will be silently ignored. Default to `single`.
+	This supports two values, `single` and `multi`. The `single` mode means the pool does not distinguish various drizzle servers in the current upstream block while `multi` means the pool will merely reuse connections which have identical server host names and ports. Note that even under `multi`, differences between `dbname` or `user` parameters will be silently ignored. Default to `multi`.
 
 **overflow=**`<action>`
 	This option specifies what to do when the connection pool is already full while new database connection is required. Either `reject` or `ignore` can be specified. In case of `reject`, it will reject the current request, and returns the `503 Service Unavailable` error page. For `ignore`, this module will go on creating a new database connection.
@@ -377,6 +385,24 @@ Specify the buffer size for drizzle outputs. Default to the page size (4k/8k). T
 
 [Back to TOC](#table-of-contents)
 
+drizzle_max_buffered
+--------------------
+**syntax:** *drizzle_max_buffered &lt;size&gt;*
+
+**default:** *drizzle_max_buffered 1m*
+
+**context:** *http, server, location, location if*
+
+`drizzle_max_buffered <size>` (default `1m`) sets the per-request high-water
+mark for pending RDS output. It must be at least `drizzle_buffer_size`.
+When client output reaches this threshold, database reads and their receive
+timeout are suspended until the client drains the buffers. The client
+`send_timeout` still applies. Buffers are reused as output is consumed.
+An indivisible RDS atom may exceed the threshold by up to its own size;
+this is a streaming threshold, not a maximum result size.
+
+[Back to TOC](#table-of-contents)
+
 drizzle_module_header
 ---------------------
 **syntax:** *drizzle_module_header on|off*
@@ -394,6 +420,7 @@ The drizzle module header looks like this:
 
 
 [Back to TOC](#table-of-contents)
+
 
 drizzle_status
 --------------
@@ -453,6 +480,9 @@ Here's an example:
  drizzle_recv_rows_timeout 1s;
 
  location /query {
+     allow 127.0.0.1;
+     deny all;
+
      drizzle_query 'select sleep(10)';
      drizzle_pass my_backend;
      rds_json on;
@@ -461,32 +491,24 @@ Here's an example:
  }
 
  location /kill {
+     allow 127.0.0.1;
+     deny all;
+
+     if ($arg_tid !~ "^[0-9]+$") {
+         return 400;
+     }
+
      drizzle_query "kill query $arg_tid";
      drizzle_pass my_backend;
      rds_json on;
  }
 
- location /main {
-     content_by_lua '
-         local res = ngx.location.capture("/query")
-         if res.status ~= ngx.HTTP_OK then
-             local tid = res.header["X-Mysql-Tid"]
-             if tid and tid ~= "" then
-                 ngx.location.capture("/kill", { args = {tid = tid} })
-             end
-             return ngx.HTTP_INTERNAL_SERVER_ERROR;
-         end
-         ngx.print(res.body)
-     '
- }
 ```
-where we make use of [headers-more-nginx-module](http://github.com/openresty/headers-more-nginx-module), [lua-nginx-module](http://github.com/openresty/lua-nginx-module), and [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module) too. When the SQL query timed out, we'll explicitly cancel it immediately. One pitfall here is that you have to add these modules in this order while building Nginx:
-
-* [lua-nginx-module](http://github.com/openresty/lua-nginx-module)
-* [headers-more-nginx-module](http://github.com/openresty/headers-more-nginx-module)
-* [rds-json-nginx-module](http://github.com/openresty/rds-json-nginx-module)
-
-Such that, their output filters will work in the *reversed* order, i.e., first convert RDS to JSON, and then add our `X-Mysql-Tid` custom header, and finally capture the whole (subrequest) response with the Lua module. You're recommended to use the [OpenResty bundle](http://openresty.org/) though, it ensures the module building order automatically for you.
+The application should issue an ordinary HTTP request to `/query`, then issue
+an HTTP request to `/kill?tid=...` when it receives a 504 with `X-Mysql-Tid`.
+These endpoints should be private and the thread ID must be validated as an
+integer (as enforced above). In-memory subrequests (`ngx.location.capture`) are unsupported.
+The example requires headers-more and rds-json in addition to this module.
 
 [Back to TOC](#table-of-contents)
 
@@ -809,7 +831,7 @@ TODO
 * add the MySQL transaction support.
 * add multi-statement MySQL query support.
 * implement the "drizzle_max_output_size" directive. When the RDS data is larger then the size specified, the module will try to terminate the output as quickly as possible but will still ensure the resulting response body is still in valid RDS format.
-* implement the `drizzle_upstream_next` mechanism for failover support.
+* implement configurable failover policies beyond connection establishment.
 * add support for multiple "drizzle_query" directives in a single location.
 * implement *weighted* round-robin algorithm for the upstream server clusters.
 * add the `max_idle_time` option to the [drizzle_server](#drizzle_server) directive, so that the connection pool will automatically release idle connections for the timeout you specify.
@@ -871,4 +893,3 @@ See Also
 * [postgres-nginx-module](http://github.com/FRiCKLE/ngx_postgres)
 * [lua-nginx-module](http://github.com/openresty/lua-nginx-module)
 * The [lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) library based on the [lua-nginx-module](http://github.com/openresty/lua-nginx-module) cosocket API.
-

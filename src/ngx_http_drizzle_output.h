@@ -17,5 +17,8 @@ ngx_int_t ngx_http_drizzle_output_field(ngx_http_request_t *r, size_t offset,
 ngx_int_t ngx_http_drizzle_output_bufs(ngx_http_request_t *r,
         ngx_http_upstream_drizzle_peer_data_t *dp);
 
+ngx_int_t ngx_http_drizzle_output_ready(ngx_http_request_t *r,
+        ngx_http_upstream_drizzle_peer_data_t *dp);
+
 #endif /* NGX_HTTP_DRIZZLE_OUTPUT_H */
 

@@ -67,25 +67,15 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
             len = value[i].len - (sizeof("mode=") - 1);
             data = &value[i].data[sizeof("mode=") - 1];
 
-            switch (len) {
-            case 6:
-                if (ngx_http_drizzle_strcmp_const(data, "single") == 0) {
-                    dscf->single = 1;
-                }
-                break;
+            if (len == 6 && ngx_strncmp(data, "single", 6) == 0) {
+                dscf->single = 1;
 
-            case 5:
-                if (ngx_http_drizzle_strcmp_const(data, "multi") == 0) {
-                    dscf->single = 0;
-                }
-                break;
+            } else if (len == 5 && ngx_strncmp(data, "multi", 5) == 0) {
+                dscf->single = 0;
 
-            default:
+            } else {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "drizzle: invalid \"mode\" value \"%V\" "
-                                   "in \"%V\" directive",
-                                   &value[i], &cmd->name);
-
+                                   "drizzle: invalid parameter \"%V\"", &value[i]);
                 return NGX_CONF_ERROR;
             }
 
@@ -96,21 +86,15 @@ ngx_http_upstream_drizzle_keepalive(ngx_conf_t *cf, ngx_command_t *cmd,
             len = value[i].len - (sizeof("overflow=") - 1);
             data = &value[i].data[sizeof("overflow=") - 1];
 
-            switch (len) {
-            case 6:
-                if (ngx_http_drizzle_strcmp_const(data, "reject") == 0) {
-                    dscf->overflow = drizzle_keepalive_overflow_reject;
-                } else if (ngx_http_drizzle_strcmp_const(data, "ignore") == 0) {
-                    dscf->overflow = drizzle_keepalive_overflow_ignore;
-                }
-                break;
+            if (len == 6 && ngx_strncmp(data, "reject", 6) == 0) {
+                dscf->overflow = drizzle_keepalive_overflow_reject;
 
-            default:
+            } else if (len == 6 && ngx_strncmp(data, "ignore", 6) == 0) {
+                dscf->overflow = drizzle_keepalive_overflow_ignore;
+
+            } else {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "drizzle: invalid \"overflow\" value \"%V\" "
-                                   "in \"%V\" directive",
-                                   &value[i], &cmd->name);
-
+                                   "drizzle: invalid parameter \"%V\"", &value[i]);
                 return NGX_CONF_ERROR;
             }
 
@@ -193,7 +177,7 @@ ngx_http_drizzle_keepalive_get_peer_single(ngx_peer_connection_t *pc,
         pc->connection = c;
         pc->cached = 1;
         pc->name = &dp->name;
-        pc->sockaddr = &dp->sockaddr;
+        pc->sockaddr = (struct sockaddr *) &dp->sockaddr;
         pc->socklen = item->socklen;
 
         return NGX_DONE;

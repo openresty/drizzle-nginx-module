@@ -16,7 +16,7 @@ typedef struct {
     ngx_connection_t                    *connection;
 
     socklen_t                            socklen;
-    struct sockaddr                      sockaddr;
+    struct sockaddr_storage              sockaddr;
     drizzle_con_st                      *drizzle_con;
     ngx_str_t                            name;
 

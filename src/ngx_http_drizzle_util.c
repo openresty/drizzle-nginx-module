@@ -226,56 +226,26 @@ void
 ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t ft_type)
 {
-    ngx_uint_t  status, state;
+    ngx_uint_t                              status;
+    ngx_http_upstream_drizzle_peer_data_t   *dp;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http next upstream, %xi", ft_type);
-
-#if 0
-    ngx_http_busy_unlock(u->conf->busy_lock, &u->busy_lock);
-#endif
-
-    if (ft_type == NGX_HTTP_UPSTREAM_FT_HTTP_404) {
-        state = NGX_PEER_NEXT;
-    } else {
-        state = NGX_PEER_FAILED;
-    }
-
-    if (ft_type != NGX_HTTP_UPSTREAM_FT_NOLIVE) {
-        u->peer.free(&u->peer, u->peer.data, state);
-    }
+    dp = ngx_http_drizzle_get_peer_data(r);
 
     if (ft_type == NGX_HTTP_UPSTREAM_FT_TIMEOUT) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, NGX_ETIMEDOUT,
                       "upstream timed out");
-    }
-
-    if (u->peer.cached && ft_type == NGX_HTTP_UPSTREAM_FT_ERROR) {
-        status = 0;
+        status = NGX_HTTP_GATEWAY_TIME_OUT;
 
     } else {
-        switch (ft_type) {
+        status = NGX_HTTP_BAD_GATEWAY;
+    }
 
-        case NGX_HTTP_UPSTREAM_FT_TIMEOUT:
-            status = NGX_HTTP_GATEWAY_TIME_OUT;
-            break;
+    if (u->state) {
+        u->state->status = status;
+    }
 
-        case NGX_HTTP_UPSTREAM_FT_HTTP_500:
-            status = NGX_HTTP_INTERNAL_SERVER_ERROR;
-            break;
-
-        case NGX_HTTP_UPSTREAM_FT_HTTP_404:
-            status = NGX_HTTP_NOT_FOUND;
-            break;
-
-        /*
-         * NGX_HTTP_UPSTREAM_FT_BUSY_LOCK and NGX_HTTP_UPSTREAM_FT_MAX_WAITING
-         * never reach here
-         */
-
-        default:
-            status = NGX_HTTP_BAD_GATEWAY;
-        }
+    if (ft_type != NGX_HTTP_UPSTREAM_FT_NOLIVE && u->peer.free) {
+        u->peer.free(&u->peer, u->peer.data, NGX_PEER_FAILED);
     }
 
     if (r->connection->error) {
@@ -284,44 +254,18 @@ ngx_http_upstream_drizzle_next(ngx_http_request_t *r,
         return;
     }
 
-    if (status) {
-        u->state->status = status;
-
-        if (u->peer.tries == 0 || !(u->conf->next_upstream & ft_type)) {
-            ngx_http_upstream_drizzle_finalize_request(r, u, status);
-            return;
-        }
-    }
-
-    if (u->peer.connection) {
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                       "close http upstream connection: %d",
-                       u->peer.connection->fd);
-#if 0 /* libdrizzle doesn't support SSL, was: (NGX_HTTP_SSL) */
-
-        if (u->peer.connection->ssl) {
-            u->peer.connection->ssl->no_wait_shutdown = 1;
-            u->peer.connection->ssl->no_send_shutdown = 1;
-
-            (void) ngx_ssl_shutdown(u->peer.connection);
-        }
-#endif
-
-        dd("r pool: %p, c pool: %p", r->pool, u->peer.connection->pool);
-
-        ngx_close_connection(u->peer.connection);
-    }
-
-#if 0
-    if (u->conf->busy_lock && !u->busy_locked) {
-        ngx_http_upstream_busy_lock(p);
+    /* drizzle_query() may have written SQL even if it returned IO_WAIT. */
+    if (dp != NULL && !dp->query_started && dp->remaining_peers
+        && !u->header_sent
+        && (ft_type == NGX_HTTP_UPSTREAM_FT_ERROR
+            || ft_type == NGX_HTTP_UPSTREAM_FT_TIMEOUT))
+    {
+        dp->state = state_db_connect;
+        dp->has_set_names = 0;
+        dp->used = 0;
+        u->peer.cached = 0;
+        ngx_http_upstream_dbd_connect(r, u);
         return;
-    }
-#endif
-
-    /* TODO: ngx_http_upstream_connect(r, u); */
-    if (status == 0) {
-        status = NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
     ngx_http_upstream_drizzle_finalize_request(r, u, status);

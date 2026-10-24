@@ -115,17 +115,22 @@ typedef struct {
     ngx_chain_t                           **last_out;
 
     ngx_buf_t                              *out_buf;
-    ngx_buf_t                               cached;
-    ngx_buf_t                               postponed;
     size_t                                  avail_out;
+    size_t                                  buffered_output;
+    ngx_msec_t                              read_timeout;
+    ngx_uint_t                              next_peer;
+    ngx_uint_t                              remaining_peers;
     ngx_str_t                               charset;
     ngx_str_t                              *set_names_query;
 
-    struct sockaddr                         sockaddr;
+    struct sockaddr_storage                 sockaddr;
 
     /* how many times this connection has been successfully used */
     ngx_uint_t                              used;
 
+    unsigned                                query_started:1;
+    unsigned                                output_paused:1;
+    unsigned                                output_blocked:1;
     unsigned                                failed:1;
     unsigned                                seen_stream_end:1;
     unsigned                                has_set_names:1;

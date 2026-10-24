@@ -136,6 +136,14 @@ static ngx_command_t ngx_http_drizzle_cmds[] = {
       offsetof(ngx_http_drizzle_loc_conf_t, buf_size),
       NULL },
 
+    { ngx_string("drizzle_max_buffered"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
+          |NGX_CONF_TAKE1,
+      ngx_conf_set_size_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_drizzle_loc_conf_t, max_buffered),
+      NULL },
+
     { ngx_string("drizzle_status"),
       NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_NOARGS,
       ngx_http_drizzle_enable_status,
@@ -241,6 +249,7 @@ ngx_http_drizzle_create_loc_conf(ngx_conf_t *cf)
     conf->complex_target = NGX_CONF_UNSET_PTR;
 
     conf->buf_size = NGX_CONF_UNSET_SIZE;
+    conf->max_buffered = NGX_CONF_UNSET_SIZE;
     conf->tid_var_index = NGX_CONF_UNSET;
 
     return conf;
@@ -280,6 +289,21 @@ ngx_http_drizzle_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_size_value(conf->buf_size, prev->buf_size,
                               (size_t) ngx_pagesize);
+
+    ngx_conf_merge_size_value(conf->max_buffered, prev->max_buffered,
+                              1024 * 1024);
+    if (conf->buf_size == 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "drizzle_buffer_size must be non-zero");
+        return NGX_CONF_ERROR;
+    }
+
+    if (conf->max_buffered < conf->buf_size) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "drizzle_max_buffered must be at least "
+                           "drizzle_buffer_size");
+        return NGX_CONF_ERROR;
+    }
 
     if (conf->tid_var_index == NGX_CONF_UNSET) {
         conf->tid_var_index = prev->tid_var_index;

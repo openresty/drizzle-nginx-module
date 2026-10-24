@@ -211,32 +211,20 @@ ngx_http_upstream_drizzle_server(ngx_conf_t *cf, ngx_command_t *cmd,
             protocol.len = value[i].len - (sizeof("protocol=") - 1);
             protocol.data = &value[i].data[sizeof("protocol=") - 1];
 
-            switch (protocol.len) {
+            if (protocol.len == 5
+                && ngx_strncmp(protocol.data, "mysql", 5) == 0)
+            {
+                ds->protocol = ngx_http_mysql_protocol;
 
-            case 5:
-                if (ngx_http_drizzle_strcmp_const(protocol.data, "mysql") == 0)
-                {
-                    ds->protocol = ngx_http_mysql_protocol;
-                } else {
-                    continue;
-                }
+            } else if (protocol.len == 7
+                       && ngx_strncmp(protocol.data, "drizzle", 7) == 0)
+            {
+                ds->protocol = ngx_http_drizzle_protocol;
 
-                break;
-
-            case 7:
-                if (ngx_http_drizzle_strcmp_const(protocol.data,
-                            "drizzle") != 0)
-                {
-                    continue;
-                }
-
-                break;
-
-            default:
+            } else {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "drizzle: invalid protocol \"%V\""
                                    " in drizzle_server", &protocol);
-
                 return NGX_CONF_ERROR;
             }
 
@@ -427,6 +415,8 @@ ngx_http_upstream_drizzle_init_peer(ngx_http_request_t *r,
     dscf = ngx_http_conf_upstream_srv_conf(uscf, ngx_http_drizzle_module);
 
     dp->srv_conf = dscf;
+    dp->next_peer = dscf->current % dscf->peers->number;
+    dp->remaining_peers = dscf->peers->number;
 
     dlcf = ngx_http_get_module_loc_conf(r, ngx_http_drizzle_module);
 
@@ -597,16 +587,19 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     peers = dscf->peers;
 
-    if (dscf->current > peers->number - 1) {
-        dscf->current = 0;
+    if (dp->remaining_peers == 0) {
+        return NGX_BUSY;
     }
 
-    peer = &peers->peer[dscf->current++];
+    peer = &peers->peer[dp->next_peer];
+    dp->next_peer = (dp->next_peer + 1) % peers->number;
+    dp->remaining_peers--;
+    dscf->current = dp->next_peer;
 
     dp->name.data = peer->name.data;
     dp->name.len = peer->name.len;
 
-    dp->sockaddr = *peer->sockaddr;
+    ngx_memcpy(&dp->sockaddr, peer->sockaddr, peer->socklen);
 
     dp->enable_charset = (peer->set_names_query->len > 0);
     dp->set_names_query = peer->set_names_query;
@@ -616,7 +609,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
                    dp->set_names_query);
 
     pc->name = &dp->name;
-    pc->sockaddr = &dp->sockaddr;
+    pc->sockaddr = (struct sockaddr *) &dp->sockaddr;
     pc->socklen = peer->socklen;
     pc->cached = 0;
 
@@ -627,7 +620,8 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
         }
     }
 
-    if (dscf->overflow == drizzle_keepalive_overflow_reject
+    if (dscf->max_cached
+        && dscf->overflow == drizzle_keepalive_overflow_reject
         && dscf->active_conns >= dscf->max_cached)
     {
         ngx_log_error(NGX_LOG_INFO, pc->log, 0,
@@ -696,7 +690,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
     ngx_memcpy(dc->password, peer->password.data, peer->password.len);
     dc->password[peer->password.len] = '\0';
 
-    dd("user %s, password %s", dc->user, dc->password);
+    dd("user %s", dc->user);
 
     /* TODO add support for uds (unix domain socket) */
 
@@ -706,12 +700,10 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
     /* ask drizzle to connect to the remote */
 
-    ngx_log_debug7(NGX_LOG_DEBUG_HTTP, pc->log, 0,
+    ngx_log_debug5(NGX_LOG_DEBUG_HTTP, pc->log, 0,
                    "drizzle connecting: host %s, port %d, dbname \"%V\", "
-                   "user \"%V\", pass \"%V\", dc pass \"%s\", "
-                   "protocol %d", peer->host, (int) peer->port, &dbname,
-                   &peer->user, &peer->password, dc->password,
-                   (int) peer->protocol);
+                   "user \"%V\", protocol %d", peer->host, (int) peer->port,
+                   &dbname, &peer->user, (int) peer->protocol);
 
     ret = drizzle_con_connect(dc);
 
@@ -724,6 +716,7 @@ ngx_http_upstream_drizzle_get_peer(ngx_peer_connection_t *pc, void *data)
 
         drizzle_con_free(dc);
         ngx_pfree(dscf->pool, dc);
+        dp->drizzle_con = NULL;
 
 #if defined(nginx_version) && (nginx_version >= 8017)
         return NGX_DECLINED;
@@ -854,6 +847,8 @@ invalid:
 
     ngx_http_upstream_drizzle_free_connection(pc->log, pc->connection,
                                               dc, dscf);
+    pc->connection = NULL;
+    dp->drizzle_con = NULL;
 
 #if defined(nginx_version) && (nginx_version >= 8017)
     return NGX_ERROR;

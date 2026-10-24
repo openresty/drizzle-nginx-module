@@ -35,8 +35,8 @@
 #define NGX_HTTP_GONE  410
 #endif
 
-#define ngx_http_drizzle_module_version  1012
-#define ngx_http_drizzle_module_version_string  "0.1.12"
+#define ngx_http_drizzle_module_version  1014
+#define ngx_http_drizzle_module_version_string  "0.1.14"
 
 
 extern ngx_module_t ngx_http_drizzle_module;
@@ -81,6 +81,7 @@ typedef struct {
     ngx_http_complex_value_t            *complex_target;
 
     size_t                               buf_size;
+    size_t                               max_buffered;
 
     ngx_int_t                            tid_var_index; /* thread id variable
                                                            index */
